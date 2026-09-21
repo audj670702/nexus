@@ -1,4 +1,4 @@
 import {resolveAccessContext} from "./auth.js";import {initGlobalMenu} from "./navigation.js";import {BASIC_MODULES,renderModules} from "./modules.js";import {initTv} from "./tv.js";
-const VERSION="0.1.2";
+const VERSION="0.1.3";
 async function boot(){initGlobalMenu();initTv();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES);const c=await resolveAccessContext();const eo=c?.eo?.nombreMostrar||"Entidad organizacional";document.querySelector("#eoName").textContent=eo;document.querySelector("#eoChannelName").textContent=eo;if(c?.user?.nombre)document.querySelector("#userName").textContent=c.user.nombre;if(c?.email)document.querySelector("#userMeta").textContent=c.email;document.querySelector(".footer>span:first-child").textContent=`Nexus · v${VERSION}`;if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));}
 boot().catch(console.error);
