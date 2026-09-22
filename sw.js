@@ -1,4 +1,4 @@
-const CACHE_NAME="nexus-v0.2.2";
+const CACHE_NAME="nexus-v0.2.3";
 const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./manifest.json"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim()});
