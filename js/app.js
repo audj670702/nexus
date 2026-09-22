@@ -2,7 +2,7 @@ import {resolveAccessContext,startLogin,logoutLocal} from "./auth.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
-const VERSION="0.2.1";
+const VERSION="0.2.2";
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function paintContext(c){
   const auth=c?.authenticated===true;
@@ -28,7 +28,13 @@ function paintContext(c){
 }
 async function boot(){
   initAccountMenu();initTv();
-  const c=await resolveAccessContext();
+  let c;
+  try{
+    c=await resolveAccessContext();
+  }catch(error){
+    console.error("NEXUS | SYS AUT:",error);
+    c={authenticated:false,roles:[],modules:[]};
+  }
   paintContext(c);renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal()});
