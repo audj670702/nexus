@@ -4,6 +4,10 @@ const SYS_AUTH_URL="https://www.scad.mx/sys-autenticacion";
 const SYS_CONTEXT_URL="https://www.scad.mx/_functions/nexusPwaContext";
 const SESSION_KEY="nexus.sys.context";
 
+function trace(stage,detail={}){
+  console.info(`NEXUS | SYS AUT | ${stage}`,detail);
+}
+
 function normalizeSysContext(result={}){
   const usuario=result?.usuario||{};
   return {
@@ -22,7 +26,9 @@ function normalizeSysContext(result={}){
 }
 
 function saveSessionContext(context){
-  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(context))}catch(_){}
+  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(context))}catch(error){
+    console.warn("NEXUS | SYS AUT | SESSION_SAVE_ERROR",error);
+  }
 }
 
 function restoreSessionContext(){
@@ -31,7 +37,10 @@ function restoreSessionContext(){
     if(!raw)return null;
     const parsed=JSON.parse(raw);
     return parsed?.authenticated===true?parsed:null;
-  }catch(_){return null}
+  }catch(error){
+    console.warn("NEXUS | SYS AUT | SESSION_RESTORE_ERROR",error);
+    return null;
+  }
 }
 
 function removeSysAuthFromUrl(){
@@ -42,6 +51,8 @@ function removeSysAuthFromUrl(){
 }
 
 async function exchangeSysAuth(sysAuth){
+  trace("NEXUS_CONTEXT_REQUEST",{endpoint:SYS_CONTEXT_URL,tokenPresent:true});
+
   const url=new URL(SYS_CONTEXT_URL);
   url.searchParams.set("sysAuth",sysAuth);
 
@@ -54,14 +65,28 @@ async function exchangeSysAuth(sysAuth){
   });
 
   let result=null;
-  try{result=await response.json()}catch(_){}
+  try{result=await response.json()}catch(error){
+    console.error("NEXUS | SYS AUT | RESPONSE_JSON_ERROR",{status:response.status,error});
+  }
 
   if(!response.ok||!result?.ok){
-    throw new Error(result?.mensaje||`No fue posible resolver el contexto NEXUS (HTTP ${response.status}).`);
+    const error=new Error(result?.mensaje||`No fue posible resolver el contexto NEXUS (HTTP ${response.status}).`);
+    error.code=result?.code||`HTTP_${response.status}`;
+    error.status=response.status;
+    error.payload=result;
+    throw error;
   }
 
   const context=setContext(normalizeSysContext(result));
   saveSessionContext(context);
+  removeSysAuthFromUrl();
+
+  trace("NEXUS_CONTEXT_OK",{
+    memberId:context.memberId,
+    eo:context?.eo?.codigoEO||context?.eo?.nombreMostrar||context?.eo?.nombre||null,
+    roles:context.roles
+  });
+
   return context;
 }
 
@@ -70,24 +95,33 @@ export async function resolveAccessContext(){
   const sysAuth=String(url.searchParams.get("sysAuth")||"").trim();
 
   if(sysAuth){
-    try{
-      return await exchangeSysAuth(sysAuth);
-    }finally{
-      removeSysAuthFromUrl();
-    }
+    trace("SYS_AUTH_RETURN_RECEIVED",{tokenPresent:true});
+    return exchangeSysAuth(sysAuth);
   }
 
   const restored=restoreSessionContext();
-  if(restored)return setContext(restored);
+  if(restored){
+    trace("SESSION_CONTEXT_RESTORED",{
+      memberId:restored.memberId||null,
+      roles:Array.isArray(restored.roles)?restored.roles:[]
+    });
+    return setContext(restored);
+  }
 
+  trace("VISITOR_CONTEXT",{reason:"SYS_AUTH_NOT_PRESENT"});
   clearContext();
   return getContext();
 }
 
 export function startLogin(){
+  const returnUrl=new URL(window.location.href);
+  returnUrl.searchParams.delete("sysAuth");
+
   const u=new URL(SYS_AUTH_URL);
   u.searchParams.set("app","NEXUS");
-  u.searchParams.set("returnUrl",window.location.href);
+  u.searchParams.set("returnUrl",returnUrl.toString());
+
+  trace("LOGIN_REDIRECT",{app:"NEXUS",returnUrl:returnUrl.toString()});
   window.location.assign(u.toString());
 }
 
