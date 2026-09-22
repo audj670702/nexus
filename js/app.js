@@ -2,7 +2,7 @@ import {resolveAccessContext,startLogin,logoutLocal} from "./auth.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
-const VERSION="0.2.2";
+const VERSION="0.2.3";
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function paintContext(c){
   const auth=c?.authenticated===true;
@@ -32,7 +32,12 @@ async function boot(){
   try{
     c=await resolveAccessContext();
   }catch(error){
-    console.error("NEXUS | SYS AUT:",error);
+    console.error("NEXUS | SYS AUT | CONTEXT_ERROR",{
+      code:error?.code||null,
+      status:error?.status||null,
+      message:error?.message||String(error),
+      payload:error?.payload||null
+    });
     c={authenticated:false,roles:[],modules:[]};
   }
   paintContext(c);renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
