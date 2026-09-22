@@ -2,7 +2,7 @@ import {resolveAccessContext,startLogin,logoutLocal} from "./auth.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
-const VERSION="0.2.4";
+const VERSION="0.2.5";
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function paintContext(c){
   const auth=c?.authenticated===true;
