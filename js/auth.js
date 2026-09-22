@@ -43,18 +43,18 @@ function restoreSessionContext(){
   }
 }
 
-function removeSysAuthFromUrl(){
+function removeMemberIdFromUrl(){
   const url=new URL(window.location.href);
-  if(!url.searchParams.has("sysAuth"))return;
-  url.searchParams.delete("sysAuth");
+  if(!url.searchParams.has("memberId"))return;
+  url.searchParams.delete("memberId");
   window.history.replaceState({},"",url.toString());
 }
 
-async function exchangeSysAuth(sysAuth){
-  trace("NEXUS_CONTEXT_REQUEST",{endpoint:SYS_CONTEXT_URL,tokenPresent:true});
+async function resolveMemberContext(memberId){
+  trace("NEXUS_CONTEXT_REQUEST",{endpoint:SYS_CONTEXT_URL,memberIdPresent:true});
 
   const url=new URL(SYS_CONTEXT_URL);
-  url.searchParams.set("sysAuth",sysAuth);
+  url.searchParams.set("memberId",memberId);
 
   const response=await fetch(url.toString(),{
     method:"GET",
@@ -79,7 +79,7 @@ async function exchangeSysAuth(sysAuth){
 
   const context=setContext(normalizeSysContext(result));
   saveSessionContext(context);
-  removeSysAuthFromUrl();
+  removeMemberIdFromUrl();
 
   trace("NEXUS_CONTEXT_OK",{
     memberId:context.memberId,
@@ -92,11 +92,11 @@ async function exchangeSysAuth(sysAuth){
 
 export async function resolveAccessContext(){
   const url=new URL(window.location.href);
-  const sysAuth=String(url.searchParams.get("sysAuth")||"").trim();
+  const memberId=String(url.searchParams.get("memberId")||"").trim();
 
-  if(sysAuth){
-    trace("SYS_AUTH_RETURN_RECEIVED",{tokenPresent:true});
-    return exchangeSysAuth(sysAuth);
+  if(memberId){
+    trace("MEMBER_RETURN_RECEIVED",{memberIdPresent:true});
+    return resolveMemberContext(memberId);
   }
 
   const restored=restoreSessionContext();
@@ -108,13 +108,14 @@ export async function resolveAccessContext(){
     return setContext(restored);
   }
 
-  trace("VISITOR_CONTEXT",{reason:"SYS_AUTH_NOT_PRESENT"});
+  trace("VISITOR_CONTEXT",{reason:"MEMBER_ID_NOT_PRESENT"});
   clearContext();
   return getContext();
 }
 
 export function startLogin(){
   const returnUrl=new URL(window.location.href);
+  returnUrl.searchParams.delete("memberId");
   returnUrl.searchParams.delete("sysAuth");
 
   const u=new URL(SYS_AUTH_URL);
