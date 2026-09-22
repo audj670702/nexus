@@ -1,2 +1,19 @@
-export const BASIC_MODULES=Object.freeze([{id:"mns",name:"Mensajería",description:"Comunicación MNS",access:"general"},{id:"training",name:"Capacitación",description:"Wix Programs",access:"general"},{id:"docs",name:"Documentación",description:"Documentación operativa",access:"general"},{id:"schedule",name:"Programación",description:"Actividades y agenda",access:"general"},{id:"admin",name:"Administración",description:"Acceso restringido",access:"role",role:"ADM"}]);
-export function renderModules(c,modules=BASIC_MODULES){c.replaceChildren(...modules.map(m=>{const b=document.createElement("button");b.type="button";b.className="module-card";b.dataset.module=m.id;const s=document.createElement("strong");s.textContent=m.name;const d=document.createElement("span");d.textContent=m.description;b.append(s,d);return b;}));}
+export const BASIC_MODULES=Object.freeze([
+{id:"mns",name:"Mensajería",description:"Comunicación MNS"},
+{id:"training",name:"Capacitación",description:"Programas y formación"},
+{id:"docs",name:"Documentación",description:"Documentación operativa"},
+{id:"schedule",name:"Programación",description:"Actividades y agenda"},
+{id:"admin",name:"Administración",description:"Gestión NEXUS",role:"ADM"}
+]);
+export function renderModules(container,modules=BASIC_MODULES,context={}){
+  const authenticated=context?.authenticated===true;
+  const roles=Array.isArray(context?.roles)?context.roles:[];
+  container.replaceChildren(...modules.map(m=>{
+    const b=document.createElement("button");b.type="button";b.className="module-card";b.dataset.module=m.id;
+    const allowed=authenticated&&(!m.role||roles.includes(m.role));
+    if(!allowed)b.classList.add("is-locked");
+    const s=document.createElement("strong");s.textContent=m.name;
+    const d=document.createElement("span");d.textContent=allowed?m.description:(authenticated?"Acceso no habilitado":"Inicia sesión para acceder");
+    b.append(s,d);return b;
+  }));
+}
