@@ -33,6 +33,8 @@ function setAvatar(el,obj,name){
   const url=imageUrl(obj);
   el.textContent=url?"":initials(name);
   el.style.backgroundImage=url?`url("${String(url).replace(/"/g,"%22")}")`:"";
+  el.style.backgroundSize="cover";
+  el.style.backgroundPosition="center";
 }
 function installedApp(c){
   if(c?.app!==null&&c?.app!==undefined){
@@ -96,7 +98,8 @@ function paintContext(c){
   document.querySelector("#eoChannelName").textContent=eo;
   for(const id of ["#topUserName","#menuUserName"])document.querySelector(id).textContent=name;
   document.querySelector("#menuUserEmail").textContent=email;
-  for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),c?.user,name);
+  const userImageSource=c?.user?.profile?.photo||c?.profile?.photo||c?.member?.profile?.photo||c?.user;
+  for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),userImageSource,name);
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
