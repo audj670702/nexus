@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.24";
+const VERSION="0.2.25";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -193,13 +193,14 @@ function initProfileModal(){
     const file=fileInput.files?.[0]||null;
     const memberId=String(currentContext?.memberId||"").trim();
     const nombreApp=String(document.querySelector("#profileName").value||"").trim();
+    const telefono=String(document.querySelector("#profilePhone").value||"").trim();
     if(!memberId)return;
     if(file&&file.size>5*1024*1024){
       msg.textContent="La fotografía debe pesar máximo 5 MB.";
       msg.hidden=false;
       return;
     }
-    const payload={memberId,nombreApp};
+    const payload={memberId,nombreApp,telefono,app:"NEXUS"};
     try{
       saveButton.disabled=true;
       saveButton.textContent="Guardando...";
@@ -207,7 +208,7 @@ function initProfileModal(){
       if(file){
         payload.foto={base64:await fileToDataUrl(file),mimeType:file.type,fileName:file.name};
       }
-      const response=await fetch(`${API_BASE}/gymPwaProfile`,{
+      const response=await fetch(`${API_BASE}/sysPwaProfile`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(payload)
@@ -215,7 +216,8 @@ function initProfileModal(){
       const data=await response.json().catch(()=>({}));
       if(!response.ok||data?.ok!==true)throw new Error(data?.error||"No fue posible guardar el perfil.");
       currentContext.user.nombreVisible=String(data.nombreApp||nombreApp||currentContext.user.nombreVisible||currentContext.user.nombre||"").trim();
-      if(data.foto)currentContext.user.avatar=data.foto;
+      currentContext.user.telefono=String(data.telefono??telefono);
+      if(data.avatar)currentContext.user.avatar=data.avatar;
       paintContext(currentContext);
       close();
     }catch(error){
