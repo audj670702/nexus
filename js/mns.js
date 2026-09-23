@@ -9,13 +9,13 @@ const CHANNEL='MNS_FRONTEND';
 const FRAME_URL='./mns-frontend-v052.html?v=0.5.11';
 const CLIENT_ID='8943652e-6424-4b27-961b-9486abcc97b7';
 const SITE_ID='e9c5ce53-8342-4146-acd9-3468abb10cb0';
+const REDIRECT_URI='https://nexus.scad.mx/';
 const TOKEN_KEY='nexus_mns_tokens';
 const PKCE_KEY='nexus_mns_pkce';
 const PENDING_KEY='nexus_mns_pending';
 const MNS_KEY='MNS-2RYC2USGM32F';
 let activeContext=null;
 
-function redirectUri(){return location.origin+location.pathname}
 function readTokens(){try{return JSON.parse(localStorage.getItem(TOKEN_KEY)||'null')}catch{return null}}
 function saveTokens(t){localStorage.setItem(TOKEN_KEY,JSON.stringify({...t,savedAt:Date.now()}))}
 function sdkTokens(t){if(!t?.access_token||!t?.refresh_token)return null;const savedAt=Number(t.savedAt||Date.now());const expiresIn=Number(t.expires_in||14400);return{accessToken:{value:t.access_token,expiresAt:savedAt+(expiresIn*1000)},refreshToken:{value:t.refresh_token,role:'member'}}}
@@ -32,7 +32,7 @@ async function startMnsLogin(){
   sessionStorage.setItem(PKCE_KEY,JSON.stringify({verifier,state}));
   sessionStorage.setItem(PENDING_KEY,'1');
   const anon=await anonymousToken();
-  const r=await fetch('https://www.wixapis.com/headless/v1/redirect-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':anon.access_token},body:JSON.stringify({auth:{authRequest:{clientId:CLIENT_ID,responseType:'code',redirectUri:redirectUri(),scope:'offline_access',state,responseMode:'query',codeChallenge,codeChallengeMethod:'S256',metaSiteId:SITE_ID},prompt:'login'},preferences:{useGenericWixPages:true}})});
+  const r=await fetch('https://www.wixapis.com/headless/v1/redirect-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':anon.access_token},body:JSON.stringify({auth:{authRequest:{clientId:CLIENT_ID,responseType:'code',redirectUri:REDIRECT_URI,scope:'offline_access',state,responseMode:'query',codeChallenge,codeChallengeMethod:'S256',metaSiteId:SITE_ID},prompt:'login'},preferences:{useGenericWixPages:true}})});
   if(!r.ok)throw new Error(`OAuth redirect ${r.status}`);
   const data=await r.json(),url=data?.redirectSession?.fullUrl;
   if(!url)throw new Error('Wix no devolvió URL de autenticación.');
@@ -44,7 +44,7 @@ async function consumeCallback(){
   if(!code)return false;
   const raw=sessionStorage.getItem(PKCE_KEY);if(!raw)return false;
   const pkce=JSON.parse(raw);if(p.get('state')!==pkce.state)throw new Error('Estado OAuth inválido.');
-  const t=await tokenRequest({clientId:CLIENT_ID,grantType:'authorization_code',redirectUri:redirectUri(),code,codeVerifier:pkce.verifier});
+  const t=await tokenRequest({clientId:CLIENT_ID,grantType:'authorization_code',redirectUri:REDIRECT_URI,code,codeVerifier:pkce.verifier});
   saveTokens(t);sessionStorage.removeItem(PKCE_KEY);
   const clean=new URL(location.href);clean.searchParams.delete('code');clean.searchParams.delete('state');clean.searchParams.delete('error');clean.searchParams.delete('error_description');
   history.replaceState({},document.title,clean.pathname+clean.search+clean.hash);
