@@ -126,11 +126,39 @@
     <section class="modules-section">
       <div id="modulesGrid" class="modules-grid"></div>
     </section>
+
+    <div id="documentsModal" class="modal-backdrop" hidden>
+      <section class="documents-modal" role="dialog" aria-modal="true" aria-labelledby="documentsModalTitle">
+        <header class="documents-bar">
+          <div class="documents-bar-title">
+            <span class="documents-bar-icon" aria-hidden="true">▤</span>
+            <h2 id="documentsModalTitle">Documentos</h2>
+          </div>
+          <button id="btnCloseDocuments" class="documents-close" type="button" aria-label="Cerrar">×</button>
+        </header>
+        <div class="documents-toolbar">
+          <label class="documents-search">
+            <span aria-hidden="true">⌕</span>
+            <input id="documentsSearch" type="search" placeholder="Buscar documentos" autocomplete="off" aria-label="Buscar documentos">
+          </label>
+        </div>
+        <div id="documentsCount" class="documents-count"></div>
+        <div id="documentsList" class="documents-list"></div>
+        <div id="documentViewer" class="document-viewer" hidden>
+          <div class="document-viewer-head">
+            <button id="btnBackDocuments" class="documents-action" type="button">‹ Lista</button>
+            <strong id="documentViewerTitle"></strong>
+            <a id="documentOpenExternal" class="documents-action" target="_blank" rel="noopener noreferrer">Abrir ↗</a>
+          </div>
+          <iframe id="documentFrame" class="document-frame" title="Visualizador de documento"></iframe>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.32</span>
+      <span id="versionLabel">NEXUS · v0.2.40</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
