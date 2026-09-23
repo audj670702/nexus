@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.31";
+const VERSION="0.2.32";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -276,6 +276,7 @@ async function boot(){
   });
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal()});
+  document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
 }
