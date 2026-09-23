@@ -10,11 +10,16 @@ function trace(stage,detail={}){
 
 function normalizeSysContext(result={}){
   const usuario=result?.usuario||{};
+  const member=result?.member||result?.miembro||result?.wixMember||{};
+  const profile=member?.profile||result?.profile||result?.perfil||usuario?.profile||null;
+  const user={...usuario,profile:profile||usuario?.profile||null};
+  if(profile?.slug&&!user.slug)user.slug=profile.slug;
+  if(profile?.photo&&!user.photo)user.photo=profile.photo;
   return {
     authenticated:true,
     memberId:usuario.memberId||"",
     email:usuario.email||"",
-    user:usuario,
+    user:user,
     eo:result?.eo||null,
     roles:Array.isArray(usuario.roles)?usuario.roles:[],
     modules:[],
