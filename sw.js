@@ -1,4 +1,4 @@
-const CACHE_NAME="nexus-v0.2.5";
+const CACHE_NAME="nexus-v0.2.6";
 const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./manifest.json"];
 
 self.addEventListener("install",event=>{
