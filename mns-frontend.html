@@ -54,7 +54,7 @@ button{cursor:pointer}
 .unread{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:900;position:relative}.chev{font-size:24px;color:#7c8da3;line-height:1}.empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--line);background:#fff;border-radius:15px}
 .group-title{margin:15px 3px 7px;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--muted)}.group-title:first-child{margin-top:2px}.contact-list{display:grid;gap:8px}
 .contacts-topbar{display:grid;grid-template-columns:72px 86px minmax(0,1fr);align-items:center;gap:4px;margin:0 -14px 12px;padding:7px 8px;background:var(--mns-bar)}
-.contacts-topitem{min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-size:9px;font-weight:700;line-height:1.1}
+.contacts-topitem{min-height:46px;border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-size:9px;font-weight:700;line-height:1.1}.contacts-topitem.on{background:rgba(255,255,255,.14);border-radius:8px}.contacts-filter-hidden{display:none!important}
 .contacts-topitem svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .contacts-topsearch{position:relative;min-width:0}
 .contacts-topsearch input{width:100%;height:38px;border:1px solid rgba(255,255,255,.45);border-radius:10px;background:#fff;padding:0 34px 0 10px;outline:none;color:var(--ink);font-size:11px}
@@ -76,7 +76,7 @@ button{cursor:pointer}
 </div>
 <div class="toolbar"><div class="searchbox"><input id="conversationSearch" type="search" placeholder="Buscar en conversaciones..." autocomplete="off"><span class="searchmark">⌕</span></div><button class="filter-btn" id="btnUnread"><span>☷</span><span>No leídos</span><span class="filter-count hidden" id="unreadFilterCount"></span></button><button class="compose-btn hidden" id="btnNew" title="Nueva conversación">✎</button></div>
 <div id="conversationList" class="list"></div></div></section>
-<section class="view" id="contactsView"><div class="body"><div class="contacts-topbar"><div class="contacts-topitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg><span>Roles</span></div><div class="contacts-topitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg><span>Contactos</span></div><div class="contacts-topsearch"><input id="contactSearch" type="search" placeholder="Buscar..." autocomplete="off"><span class="searchmark">⌕</span></div></div><div id="contactsList"></div></div></section>
+<section class="view" id="contactsView"><div class="body"><div class="contacts-topbar"><button id="contactsTabRoles" class="contacts-topitem" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg><span>Roles</span></button><button id="contactsTabContacts" class="contacts-topitem on" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg><span>Contactos</span></button><div class="contacts-topsearch"><input id="contactSearch" type="search" placeholder="Buscar..." autocomplete="off"><span class="searchmark">⌕</span></div></div><div id="contactsList"></div></div></section>
 <section class="chat-view" id="chatView"><div class="chat-head"><button class="icon-btn" id="btnChatBack">←</button><div class="avatar" id="chatAvatar">A</div><div class="row-main"><div class="name" id="chatTitle"></div><div class="preview" id="chatType"></div></div></div><div class="chat" id="chat"></div><div class="composer" id="composer"><textarea id="messageText" rows="1" maxlength="5000" placeholder="Escribe un mensaje"></textarea><button class="send" id="btnSend">➤</button></div><div class="readonly hidden" id="readonly">Este canal es de solo lectura.</div></section>
 <div class="overlay" id="newOverlay"><div class="sheet"><div class="new-head"><div class="new-title"><h3>Nuevo MNS</h3><button class="new-close" id="btnNewClose" type="button" aria-label="Salir">×</button></div><div class="new-menu">
 <button class="new-menu-btn on" data-newtab="roles" title="Roles"><span class="new-menu-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg></span><span>Roles</span></button>
@@ -93,7 +93,7 @@ button{cursor:pointer}
 'use strict';
 
 const CHANNEL = 'MNS_FRONTEND';
-const VERSION = '0.5.26';
+const VERSION = '0.5.27';
 const REQUEST_TIMEOUT = 15000;
 
 document.getElementById('mnsVersion').textContent=`v${VERSION}`;
@@ -523,7 +523,26 @@ async function sendMessage(){
 }
 
 $('#conversationSearch').addEventListener('input',renderConversations);
-$('#contactSearch').addEventListener('input',()=>renderContacts('#contactsList',$('#contactSearch').value));
+let contactsTopMode='contacts';
+function applyContactsTopMode(){
+  const list=$('#contactsList'); if(!list)return;
+  const titles=[...list.querySelectorAll('.group-title')];
+  titles.forEach(title=>{
+    const label=(title.textContent||'').trim().toUpperCase();
+    const show=(contactsTopMode==='roles'&&label==='ROLES')||(contactsTopMode==='contacts'&&label==='CONTACTOS');
+    title.classList.toggle('contacts-filter-hidden',!show);
+    let node=title.nextElementSibling;
+    while(node&&!node.classList.contains('group-title')){
+      node.classList.toggle('contacts-filter-hidden',!show);
+      node=node.nextElementSibling;
+    }
+  });
+  $('#contactsTabRoles').classList.toggle('on',contactsTopMode==='roles');
+  $('#contactsTabContacts').classList.toggle('on',contactsTopMode==='contacts');
+}
+$('#contactSearch').addEventListener('input',()=>{renderContacts('#contactsList',$('#contactSearch').value);applyContactsTopMode()});
+$('#contactsTabRoles').onclick=()=>{contactsTopMode='roles';applyContactsTopMode()};
+$('#contactsTabContacts').onclick=()=>{contactsTopMode='contacts';applyContactsTopMode()};
 $('#newContactsSearch').addEventListener('input',renderNewContacts);
 $('#newRolesSearch').addEventListener('input',renderNewRoles);
 
@@ -543,7 +562,9 @@ $('#btnAttention').onclick=()=>openSpecial('ADMIN');
 $('#btnSystem').onclick=()=>openSpecial('SYSTEM');
 $('#btnContacts').onclick=()=>{
   $('#contactSearch').value='';
+  contactsTopMode='contacts';
   renderContacts();
+  applyContactsTopMode();
   showMain('contacts');
 };
 $('#btnNew').onclick=openNew;
