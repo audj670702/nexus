@@ -54,7 +54,7 @@ button{cursor:pointer}
 .unread{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:900;position:relative}.chev{font-size:24px;color:#7c8da3;line-height:1}.empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--line);background:#fff;border-radius:15px}
 .group-title{margin:15px 3px 7px;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--muted)}.group-title:first-child{margin-top:2px}.contact-list{display:grid;gap:8px}.contact-row{width:100%;border:1px solid #edf1f5;background:#fff;border-radius:15px;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 11px;text-align:left}
 .chat-view{display:none;flex:1;min-height:0;flex-direction:column}.chat-view.active{display:flex}.chat-head{flex:none;background:#fff;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:9px;align-items:center;padding:9px 10px}.chat{flex:1;overflow:auto;padding:13px}.day{text-align:center;margin:7px 0 14px}.day span{background:#e9eef3;color:var(--muted);font-size:10px;border-radius:999px;padding:5px 9px}.bubble-line{display:flex;margin:7px 0}.bubble-line.mine{justify-content:flex-end}.bubble{max-width:82%;padding:9px 11px;border-radius:14px 14px 14px 4px;background:#fff;border:1px solid var(--line);font-size:13px;line-height:1.42;white-space:pre-wrap;overflow-wrap:anywhere}.mine .bubble{background:#ddecfb;border-color:#ddecfb;border-radius:14px 14px 4px 14px}.stamp{font-size:9px;color:var(--muted);text-align:right;margin-top:4px}.composer{flex:none;background:#fff;border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.composer textarea{width:100%;min-height:42px;max-height:110px;resize:none;border:1px solid var(--line);border-radius:13px;padding:10px 11px;outline:none}.send{width:42px;height:42px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-size:18px}.readonly{flex:none;background:#fff;border-top:1px solid var(--line);padding:14px;text-align:center;color:var(--muted);font-size:12px}
-.overlay{position:absolute;inset:0;background:#14243666;display:none;align-items:flex-end;z-index:30}.overlay.on{display:flex}.sheet{width:100%;max-height:86%;overflow:auto;background:#fff;border-radius:20px 20px 0 0;padding:17px 14px calc(18px + env(safe-area-inset-bottom))}.sheet h3{margin:0 0 13px;font-size:17px}.tabs{display:flex;gap:7px;margin-bottom:12px}.tab{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:800;color:var(--muted)}.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}.exact-note{font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:-3px;margin-bottom:10px}.result-none{padding:18px;text-align:center;color:var(--muted);font-size:11px;border:1px dashed var(--line);border-radius:13px}.result-ok{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}.mns-version{position:absolute;right:8px;bottom:5px;z-index:5;color:#a4adb8;font-size:9px;font-weight:500;letter-spacing:.02em;pointer-events:none;user-select:none}.toast{position:absolute;left:10%;bottom:24px;width:80%;padding:10px 12px;border-radius:12px;background:var(--ink);color:#fff;text-align:center;font-size:12px;display:none;z-index:40}.toast.on{display:block}.hidden{display:none!important}
+.overlay{position:absolute;inset:0;background:#14243666;display:none;align-items:flex-end;z-index:30}.overlay.on{display:flex}.sheet{width:100%;height:min(620px,86%);max-height:86%;overflow:hidden;background:#fff;border-radius:20px 20px 0 0;padding:0 14px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column}.sheet h3{margin:0;font-size:17px}.new-head{flex:none;margin:0 -14px 12px}.new-title{padding:16px 14px 10px}.new-menu{display:grid;grid-template-columns:repeat(4,1fr);background:var(--mns-bar);padding:7px 6px 6px}.new-menu-btn{min-height:56px;border:0;background:transparent;color:#fff;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:700;position:relative}.new-menu-btn.on{background:rgba(255,255,255,.12)}.new-menu-icon{width:25px;height:25px;display:grid;place-items:center}.new-menu-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.new-pane{flex:1;min-height:0;overflow:auto}.exact-note{font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:-3px;margin-bottom:10px}.result-none{padding:18px;text-align:center;color:var(--muted);font-size:11px;border:1px dashed var(--line);border-radius:13px}.result-ok{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}.mns-version{position:absolute;right:8px;bottom:5px;z-index:5;color:#a4adb8;font-size:9px;font-weight:500;letter-spacing:.02em;pointer-events:none;user-select:none}.toast{position:absolute;left:10%;bottom:24px;width:80%;padding:10px 12px;border-radius:12px;background:var(--ink);color:#fff;text-align:center;font-size:12px;display:none;z-index:40}.toast.on{display:block}.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -71,7 +71,16 @@ button{cursor:pointer}
 <div id="conversationList" class="list"></div></div></section>
 <section class="view" id="contactsView"><div class="body"><div class="searchbox" style="margin-bottom:10px"><input id="contactSearch" type="search" placeholder="Buscar en contactos..." autocomplete="off"><span class="searchmark">⌕</span></div><div id="contactsList"></div></div></section>
 <section class="chat-view" id="chatView"><div class="chat-head"><button class="icon-btn" id="btnChatBack">←</button><div class="avatar" id="chatAvatar">A</div><div class="row-main"><div class="name" id="chatTitle"></div><div class="preview" id="chatType"></div></div></div><div class="chat" id="chat"></div><div class="composer" id="composer"><textarea id="messageText" rows="1" maxlength="5000" placeholder="Escribe un mensaje"></textarea><button class="send" id="btnSend">➤</button></div><div class="readonly hidden" id="readonly">Este canal es de solo lectura.</div></section>
-<div class="overlay" id="newOverlay"><div class="sheet"><h3>Nueva conversación</h3><div class="tabs"><button class="tab on" data-newtab="contacts">Contactos</button><button class="tab" data-newtab="new">Buscar nuevo contacto</button></div><div id="newContactsPane"><div class="searchbox" style="margin-bottom:10px"><input id="newContactsSearch" type="search" placeholder="Buscar en contactos..." autocomplete="off"><span class="searchmark">⌕</span></div><div id="newContactsList"></div></div><div id="newExternalPane" class="hidden"><div class="searchbox" style="margin-bottom:8px"><input id="exactSearch" type="search" placeholder="Nombre completo o email" autocomplete="off"><span class="searchmark">⌕</span></div><div class="exact-note">El resultado sólo se mostrará cuando exista coincidencia exacta con el nombre completo o el email.</div><div id="exactResult"></div></div></div></div><div class="toast" id="toast"></div>
+<div class="overlay" id="newOverlay"><div class="sheet"><div class="new-head"><div class="new-title"><h3>Nuevo MNS</h3></div><div class="new-menu">
+<button class="new-menu-btn on" data-newtab="contacts" title="Contactos"><span class="new-menu-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg></span><span>Contactos</span></button>
+<button class="new-menu-btn" data-newtab="new" title="Buscar nuevo contacto"><span class="new-menu-icon"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"></circle><path d="m15 15 5 5"></path><path d="M10 7v6M7 10h6"></path></svg></span><span>Buscar nuevo contacto</span></button>
+<button class="new-menu-btn" data-newtab="roles" title="Roles"><span class="new-menu-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg></span><span>Roles</span></button>
+<button class="new-menu-btn" id="btnNewClose" title="Salir"><span class="new-menu-icon"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></span><span>Salir</span></button>
+</div></div>
+<div id="newContactsPane" class="new-pane"><div class="searchbox" style="margin-bottom:10px"><input id="newContactsSearch" type="search" placeholder="Buscar en contactos..." autocomplete="off"><span class="searchmark">⌕</span></div><div id="newContactsList"></div></div>
+<div id="newExternalPane" class="new-pane hidden"><div class="searchbox" style="margin-bottom:8px"><input id="exactSearch" type="search" placeholder="Nombre completo o email" autocomplete="off"><span class="searchmark">⌕</span></div><div class="exact-note">El resultado sólo se mostrará cuando exista coincidencia exacta con el nombre completo o el email.</div><div id="exactResult"></div></div>
+<div id="newRolesPane" class="new-pane hidden"><div class="searchbox" style="margin-bottom:10px"><input id="newRolesSearch" type="search" placeholder="Buscar en roles..." autocomplete="off"><span class="searchmark">⌕</span></div><div id="newRolesList"></div></div>
+</div></div><div class="toast" id="toast"></div>
 <div class="mns-version" id="mnsVersion"></div>
 </div>
 <script>
@@ -79,7 +88,7 @@ button{cursor:pointer}
 'use strict';
 
 const CHANNEL = 'MNS_FRONTEND';
-const VERSION = '0.5.15';
+const VERSION = '0.5.16';
 const REQUEST_TIMEOUT = 15000;
 
 document.getElementById('mnsVersion').textContent=`v${VERSION}`;
@@ -244,7 +253,22 @@ function renderContacts(target='#contactsList',filter=''){
 }
 
 function renderNewContacts(){
-  renderContacts('#newContactsList',$('#newContactsSearch').value);
+  const q=$('#newContactsSearch').value.trim().toLocaleLowerCase('es-MX');
+  const users=state.users.filter(u=>!q || String(u.nombreVisible||'').toLocaleLowerCase('es-MX').includes(q));
+  $('#newContactsList').innerHTML=users.length?'<div class="contact-list">'+users.map(u=>`
+    <button class="contact-row" data-contact-kind="USER" data-contact-id="${esc(u.memberId)}">
+      <div class="avatar">${esc(initials(u.nombreVisible))}</div>
+      <div class="row-main"><div class="name">${esc(u.nombreVisible)}</div></div><span class="chev">›</span>
+    </button>`).join('')+'</div>':'<div class="empty">Sin contactos disponibles.</div>';
+}
+function renderNewRoles(){
+  const q=$('#newRolesSearch').value.trim().toLocaleLowerCase('es-MX');
+  const roles=state.roles.filter(r=>r.asignado).filter(r=>!q || String(r.nombre||'').toLocaleLowerCase('es-MX').includes(q));
+  $('#newRolesList').innerHTML=roles.length?'<div class="contact-list">'+roles.map(r=>`
+    <button class="contact-row" data-contact-kind="ROLE" data-contact-id="${esc(r.roleId)}">
+      <div class="avatar role">👥</div>
+      <div class="row-main"><div class="name-line"><div class="name">${esc(r.nombre)}</div><span class="role-tag">ROL</span></div></div><span class="chev">›</span>
+    </button>`).join('')+'</div>':'<div class="empty">Sin roles disponibles.</div>';
 }
 
 async function renderExactResult(){
@@ -424,7 +448,9 @@ function openNew(){
   $('#newContactsSearch').value='';
   $('#exactSearch').value='';
   $('#exactResult').innerHTML='';
+  $('#newRolesSearch').value='';
   renderNewContacts();
+  renderNewRoles();
   $('#newOverlay').classList.add('on');
 }
 
@@ -493,6 +519,7 @@ async function sendMessage(){
 $('#conversationSearch').addEventListener('input',renderConversations);
 $('#contactSearch').addEventListener('input',()=>renderContacts('#contactsList',$('#contactSearch').value));
 $('#newContactsSearch').addEventListener('input',renderNewContacts);
+$('#newRolesSearch').addEventListener('input',renderNewRoles);
 
 let exactTimer=null;
 $('#exactSearch').addEventListener('input',()=>{
@@ -524,12 +551,16 @@ $('#newOverlay').addEventListener('click',e=>{
   if(e.target===$('#newOverlay')) $('#newOverlay').classList.remove('on');
 });
 
-$$('[data-newtab]').forEach(b=>b.onclick=()=>{
+$('[data-newtab]').forEach(b=>b.onclick=()=>{
   const tab=b.dataset.newtab;
-  $$('[data-newtab]').forEach(x=>x.classList.toggle('on',x===b));
+  $('[data-newtab]').forEach(x=>x.classList.toggle('on',x===b));
   $('#newContactsPane').classList.toggle('hidden',tab!=='contacts');
   $('#newExternalPane').classList.toggle('hidden',tab!=='new');
+  $('#newRolesPane').classList.toggle('hidden',tab!=='roles');
+  if(tab==='contacts') renderNewContacts();
+  if(tab==='roles') renderNewRoles();
 });
+$('#btnNewClose').onclick=()=>$('#newOverlay').classList.remove('on');
 
 document.addEventListener('click',e=>{
   const conv=e.target.closest('[data-conv]');
