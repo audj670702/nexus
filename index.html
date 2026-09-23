@@ -41,18 +41,26 @@
 
   <main>
     <section class="context-block">
-      <div class="eyebrow">MI NEXUS</div>
-      <div class="context-row">
-        <div class="context-copy">
-          <strong id="contextTitle">Explora NEXUS</strong>
-          <span id="contextMeta">Inicia sesión para acceder a tus recursos operativos.</span>
-        </div>
-        <div class="eo-block">
-          <span>EO</span>
+      <button id="eoIdentity" class="eo-identity" type="button" aria-label="Información del ente operador">
+        <span id="eoAvatar" class="eo-avatar">EO</span>
+        <span class="eo-copy">
+          <span class="eo-label">ENTE OPERADOR</span>
           <strong id="eoName">Información pública</strong>
-        </div>
-      </div>
+        </span>
+        <span class="eo-info">+ Info</span>
+      </button>
     </section>
+
+    <div id="eoModal" class="modal-backdrop" hidden>
+      <section class="eo-modal" role="dialog" aria-modal="true" aria-labelledby="eoModalTitle">
+        <button id="btnCloseEoModal" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        <div class="eo-modal-head">
+          <span id="eoModalAvatar" class="eo-avatar eo-avatar-large">EO</span>
+          <div><span class="eo-label">ENTE OPERADOR</span><h2 id="eoModalTitle">Información pública</h2></div>
+        </div>
+        <div id="eoModalInfo" class="eo-modal-info"></div>
+      </section>
+    </div>
 
     <section class="tv-section" aria-label="TV SCaD">
       <div class="tv-console">
@@ -74,7 +82,10 @@
   </main>
 
   <footer class="footer">
-    <span>NEXUS · v0.2.1</span>
+    <div class="footer-status">
+      <span id="versionLabel">NEXUS · v0.2.6</span>
+      <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
+    </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_scad.png" alt="SCaD HUB"></span>
   </footer>
 </div>
