@@ -19,6 +19,9 @@ function normalizeSysContext(result={}){
     roles:Array.isArray(usuario.roles)?usuario.roles:[],
     modules:[],
     auth:result?.auth||null,
+    cca:result?.cca||null,
+    mns:result?.mns||result?.mensajeria||null,
+    app:result?.app||null,
     actividades:Array.isArray(result?.actividades)?result.actividades:[],
     documentos:Array.isArray(result?.documentos)?result.documentos:[],
     tv:result?.tv||null
