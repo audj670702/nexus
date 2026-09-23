@@ -12,6 +12,7 @@
   --muted:#5e7391;
   --line:#dce5ef;
   --blue:#0e67d7;
+  --mns-bar:#205985;
   --blue-soft:#edf5ff;
   --red:#ef1b23;
   --red-soft:#ffe3e5;
@@ -32,11 +33,13 @@ button{cursor:pointer}
 .global-alert::after{content:"";position:absolute;inset:-5px;border-radius:999px;border:2px solid rgba(239,27,35,.16)}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,27,35,.42)}65%{box-shadow:0 0 0 10px rgba(239,27,35,0)}100%{box-shadow:0 0 0 0 rgba(239,27,35,0)}}
 .view{display:none;flex:1;min-height:0;overflow:auto}.view.active{display:block}.body{padding:12px 14px 24px}
-.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
-.quick-btn{min-height:52px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:6px 7px;display:flex;align-items:center;justify-content:center;gap:7px;color:var(--ink);font-weight:900;font-size:12px;box-shadow:0 3px 9px rgba(14,48,83,.025);position:relative}
-.quick-btn.active{border:2px solid var(--blue);background:linear-gradient(180deg,#fff,#f3f8ff)}
-.quick-icon{width:auto;height:auto;border-radius:0;background:transparent;display:inline-grid;place-items:center;font-size:21px;font-weight:900;color:var(--blue);line-height:1}
-.quick-btn[data-key="SYSTEM"] .quick-icon{background:transparent;color:#6d7f95}.quick-btn[data-key="CONTACTS"] .quick-icon{background:transparent;color:#0c55a8}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:0 -14px 13px;background:var(--mns-bar);padding:7px 6px 6px}
+.quick-btn{min-height:56px;border:0;background:transparent;border-radius:0;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-weight:700;font-size:9px;letter-spacing:.01em;box-shadow:none;position:relative}
+.quick-btn.active{border:0;background:rgba(255,255,255,.12)}
+.quick-icon{width:25px;height:25px;display:grid;place-items:center;color:#fff;line-height:1}
+.quick-icon svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.quick-label{display:block;line-height:1.15;color:#fff}
+.quick-btn[data-key="SYSTEM"] .quick-icon,.quick-btn[data-key="CONTACTS"] .quick-icon{background:transparent;color:#fff}
 .tab-alert{position:absolute;top:6px;right:7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;display:grid;place-items:center;background:var(--red);color:#fff;font-size:9px;font-weight:900;animation:pulse 1.65s infinite}
 .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;margin-bottom:12px}.searchbox{position:relative}
 .searchbox input{width:100%;height:42px;border:1px solid var(--line);border-radius:13px;background:#fff;padding:0 38px 0 12px;outline:none;color:var(--ink)}
@@ -59,11 +62,12 @@ button{cursor:pointer}
 <header class="topbar"><div class="brand-icon">💬</div><div class="title">Mensajes</div><div class="global-alert" id="globalBadge">5</div><button class="icon-btn" id="btnExit">×</button></header>
 <section class="view active" id="homeView"><div class="body">
 <div class="quick">
-<button class="quick-btn" data-key="SYSTEM" id="btnSystem"><span class="quick-icon">⚙️</span><span>SISTEMA</span></button>
-<button class="quick-btn active" data-key="ATTENTION" id="btnAttention"><span class="quick-icon">👤</span><span>ATENCIÓN</span><span class="tab-alert" id="attentionBadge">3</span></button>
-<button class="quick-btn" data-key="CONTACTS" id="btnContacts"><span class="quick-icon">👥</span><span>CONTACTOS</span></button>
+<button class="quick-btn" data-key="SYSTEM" id="btnSystem" title="Sistema"><span class="quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.38.34.72.64.98.3.26.68.4 1.08.4H21v4h-.1a1.7 1.7 0 0 0-1.5.62Z"></path></svg></span><span class="quick-label">Sistema</span></button>
+<button class="quick-btn active" data-key="ATTENTION" id="btnAttention" title="Atención"><span class="quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><path d="M4 13a2 2 0 0 0 2 2h1v-5H6a2 2 0 0 0-2 2v1Zm16 0a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2v1Z"></path><path d="M17 15c0 3-2 4-5 4"></path></svg></span><span class="quick-label">Atención</span><span class="tab-alert" id="attentionBadge">3</span></button>
+<button class="quick-btn" data-key="CONTACTS" id="btnContacts" title="Contactos"><span class="quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.4-3.2 2.5-5 6-5s5.6 1.8 6 5"></path><path d="M14 14.5c.8-.7 1.8-1 3-1 2.5 0 4 1.4 4 4"></path></svg></span><span class="quick-label">Contactos</span></button>
+<button class="quick-btn" data-key="NEW" id="btnNewTop" title="Nuevo MNS"><span class="quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Z"></path><path d="m13.5 6.5 4 4"></path></svg></span><span class="quick-label">Nuevo MNS</span></button>
 </div>
-<div class="toolbar"><div class="searchbox"><input id="conversationSearch" type="search" placeholder="Buscar en conversaciones..." autocomplete="off"><span class="searchmark">⌕</span></div><button class="filter-btn" id="btnUnread"><span>☷</span><span>No leídos</span><span class="filter-count" id="unreadFilterCount">5</span></button><button class="compose-btn" id="btnNew" title="Nueva conversación">✎</button></div>
+<div class="toolbar"><div class="searchbox"><input id="conversationSearch" type="search" placeholder="Buscar en conversaciones..." autocomplete="off"><span class="searchmark">⌕</span></div><button class="filter-btn" id="btnUnread"><span>☷</span><span>No leídos</span><span class="filter-count" id="unreadFilterCount">5</span></button><button class="compose-btn hidden" id="btnNew" title="Nueva conversación">✎</button></div>
 <div id="conversationList" class="list"></div></div></section>
 <section class="view" id="contactsView"><div class="body"><div class="searchbox" style="margin-bottom:10px"><input id="contactSearch" type="search" placeholder="Buscar en contactos..." autocomplete="off"><span class="searchmark">⌕</span></div><div id="contactsList"></div></div></section>
 <section class="chat-view" id="chatView"><div class="chat-head"><button class="icon-btn" id="btnChatBack">←</button><div class="avatar" id="chatAvatar">A</div><div class="row-main"><div class="name" id="chatTitle"></div><div class="preview" id="chatType"></div></div></div><div class="chat" id="chat"></div><div class="composer" id="composer"><textarea id="messageText" rows="1" maxlength="5000" placeholder="Escribe un mensaje"></textarea><button class="send" id="btnSend">➤</button></div><div class="readonly hidden" id="readonly">Este canal es de solo lectura.</div></section>
@@ -74,7 +78,7 @@ button{cursor:pointer}
 'use strict';
 
 const CHANNEL = 'MNS_FRONTEND';
-const VERSION = '0.5.13';
+const VERSION = '0.5.14';
 const REQUEST_TIMEOUT = 15000;
 
 const $ = s => document.querySelector(s);
@@ -507,6 +511,7 @@ $('#btnContacts').onclick=()=>{
   showMain('contacts');
 };
 $('#btnNew').onclick=openNew;
+$('#btnNewTop').onclick=openNew;
 $('#btnChatBack').onclick=()=>showMain('home');
 $('#btnExit').onclick=()=>{
   if($('#chatView').classList.contains('active')||$('#contactsView').classList.contains('active')) showMain('home');
