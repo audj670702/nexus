@@ -3,7 +3,7 @@ import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 
-const VERSION="0.2.8";
+const VERSION="0.2.9";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -111,12 +111,7 @@ async function boot(){
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
     if(card.dataset.module==="training"){
-      const slug=String(c?.user?.profile?.slug||c?.profile?.slug||c?.member?.profile?.slug||firstValue(c?.user,["slug","profileSlug","memberSlug"])||"").trim();
-      if(!slug){
-        console.error("NEXUS | MIS CURSOS | SLUG_NO_DISPONIBLE",{memberId:c?.memberId||null});
-        return;
-      }
-      window.location.assign(`https://www.scad.mx/members-area/${encodeURIComponent(slug)}/challenges`);
+      window.location.assign("https://www.scad.mx/members-area/gestor-isp3068/challenges");
     }
   });
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
