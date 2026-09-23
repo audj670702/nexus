@@ -3,8 +3,9 @@ import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
+import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 
-const VERSION="0.2.39";
+const VERSION="0.2.40";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -257,7 +258,7 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();
+  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -266,10 +267,11 @@ async function boot(){
   }
   currentContext=c;
   setTvContext(c);
-  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
+  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
+    if(card.dataset.module==="docs"){openDocuments();return}
     if(card.dataset.module==="training"){
       const target=getMemberAreaUrl({slug:"jorgeaad6759607"},"challenges");
       window.location.assign(target);
