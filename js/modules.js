@@ -1,7 +1,7 @@
 export const BASIC_MODULES=Object.freeze([
 {id:"mns",name:"Mensajería",description:"Comunicación MNS"},
 {id:"training",name:"Mis Cursos",description:"Cursos vigentes y completados"},
-{id:"docs",name:"Documentación",description:"Documentación operativa"},
+{id:"docs",name:"Documentos",description:"Documentos disponibles"},
 {id:"schedule",name:"Programación",description:"Actividades y agenda"},
 {id:"admin",name:"Administración",description:"Gestión NEXUS",role:"ADM"}
 ]);
