@@ -57,3 +57,48 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
   .tv-console{width:190px}
   .modules-section{margin-top:4px}
 }
+
+/* NEXUS mobile EO/TV refinement · v0.2.20 */
+@media(max-width:559px){
+  .context-block{
+    width:calc(100% - 205px);
+    padding-right:0;
+    overflow:visible;
+  }
+  .eo-identity{overflow:visible}
+  .eo-copy{
+    width:calc(100vw - 250px);
+    min-width:185px;
+    overflow:visible;
+  }
+  .eo-copy strong{
+    width:100%;
+    max-width:none;
+    font-size:.76rem;
+    line-height:1.18;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    display:block;
+    -webkit-line-clamp:unset;
+    -webkit-box-orient:unset;
+  }
+
+  .tv-section{right:0}
+  .tv-console{position:relative;width:190px}
+  .tv-controls{padding-top:4px}
+  .tv-channels{gap:3px}
+  .channel{
+    font-size:.53rem;
+    padding:0 4px;
+  }
+  .expand-button{
+    position:absolute;
+    right:calc(100% + 5px);
+    bottom:5px;
+    height:27px;
+    padding:0;
+    white-space:nowrap;
+    font-size:.55rem;
+  }
+}
