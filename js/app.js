@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.22";
+const VERSION="0.2.23";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -35,6 +35,15 @@ function setAvatar(el,obj,name){
   el.style.backgroundImage=url?`url("${String(url).replace(/"/g,"%22")}")`:"";
   el.style.backgroundSize="cover";
   el.style.backgroundPosition="center";
+}
+const API_BASE="https://www.scad.mx/_functions";
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(new Error("No fue posible leer la fotografía."));
+    reader.readAsDataURL(file);
+  });
 }
 function withWixReturnUrl(rawUrl){
   const url=new URL(rawUrl,window.location.href);
@@ -138,10 +147,44 @@ function initProfileModal(){
   modal.addEventListener("click",e=>{if(e.target===modal)close()});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)close()});
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="profile")open()});
-  document.querySelector("#btnSaveProfile").addEventListener("click",()=>{
+  document.querySelector("#btnSaveProfile").addEventListener("click",async()=>{
     const msg=document.querySelector("#profileMessage");
-    msg.textContent="La edición ya está habilitada en NEXUS; falta conectar la persistencia de los datos y la carga del avatar con SCaD_USR.";
-    msg.hidden=false;
+    const saveButton=document.querySelector("#btnSaveProfile");
+    const file=fileInput.files?.[0]||null;
+    const memberId=String(currentContext?.memberId||"").trim();
+    const nombreApp=String(document.querySelector("#profileName").value||"").trim();
+    if(!memberId)return;
+    if(file&&file.size>5*1024*1024){
+      msg.textContent="La fotografía debe pesar máximo 5 MB.";
+      msg.hidden=false;
+      return;
+    }
+    const payload={memberId,nombreApp};
+    try{
+      saveButton.disabled=true;
+      saveButton.textContent="Guardando...";
+      msg.hidden=true;
+      if(file){
+        payload.foto={base64:await fileToDataUrl(file),mimeType:file.type,fileName:file.name};
+      }
+      const response=await fetch(`${API_BASE}/gymPwaProfile`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||data?.ok!==true)throw new Error(data?.error||"No fue posible guardar el perfil.");
+      currentContext.user.nombreVisible=String(data.nombreApp||nombreApp||currentContext.user.nombreVisible||currentContext.user.nombre||"").trim();
+      if(data.foto)currentContext.user.avatar=data.foto;
+      paintContext(currentContext);
+      close();
+    }catch(error){
+      msg.textContent=error?.message||"No fue posible guardar el perfil.";
+      msg.hidden=false;
+    }finally{
+      saveButton.disabled=false;
+      saveButton.textContent="Guardar";
+    }
   });
 }
 function initEoModal(){
