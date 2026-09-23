@@ -6,7 +6,7 @@ import { getContext } from './context.js';
 // Traslado funcional del módulo MNS de SCaD Comunidad.
 // No modifica contratos, acciones, colecciones ni estructura MNS SYS.
 const CHANNEL='MNS_FRONTEND';
-const FRAME_URL='./mns-frontend-v052.html?v=0.5.21';
+const FRAME_URL='./mns-frontend-v052.html?v=0.5.22';
 const CLIENT_ID='8943652e-6424-4b27-961b-9486abcc97b7';
 const SITE_ID='e9c5ce53-8342-4146-acd9-3468abb10cb0';
 const REDIRECT_URI='https://nexus.scad.mx/';
