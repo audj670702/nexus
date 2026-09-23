@@ -169,3 +169,21 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
   .modules-section{margin-top:18px}
   #btnTvMute{top:4px;font-size:.82rem}
 }
+
+
+/* NEXUS TV mute placement correction · v0.2.34 */
+#btnTvMute{
+  top:0;
+  bottom:auto;
+  right:calc(100% + 6px);
+  transform:translateY(0);
+}
+#btnTvExpand{
+  top:auto;
+  bottom:4px;
+  right:calc(100% + 6px);
+}
+@media(max-width:559px){
+  #btnTvMute{top:0;bottom:auto;right:calc(100% + 6px)}
+  #btnTvExpand{top:auto;bottom:4px;right:calc(100% + 6px)}
+}
