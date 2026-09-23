@@ -51,6 +51,30 @@
       </button>
     </section>
 
+    <div id="profileModal" class="modal-backdrop" hidden>
+      <section class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <button id="btnCloseProfileModal" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        <div class="profile-modal-head">
+          <span id="profileAvatar" class="account-avatar profile-avatar">N</span>
+          <div>
+            <span class="profile-kicker">PERFIL</span>
+            <h2 id="profileModalTitle">Editar perfil</h2>
+          </div>
+        </div>
+        <div class="profile-form">
+          <label>Nombre visible<input id="profileName" type="text" maxlength="80" autocomplete="name"></label>
+          <label>Teléfono / WhatsApp<input id="profilePhone" type="tel" maxlength="30" autocomplete="tel"></label>
+          <label>Avatar<input id="profileAvatarUrl" type="url" placeholder="URL de imagen" autocomplete="url"></label>
+          <div class="profile-fixed"><span>Correo</span><strong id="profileEmail">—</strong></div>
+        </div>
+        <div id="profileMessage" class="profile-message" hidden></div>
+        <div class="profile-actions">
+          <button id="btnCancelProfile" class="profile-button secondary" type="button">Cancelar</button>
+          <button id="btnSaveProfile" class="profile-button primary" type="button">Guardar</button>
+        </div>
+      </section>
+    </div>
+
     <div id="eoModal" class="modal-backdrop" hidden>
       <section class="eo-modal" role="dialog" aria-modal="true" aria-labelledby="eoModalTitle">
         <button id="btnCloseEoModal" class="modal-close" type="button" aria-label="Cerrar">×</button>
@@ -83,7 +107,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.18</span>
+      <span id="versionLabel">NEXUS · v0.2.21</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_scad.png" alt="SCaD HUB"></span>
