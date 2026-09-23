@@ -111,8 +111,7 @@ function paintContext(c){
   document.querySelector("#eoChannelName").textContent=eo;
   for(const id of ["#topUserName","#menuUserName"])document.querySelector(id).textContent=name;
   document.querySelector("#menuUserEmail").textContent=email;
-  const userImageSource=c?.user?.profile?.photo||c?.profile?.photo||c?.member?.profile?.photo||c?.user;
-  for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),userImageSource,name);
+  for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),c?.user,name);
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
