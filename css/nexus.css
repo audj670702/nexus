@@ -7,3 +7,53 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 [hidden]{display:none!important}
 @media(min-width:560px){.app-shell{padding-left:18px;padding-right:18px}.topbar{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}.account-menu{right:18px}.context-block{padding-right:235px;min-height:148px;align-items:flex-start;justify-content:flex-start}.tv-section{position:absolute;right:0;top:14px;margin:0}.tv-console{width:220px}.eo-block strong{max-width:260px}.modules-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:900px){.app-shell{padding-left:22px;padding-right:22px}.topbar{margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}.account-menu{right:22px}.context-block{padding-right:225px;min-height:144px;justify-content:flex-start}.tv-console{width:212px}.modules-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.module-card{min-height:64px}}
+
+/* NEXUS mobile identity/TV layout · v0.2.18 */
+@media(max-width:559px){
+  .account-trigger{min-width:168px;justify-content:flex-end}
+  .account-name{max-width:118px}
+
+  main{padding-top:0}
+  .context-block{
+    width:calc(100% - 205px);
+    min-height:154px;
+    padding:14px 8px 8px 0;
+    align-items:flex-start;
+  }
+  .eo-identity{
+    width:100%;
+    max-width:none;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:5px;
+    padding:0;
+  }
+  .eo-avatar{width:52px;height:52px}
+  .eo-copy{width:100%;gap:4px}
+  .eo-copy strong{
+    max-width:100%;
+    font-size:.76rem;
+    line-height:1.18;
+    white-space:normal;
+    overflow:hidden;
+    text-overflow:clip;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  .eo-info{
+    align-self:flex-start;
+    margin:0;
+    font-size:.7rem;
+  }
+
+  .tv-section{
+    position:absolute;
+    top:14px;
+    right:0;
+    margin:0;
+  }
+  .tv-console{width:190px}
+  .modules-section{margin-top:4px}
+}
