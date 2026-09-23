@@ -3,12 +3,30 @@ import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 
-const VERSION="0.2.7";
+const VERSION="0.2.8";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
 function asBool(v){return v===true||v===1||v==="1"||String(v).toLowerCase()==="true"||String(v).toLowerCase()==="activo"}
-function imageUrl(obj){return firstValue(obj,["avatar","avatarUrl","foto","fotoUrl","photo","photoUrl","imagen","imagenUrl","logo","logoUrl","image","imageUrl"])}
+function normalizeImage(v){
+  if(!v)return null;
+  if(typeof v==="object"){
+    return normalizeImage(v.url||v.src||v.imageUrl||v.fileUrl||v.photo?.url||v.image?.url);
+  }
+  const s=String(v).trim();
+  if(!s)return null;
+  if(s.startsWith("wix:image://v1/")){
+    const id=s.slice("wix:image://v1/".length).split("/")[0];
+    return id?`https://static.wixstatic.com/media/${id}`:null;
+  }
+  return s;
+}
+function imageUrl(obj){
+  return normalizeImage(
+    firstValue(obj,["avatar","avatarUrl","foto","fotoUrl","photo","photoUrl","imagen","imagenUrl","logoEo","logoEO","logo","logoUrl","image","imageUrl"])
+    ||obj?.profile?.photo||obj?.profile?.image||obj?.member?.profile?.photo
+  );
+}
 function setAvatar(el,obj,name){
   if(!el)return;
   const url=imageUrl(obj);
@@ -93,7 +111,7 @@ async function boot(){
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
     if(card.dataset.module==="training"){
-      const slug=String(c?.user?.profile?.slug||firstValue(c?.user,["slug","profileSlug","memberSlug"])||"").trim();
+      const slug=String(c?.user?.profile?.slug||c?.profile?.slug||c?.member?.profile?.slug||firstValue(c?.user,["slug","profileSlug","memberSlug"])||"").trim();
       if(!slug){
         console.error("NEXUS | MIS CURSOS | SLUG_NO_DISPONIBLE",{memberId:c?.memberId||null});
         return;
