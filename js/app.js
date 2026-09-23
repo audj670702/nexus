@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.23";
+const VERSION="0.2.24";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -58,11 +58,7 @@ function getMemberAreaUrl(member,pageSlug){
   return withWixReturnUrl(url.toString());
 }
 
-function installedApp(c){
-  if(c?.app!==null&&c?.app!==undefined){
-    if(typeof c.app==="object")return asBool(firstValue(c.app,["instalada","installed","activa","activo","enabled"]));
-    return asBool(c.app);
-  }
+function installedApp(){
   return window.matchMedia?.("(display-mode: standalone)")?.matches===true||window.navigator.standalone===true;
 }
 function ccaBits(c){
@@ -72,13 +68,57 @@ function ccaBits(c){
   const us=firstValue(cca,["Us","us","usuario","usuarioActivo"])??firstValue(c?.user,["activo","active","estatus"]);
   const eo=firstValue(cca,["Eo","eo"])??!!c?.eo;
   const mns=firstValue(cca,["Mns","mns"])??(typeof c?.mns==="object"?firstValue(c.mns,["activo","activa","enabled","habilitado"]):c?.mns);
-  const app=firstValue(cca,["App","app"])??installedApp(c);
+  const app=installedApp();
   return {Se:asBool(se??c?.authenticated),Us:asBool(us??!!c?.user),Eo:asBool(eo),Mns:asBool(mns),App:asBool(app)};
 }
 function paintCca(c){
   const b=ccaBits(c);
   document.querySelector("#ccaLabel").textContent=`CCA · Se${+b.Se} Us${+b.Us} Eo${+b.Eo} Mns${+b.Mns} App${+b.App}`;
 }
+let deferredInstallPrompt=null;
+function isIosDevice(){return /iphone|ipad|ipod/i.test(window.navigator.userAgent)}
+function renderInstallOption(){
+  const button=document.querySelector("#installButton");
+  if(!button)return;
+  const installed=installedApp();
+  button.textContent=installed?"App instalada":"Instalar app";
+  button.dataset.installed=installed?"true":"false";
+  button.disabled=installed;
+  button.setAttribute("aria-label",installed?"App instalada":"Instalar app");
+  if(currentContext)paintCca(currentContext);
+}
+function openIosTutorial(){
+  const modal=document.querySelector("#iosTutorialModal"),video=document.querySelector("#iosTutorialVideo");
+  if(!modal||!video)return;
+  modal.hidden=false;document.body.style.overflow="hidden";document.querySelector("#iosTutorialClose")?.focus();video.load();
+}
+function closeIosTutorial(){
+  const modal=document.querySelector("#iosTutorialModal"),video=document.querySelector("#iosTutorialVideo");
+  if(!modal||!video)return;
+  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+  else if(video.webkitDisplayingFullscreen&&video.webkitExitFullscreen)video.webkitExitFullscreen();
+  video.pause();video.currentTime=0;modal.hidden=true;document.body.style.overflow="";document.querySelector("#installButton")?.focus();
+}
+function initInstallFlow(){
+  document.querySelector("#iosTutorialClose")?.addEventListener("click",closeIosTutorial);
+  document.querySelector("#iosTutorialModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeIosTutorial()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.querySelector("#iosTutorialModal")?.hidden)closeIosTutorial()});
+  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;renderInstallOption()});
+  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;renderInstallOption()});
+  document.querySelector("#installButton")?.addEventListener("click",async()=>{
+    if(installedApp())return;
+    if(isIosDevice()){openIosTutorial();return}
+    if(!deferredInstallPrompt){window.alert("La instalación todavía no está disponible. Abre el menú del navegador y selecciona Instalar app o Instalar NEXUS.");return}
+    const button=document.querySelector("#installButton");
+    button.disabled=true;button.textContent="Instalando...";
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    button.disabled=false;renderInstallOption();
+  });
+  renderInstallOption();
+}
+
 function eoInfoRows(eo={}){
   const fields=[
     ["Código",firstValue(eo,["codigoEO","codigo","clave"])],
@@ -213,7 +253,7 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();initProfileModal();
+  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -221,7 +261,7 @@ async function boot(){
     c={authenticated:false,roles:[],modules:[]};
   }
   currentContext=c;
-  paintContext(c);renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
+  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
