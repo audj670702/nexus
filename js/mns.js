@@ -62,7 +62,8 @@ async function validateMnsAccess(){
   const appId=String(init?.appId||'').trim();
   const eoId=String(init?.eoId||'').trim();
   if(!appId||!eoId)throw new Error('MNS no devolvió el contexto APP/EO resuelto.');
-  activeContext={...activeContext,mnsResolved:{appId,eoId}};
+  activeContext={...activeContext,mnsResolved:{appId,eoId},mns:{...(activeContext?.mns||{}),activo:true}};
+  document.dispatchEvent(new CustomEvent('nexus:mns-active',{detail:{active:true}}));
   return init;
 }
 function ensureStyles(){if(document.getElementById('nexusMnsStyles'))return;const s=document.createElement('style');s.id='nexusMnsStyles';s.textContent=`.nexus-mns-overlay{position:fixed;inset:0;z-index:99999;background:rgba(11,28,47,.46);display:flex;align-items:stretch;justify-content:center}.nexus-mns-panel{width:100%;height:100%;background:#f6f8fb;overflow:hidden}.nexus-mns-frame{display:block;width:100%;height:100%;border:0;background:#f6f8fb}body.nexus-mns-open{overflow:hidden}@media(min-width:760px){.nexus-mns-overlay{padding:28px;align-items:center}.nexus-mns-panel{width:min(1040px,calc(100vw - 56px));height:min(820px,calc(100dvh - 56px));border-radius:22px;box-shadow:0 24px 80px rgba(6,31,57,.28)}}`;document.head.appendChild(s)}
