@@ -14,7 +14,10 @@
   <header class="topbar">
     <img class="brand-logo" src="./assets/logo/logo_nexus_horizontal.png" alt="NEXUS · Conexión operativa">
 
-    <button id="btnLogin" class="login-button" type="button">Iniciar sesión</button>
+    <div class="topbar-actions">
+      <button id="installButton" class="install-button" type="button" data-installed="false">Instalar app</button>
+      <button id="btnLogin" class="login-button" type="button">Iniciar sesión</button>
+    </div>
 
     <button id="btnAccount" class="account-trigger" type="button" hidden aria-label="Abrir menú de cuenta" aria-expanded="false">
       <span id="topAvatar" class="account-avatar">N</span>
@@ -38,6 +41,19 @@
       </nav>
     </aside>
   </header>
+
+  <div id="iosTutorialModal" class="ios-tutorial-modal" role="dialog" aria-modal="true" aria-label="Tutorial de instalación en iPhone" hidden>
+    <div class="ios-tutorial-dialog">
+      <div class="ios-tutorial-header">
+        <p class="ios-tutorial-title">Instalar app en iPhone</p>
+        <button id="iosTutorialClose" class="ios-tutorial-close" type="button" aria-label="Cerrar tutorial">×</button>
+      </div>
+      <video id="iosTutorialVideo" class="ios-tutorial-video" controls playsinline webkit-playsinline preload="metadata" disablepictureinpicture>
+        <source src="./assets/instalar-app-ios.mp4" type="video/mp4">
+        Tu navegador no puede reproducir este tutorial.
+      </video>
+    </div>
+  </div>
 
   <main>
     <section class="context-block">
@@ -115,7 +131,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.23</span>
+      <span id="versionLabel">NEXUS · v0.2.24</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_scad.png" alt="SCaD HUB"></span>
