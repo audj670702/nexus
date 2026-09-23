@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.15";
+const VERSION="0.2.16";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -36,6 +36,19 @@ function setAvatar(el,obj,name){
   el.style.backgroundSize="cover";
   el.style.backgroundPosition="center";
 }
+function withWixReturnUrl(rawUrl){
+  const url=new URL(rawUrl,window.location.href);
+  url.searchParams.set("mensaje",window.location.href);
+  return url.toString();
+}
+function getMemberAreaUrl(member,pageSlug){
+  const memberSlug=String(member?.slug||"").trim();
+  if(!memberSlug)return "#";
+  const url=new URL(`https://www.scad.mx/members-area/${encodeURIComponent(memberSlug)}/${pageSlug}`);
+  url.searchParams.set("disableScrollToTop","true");
+  return withWixReturnUrl(url.toString());
+}
+
 function installedApp(c){
   if(c?.app!==null&&c?.app!==undefined){
     if(typeof c.app==="object")return asBool(firstValue(c.app,["instalada","installed","activa","activo","enabled"]));
@@ -115,10 +128,12 @@ async function boot(){
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
     if(card.dataset.module==="training"){
-      const slug=String(c?.user?.slug||c?.user?.profile?.slug||c?.profile?.slug||c?.member?.profile?.slug||"").trim();
-      const target=slug
-        ? `https://www.scad.mx/members-area/${encodeURIComponent(slug)}/challenges?disableScrollToTop=true`
-        : "https://www.scad.mx/members-area";
+      const member={slug:c?.user?.slug||c?.user?.profile?.slug||c?.profile?.slug||c?.member?.profile?.slug||""};
+      const target=getMemberAreaUrl(member,"challenges");
+      if(target==="#"){
+        console.error("NEXUS | MIS CURSOS | MEMBER_SLUG_MISSING",{memberId:c?.memberId||null});
+        return;
+      }
       window.location.assign(target);
     }
   });
