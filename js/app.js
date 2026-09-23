@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.21";
+const VERSION="0.2.22";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -100,13 +100,39 @@ function initProfileModal(){
     const name=user.nombreVisible||user.nombre||"";
     document.querySelector("#profileName").value=name;
     document.querySelector("#profilePhone").value=firstValue(user,["telefono","phone","whatsapp"])||"";
-    document.querySelector("#profileAvatarUrl").value=imageUrl(user)||"";
+    const fileInput=document.querySelector("#profileAvatarFile");
+    fileInput.value="";
+    fileInput.removeAttribute("capture");
+    delete fileInput.dataset.previewUrl;
     document.querySelector("#profileEmail").textContent=c.email||user.email||"—";
     setAvatar(document.querySelector("#profileAvatar"),user,name||"Usuario");
     document.querySelector("#profileMessage").hidden=true;
     modal.hidden=false;
     requestAnimationFrame(()=>document.querySelector("#profileName").focus());
   };
+  const fileInput=document.querySelector("#profileAvatarFile");
+  const previewSelectedPhoto=()=>{
+    const file=fileInput.files?.[0];
+    if(!file)return;
+    const old=fileInput.dataset.previewUrl;
+    if(old)URL.revokeObjectURL(old);
+    const url=URL.createObjectURL(file);
+    fileInput.dataset.previewUrl=url;
+    const avatar=document.querySelector("#profileAvatar");
+    avatar.textContent="";
+    avatar.style.backgroundImage=`url("${url}")`;
+    avatar.style.backgroundSize="cover";
+    avatar.style.backgroundPosition="center";
+  };
+  document.querySelector("#btnChooseProfilePhoto").addEventListener("click",()=>{
+    fileInput.removeAttribute("capture");
+    fileInput.click();
+  });
+  document.querySelector("#btnTakeProfilePhoto").addEventListener("click",()=>{
+    fileInput.setAttribute("capture","user");
+    fileInput.click();
+  });
+  fileInput.addEventListener("change",previewSelectedPhoto);
   document.querySelector("#btnCloseProfileModal").addEventListener("click",close);
   document.querySelector("#btnCancelProfile").addEventListener("click",close);
   modal.addEventListener("click",e=>{if(e.target===modal)close()});
@@ -114,7 +140,7 @@ function initProfileModal(){
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="profile")open()});
   document.querySelector("#btnSaveProfile").addEventListener("click",()=>{
     const msg=document.querySelector("#profileMessage");
-    msg.textContent="La edición ya está habilitada en NEXUS; falta conectar la persistencia de estos campos con SCaD_USR.";
+    msg.textContent="La edición ya está habilitada en NEXUS; falta conectar la persistencia de los datos y la carga del avatar con SCaD_USR.";
     msg.hidden=false;
   });
 }
