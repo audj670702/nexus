@@ -187,3 +187,41 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
   #btnTvMute{top:0;bottom:auto;right:calc(100% + 6px)}
   #btnTvExpand{top:auto;bottom:4px;right:calc(100% + 6px)}
 }
+
+
+/* NEXUS TV side controls definitive · v0.2.37 */
+.tv-section{position:relative!important}
+.tv-side-controls{
+  position:absolute!important;
+  right:calc(100% + 8px)!important;
+  top:0!important;
+  width:76px!important;
+  height:100%!important;
+  pointer-events:none!important;
+}
+.tv-side-button{
+  position:absolute!important;
+  right:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:var(--ink)!important;
+  padding:0!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  white-space:nowrap!important;
+}
+.tv-mute-button{
+  top:0!important;
+  bottom:auto!important;
+  font-size:1rem!important;
+  line-height:1!important;
+}
+.tv-expand-button{
+  top:auto!important;
+  bottom:5px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  font-size:.55rem!important;
+  font-weight:800!important;
+}
