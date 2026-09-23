@@ -88,7 +88,7 @@ button{cursor:pointer}
 'use strict';
 
 const CHANNEL = 'MNS_FRONTEND';
-const VERSION = '0.5.22';
+const VERSION = '0.5.23';
 const REQUEST_TIMEOUT = 15000;
 
 document.getElementById('mnsVersion').textContent=`v${VERSION}`;
@@ -442,7 +442,7 @@ async function openContact(kind,id){
 }
 
 function openNew(){
-  $$$('[data-newtab]').forEach(b=>b.classList.toggle('on',b.dataset.newtab==='contacts'));
+  $('[data-newtab]').forEach(b=>b.classList.toggle('on',b.dataset.newtab==='contacts'));
   $('#newContactsPane').classList.remove('hidden');
   $('#newExternalPane').classList.add('hidden');
   $('#newRolesPane').classList.add('hidden');
