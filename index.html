@@ -111,7 +111,6 @@
     </div>
 
     <section class="tv-section" aria-label="TV SCaD">
-      <div class="tv-side-controls"><button id="btnTvMute" class="tv-side-button tv-mute-button" type="button" aria-label="Activar sonido"><span id="tvMuteIcon">🔇</span></button><button id="btnTvExpand" class="tv-side-button tv-expand-button" type="button" aria-label="Ampliar TV"><span>⛶</span><span>Ampliar</span></button></div>
       <div class="tv-console">
         <div id="tvMonitor" class="tv-monitor"><video id="tvVideo" autoplay muted playsinline preload="auto" aria-label="Canal en vivo"></video><div id="tvPlaceholder" class="tv-placeholder"></div><div id="tvScreenCenter" class="tv-screen-center"><span class="tv-play">▶</span></div></div>
         <div class="tv-controls">
@@ -119,6 +118,7 @@
             <button class="channel is-active" type="button" data-channel="internet"><span>◉</span><span>TV Digital</span></button>
             <button class="channel" type="button" data-channel="eo"><span>▶</span><span id="eoChannelName">EO</span></button>
           </div>
+          <button id="btnTvMute" class="expand-button" type="button" aria-label="Activar sonido"><span id="tvMuteIcon">🔇</span></button><button id="btnTvExpand" class="expand-button" type="button" aria-label="Ampliar TV"><span>⛶</span><span>Ampliar</span></button>
         </div>
       </div>
     </section>
@@ -130,7 +130,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.33</span>
+      <span id="versionLabel">NEXUS · v0.2.32</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
