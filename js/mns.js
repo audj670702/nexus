@@ -2,11 +2,11 @@ import { createClient, OAuthStrategy } from 'https://esm.sh/@wix/sdk';
 import { functions } from 'https://esm.sh/@wix/http-functions@1.0.0';
 import { getContext } from './context.js';
 
-// NEXUS · Integración MNS SYS · v1.0.0
+// NEXUS · Integración MNS SYS · v1.0.1
 // Traslado funcional del módulo MNS de SCaD Comunidad.
 // No modifica contratos, acciones, colecciones ni estructura MNS SYS.
 const CHANNEL='MNS_FRONTEND';
-const FRAME_URL='./mns-frontend-v052.html?v=0.5.11';
+const FRAME_URL='./mns-frontend-v052.html?v=0.5.17';
 const CLIENT_ID='8943652e-6424-4b27-961b-9486abcc97b7';
 const SITE_ID='e9c5ce53-8342-4146-acd9-3468abb10cb0';
 const REDIRECT_URI='https://nexus.scad.mx/';
