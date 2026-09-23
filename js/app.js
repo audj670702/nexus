@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.20";
+const VERSION="0.2.21";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -89,6 +89,35 @@ function paintEo(eo){
   setAvatar(document.querySelector("#eoModalAvatar"),eo,name);
   document.querySelector("#eoModalInfo").innerHTML=eoInfoRows(eo||{});
 }
+let currentContext=null;
+function initProfileModal(){
+  const modal=document.querySelector("#profileModal");
+  const close=()=>{modal.hidden=true;document.querySelector("#profileMessage").hidden=true};
+  const open=()=>{
+    const c=currentContext;
+    if(!c?.authenticated)return;
+    const user=c.user||{};
+    const name=user.nombreVisible||user.nombre||"";
+    document.querySelector("#profileName").value=name;
+    document.querySelector("#profilePhone").value=firstValue(user,["telefono","phone","whatsapp"])||"";
+    document.querySelector("#profileAvatarUrl").value=imageUrl(user)||"";
+    document.querySelector("#profileEmail").textContent=c.email||user.email||"—";
+    setAvatar(document.querySelector("#profileAvatar"),user,name||"Usuario");
+    document.querySelector("#profileMessage").hidden=true;
+    modal.hidden=false;
+    requestAnimationFrame(()=>document.querySelector("#profileName").focus());
+  };
+  document.querySelector("#btnCloseProfileModal").addEventListener("click",close);
+  document.querySelector("#btnCancelProfile").addEventListener("click",close);
+  modal.addEventListener("click",e=>{if(e.target===modal)close()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)close()});
+  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="profile")open()});
+  document.querySelector("#btnSaveProfile").addEventListener("click",()=>{
+    const msg=document.querySelector("#profileMessage");
+    msg.textContent="La edición ya está habilitada en NEXUS; falta conectar la persistencia de estos campos con SCaD_USR.";
+    msg.hidden=false;
+  });
+}
 function initEoModal(){
   const modal=document.querySelector("#eoModal");
   document.querySelector("#eoIdentity").addEventListener("click",()=>modal.hidden=false);
@@ -115,13 +144,14 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();
+  initAccountMenu();initTv();initEoModal();initProfileModal();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
     console.error("NEXUS | SYS AUT | CONTEXT_ERROR",{code:error?.code||null,status:error?.status||null,message:error?.message||String(error),payload:error?.payload||null});
     c={authenticated:false,roles:[],modules:[]};
   }
+  currentContext=c;
   paintContext(c);renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
