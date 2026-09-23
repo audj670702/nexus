@@ -1,5 +1,5 @@
-const CACHE_NAME="nexus-v0.2.40";
-const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./js/mns.js","./js/documents.js","./mns-frontend-v052.html","./mns-frontend.html","./manifest.json"];
+const CACHE_NAME="nexus-v0.2.41";
+const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./js/mns.js","./js/documents.js","./js/schedule.js","./mns-frontend-v052.html","./mns-frontend.html","./manifest.json"];
 
 self.addEventListener("install",event=>{
   event.waitUntil(
