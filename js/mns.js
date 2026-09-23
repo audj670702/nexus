@@ -13,7 +13,7 @@ const REDIRECT_URI='https://nexus.scad.mx/';
 const TOKEN_KEY='nexus_mns_tokens';
 const PKCE_KEY='nexus_mns_pkce';
 const PENDING_KEY='nexus_mns_pending';
-const MNS_KEY='MNS-2RYC2USGM32F';
+const MNS_KEY='MNS-E8WRQH8ZCZ8Z';
 let activeContext=null;
 
 function readTokens(){try{return JSON.parse(localStorage.getItem(TOKEN_KEY)||'null')}catch{return null}}
@@ -53,13 +53,17 @@ async function consumeCallback(){
 
 function resolveMnsContext(ctx){
   if(ctx?.authenticated!==true)throw new Error('Inicia sesión en NEXUS para usar Mensajería.');
-  const mns=ctx?.mns||{};
-  const enabled=mns?.activo??mns?.activa??mns?.enabled??mns?.habilitado;
-  if(enabled===false||enabled===0||enabled==='0')throw new Error('Mensajería no está habilitada para esta instalación.');
-  const eoId=String(mns?.eoId||ctx?.eo?.mnsEoId||ctx?.eo?.eoMnsId||'').trim();
-  const eoKey=String(ctx?.eo?.codigoEO||mns?.eoKey||ctx?.eo?.mnsEoKey||'').trim();
-  if(!eoId&&!eoKey)throw new Error('NEXUS no recibió el EO MNS correspondiente al Ente Operador.');
-  return eoId?{mnsKey:MNS_KEY,eoId}:{mnsKey:MNS_KEY,eoKey};
+  const eoKey=String(ctx?.eo?.codigoEO||'').trim().toUpperCase();
+  if(!eoKey)throw new Error('NEXUS no recibió codigoEO del Ente Operador activo.');
+  return {mnsKey:MNS_KEY,eoKey};
+}
+async function validateMnsAccess(){
+  const init=await invokeMns('mnsInit',{});
+  const appId=String(init?.appId||'').trim();
+  const eoId=String(init?.eoId||'').trim();
+  if(!appId||!eoId)throw new Error('MNS no devolvió el contexto APP/EO resuelto.');
+  activeContext={...activeContext,mnsResolved:{appId,eoId}};
+  return init;
 }
 function ensureStyles(){if(document.getElementById('nexusMnsStyles'))return;const s=document.createElement('style');s.id='nexusMnsStyles';s.textContent=`.nexus-mns-overlay{position:fixed;inset:0;z-index:99999;background:rgba(11,28,47,.46);display:flex;align-items:stretch;justify-content:center}.nexus-mns-panel{width:100%;height:100%;background:#f6f8fb;overflow:hidden}.nexus-mns-frame{display:block;width:100%;height:100%;border:0;background:#f6f8fb}body.nexus-mns-open{overflow:hidden}@media(min-width:760px){.nexus-mns-overlay{padding:28px;align-items:center}.nexus-mns-panel{width:min(1040px,calc(100vw - 56px));height:min(820px,calc(100dvh - 56px));border-radius:22px;box-shadow:0 24px 80px rgba(6,31,57,.28)}}`;document.head.appendChild(s)}
 function frame(){return document.querySelector('#nexusMnsOverlay iframe')}
@@ -80,6 +84,7 @@ async function openMns(ctx=null){
     activeContext=ctx||getContext();
     resolveMnsContext(activeContext);
     if(!await accessToken()){await startMnsLogin();return}
+    await validateMnsAccess();
     ensureStyles();closeMns();
     const overlay=document.createElement('div');overlay.id='nexusMnsOverlay';overlay.className='nexus-mns-overlay';
     overlay.innerHTML=`<div class="nexus-mns-panel" role="dialog" aria-modal="true" aria-label="Mensajería"><iframe class="nexus-mns-frame" src="${FRAME_URL}" title="Mensajería SCaD MNS"></iframe></div>`;
@@ -94,7 +99,7 @@ window.addEventListener('message',async event=>{
   const f=frame();if(!f||event.source!==f.contentWindow||event.origin!==location.origin)return;
   const m=event.data;if(!m||m.channel!==CHANNEL)return;
   if(m.type==='CLOSE'){closeMns();return}
-  if(m.type==='READY'){try{f.contentWindow.postMessage({channel:CHANNEL,type:'CONTEXT',payload:resolveMnsContext(activeContext)},location.origin)}catch(e){console.error('[NEXUS MNS]',e)}return}
+  if(m.type==='READY'){try{f.contentWindow.postMessage({channel:CHANNEL,type:'CONTEXT',payload:{appId:activeContext?.mnsResolved?.appId||'',eoId:activeContext?.mnsResolved?.eoId||''}},location.origin)}catch(e){console.error('[NEXUS MNS]',e)}return}
   if(!m.id||!m.action)return;
   try{const data=await invokeMns(m.action,m.payload||{});f.contentWindow.postMessage({channel:CHANNEL,id:m.id,ok:true,data},location.origin)}
   catch(error){f.contentWindow.postMessage({channel:CHANNEL,id:m.id,ok:false,error:error?.message||'Error MNS'},location.origin)}
