@@ -64,7 +64,15 @@
         <div class="profile-form">
           <label>Nombre visible<input id="profileName" type="text" maxlength="80" autocomplete="name"></label>
           <label>Teléfono / WhatsApp<input id="profilePhone" type="tel" maxlength="30" autocomplete="tel"></label>
-          <label>Avatar<input id="profileAvatarUrl" type="url" placeholder="URL de imagen" autocomplete="url"></label>
+          <div class="profile-photo-field">
+            <span class="profile-photo-label">Avatar</span>
+            <input id="profileAvatarFile" class="profile-photo-input" type="file" accept="image/*">
+            <div class="profile-photo-actions">
+              <button id="btnChooseProfilePhoto" class="profile-photo-button" type="button">Cargar foto</button>
+              <button id="btnTakeProfilePhoto" class="profile-photo-button" type="button">Tomar foto</button>
+            </div>
+            <span class="profile-photo-help">Selecciona una imagen del dispositivo o usa la cámara.</span>
+          </div>
           <div class="profile-fixed"><span>Correo</span><strong id="profileEmail">—</strong></div>
         </div>
         <div id="profileMessage" class="profile-message" hidden></div>
@@ -107,7 +115,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.21</span>
+      <span id="versionLabel">NEXUS · v0.2.22</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_scad.png" alt="SCaD HUB"></span>
