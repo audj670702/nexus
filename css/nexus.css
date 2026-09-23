@@ -126,3 +126,31 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
     background-repeat:no-repeat;
   }
 }
+
+/* NEXUS TV/control layout · v0.2.32 */
+.brand-logo{max-width:175px;max-height:46px}
+.tv-console{position:relative}
+.tv-monitor{position:relative}
+.tv-monitor video,.tv-youtube-frame{position:absolute;inset:0;width:100%;height:100%;display:block;border:0;object-fit:contain;background:#071a33}
+.tv-controls{position:relative}
+.tv-channels{width:100%}
+.channel{font-size:.54rem}
+#btnTvMute,#btnTvExpand{
+  position:absolute;
+  right:calc(100% + 6px);
+  width:auto;
+  min-width:0;
+  height:27px;
+  padding:0 2px;
+  justify-content:flex-end;
+  white-space:nowrap;
+  font-size:.55rem;
+}
+#btnTvMute{bottom:36px}
+#btnTvExpand{bottom:4px}
+@media(max-width:559px){
+  .brand-logo{max-width:128px}
+  .channel{font-size:.50rem}
+  #btnTvMute{bottom:36px}
+  #btnTvExpand{bottom:4px}
+}
