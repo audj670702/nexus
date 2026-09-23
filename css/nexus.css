@@ -154,3 +154,18 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
   #btnTvMute{bottom:36px}
   #btnTvExpand{bottom:4px}
 }
+
+
+/* NEXUS layout refinement · v0.2.33 */
+.modules-section{margin-top:18px}
+#btnTvMute{
+  bottom:auto;
+  top:4px;
+  font-size:.82rem;
+  line-height:1;
+}
+@media(max-width:559px){
+  .brand-logo{max-width:108px;max-height:40px}
+  .modules-section{margin-top:18px}
+  #btnTvMute{top:4px;font-size:.82rem}
+}
