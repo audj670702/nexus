@@ -127,6 +127,24 @@
       <div id="modulesGrid" class="modules-grid"></div>
     </section>
 
+    <div id="scheduleModal" class="modal-backdrop" hidden>
+      <section class="schedule-modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+        <header class="schedule-bar">
+          <div class="schedule-bar-title"><span aria-hidden="true">▦</span><h2 id="scheduleModalTitle">Programación</h2></div>
+          <button id="btnCloseSchedule" class="schedule-close" type="button" aria-label="Cerrar">×</button>
+        </header>
+        <div class="schedule-toolbar">
+          <div class="schedule-view-switch" role="group" aria-label="Vista de programación">
+            <button id="btnScheduleCalendar" class="is-active" type="button">Calendario</button>
+            <button id="btnScheduleList" type="button">Lista</button>
+          </div>
+          <label class="schedule-search"><span aria-hidden="true">⌕</span><input id="scheduleSearch" type="search" placeholder="Buscar" autocomplete="off" aria-label="Buscar en programación"></label>
+        </div>
+        <div id="scheduleTypes" class="schedule-types" aria-label="Filtrar por tipo"></div>
+        <div id="scheduleBody" class="schedule-body"></div>
+      </section>
+    </div>
+
     <div id="documentsModal" class="modal-backdrop" hidden>
       <section class="documents-modal" role="dialog" aria-modal="true" aria-labelledby="documentsModalTitle">
         <header class="documents-bar">
@@ -158,7 +176,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.40</span>
+      <span id="versionLabel">NEXUS · v0.2.41</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
