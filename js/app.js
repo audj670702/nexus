@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.14";
+const VERSION="0.2.15";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -116,13 +116,10 @@ async function boot(){
     if(!card||card.classList.contains("is-locked"))return;
     if(card.dataset.module==="training"){
       const slug=String(c?.user?.slug||c?.user?.profile?.slug||c?.profile?.slug||c?.member?.profile?.slug||"").trim();
-      if(!slug){
-        console.error("NEXUS | MIS CURSOS | MEMBER_SLUG_MISSING",{memberId:c?.memberId||null});
-        return;
-      }
-      const url=new URL(`https://www.scad.mx/members-area/${encodeURIComponent(slug)}/challenges`);
-      url.searchParams.set("disableScrollToTop","true");
-      window.location.assign(url.toString());
+      const target=slug
+        ? `https://www.scad.mx/members-area/${encodeURIComponent(slug)}/challenges?disableScrollToTop=true`
+        : "https://www.scad.mx/members-area";
+      window.location.assign(target);
     }
   });
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
