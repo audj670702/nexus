@@ -3,6 +3,7 @@ import {getContext,setContext,clearContext} from "./context.js";
 const SYS_AUTH_URL="https://www.scad.mx/sys-autenticacion";
 const SYS_CONTEXT_URL="https://www.scad.mx/_functions/nexusPwaContext";
 const SESSION_KEY="nexus.sys.context";
+const WIX_MEMBER_URL="https://www.scad.mx/_functions/nexusWixMember";
 
 function trace(stage,detail={}){
   console.info(`NEXUS | SYS AUT | ${stage}`,detail);
@@ -58,6 +59,27 @@ function removeMemberIdFromUrl(){
   window.history.replaceState({},"",url.toString());
 }
 
+async function enrichWixMember(context){
+  const memberId=String(context?.memberId||"").trim();
+  if(!memberId)return context;
+  try{
+    const url=new URL(WIX_MEMBER_URL);
+    url.searchParams.set("memberId",memberId);
+    const response=await fetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
+    const data=await response.json().catch(()=>null);
+    if(!response.ok||!data?.ok||!data?.member)return context;
+    const member=data.member;
+    const profile=member.profile||{};
+    context.member=member;
+    context.profile=profile;
+    context.user={...(context.user||{}),profile,slug:profile.slug||context?.user?.slug||"",photo:profile.photo||context?.user?.photo||null};
+    return context;
+  }catch(error){
+    console.warn("NEXUS | WIX MEMBER | PROFILE_ENRICH_ERROR",error);
+    return context;
+  }
+}
+
 async function resolveMemberContext(memberId){
   trace("NEXUS_CONTEXT_REQUEST",{endpoint:SYS_CONTEXT_URL,memberIdPresent:true});
 
@@ -85,7 +107,7 @@ async function resolveMemberContext(memberId){
     throw error;
   }
 
-  const context=setContext(normalizeSysContext(result));
+  const context=setContext(await enrichWixMember(normalizeSysContext(result)));
   saveSessionContext(context);
   removeMemberIdFromUrl();
 
@@ -113,7 +135,9 @@ export async function resolveAccessContext(){
       memberId:restored.memberId||null,
       roles:Array.isArray(restored.roles)?restored.roles:[]
     });
-    return setContext(restored);
+    const enriched=await enrichWixMember(restored);
+    saveSessionContext(enriched);
+    return setContext(enriched);
   }
 
   trace("VISITOR_CONTEXT",{reason:"MEMBER_ID_NOT_PRESENT"});
