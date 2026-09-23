@@ -4,7 +4,7 @@ import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv} from "./tv.js";
 import "./mns.js";
 
-const VERSION="0.2.26";
+const VERSION="0.2.27";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -208,7 +208,7 @@ function initProfileModal(){
       if(file){
         payload.foto={base64:await fileToDataUrl(file),mimeType:file.type,fileName:file.name};
       }
-      const response=await fetch(`${API_BASE}/nexusPwaProfile`,{
+      const response=await fetch(`${API_BASE}/sysPwaProfile`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(payload)
