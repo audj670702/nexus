@@ -127,6 +127,74 @@
       <div id="modulesGrid" class="modules-grid"></div>
     </section>
 
+    <div id="bitacoraModal" class="modal-backdrop" hidden>
+      <section class="bitacora-modal" role="dialog" aria-modal="true" aria-labelledby="bitacoraModalTitle">
+        <header class="bitacora-bar">
+          <div class="bitacora-bar-title"><span class="bitacora-bar-icon" aria-hidden="true">▤</span><h2 id="bitacoraModalTitle">Bitácora</h2></div>
+          <button id="btnCloseBitacora" class="bitacora-close" type="button" aria-label="Cerrar">×</button>
+        </header>
+
+        <div class="bitacora-tabs" role="tablist" aria-label="Bitácora">
+          <button id="btnBitRegistro" class="is-active" type="button" role="tab">Registrar</button>
+          <button id="btnBitConsulta" type="button" role="tab">Consultar</button>
+          <button id="btnBitSeguimiento" type="button" role="tab">Seguimiento</button>
+        </div>
+
+        <div id="bitRegistroView" class="bitacora-view">
+          <div class="bitacora-section-head">
+            <div><span class="bitacora-kicker">NUEVO EVENTO</span><h3>Registrar lo ocurrido</h3></div>
+          </div>
+          <div class="bitacora-form">
+            <label>Tipo de evento
+              <select id="bitTipo"><option value="">Seleccionar tipo</option></select>
+            </label>
+            <div class="bitacora-date-row">
+              <label>Fecha del evento<input id="bitFecha" type="date"></label>
+              <label>Hora<input id="bitHora" type="time"></label>
+            </div>
+            <label>Descripción
+              <textarea id="bitDescripcion" rows="5" maxlength="4000" placeholder="Describe qué ocurrió y los detalles necesarios para comprender el evento."></textarea>
+            </label>
+            <label>Comentarios <span class="bitacora-optional">Opcional</span>
+              <textarea id="bitComentarios" rows="3" maxlength="2000" placeholder="Consideraciones adicionales del registro."></textarea>
+            </label>
+            <label id="bitEvidenciaField" class="bitacora-evidence" hidden>Evidencias <span class="bitacora-optional">Opcional</span>
+              <input id="bitEvidencias" type="file" multiple>
+            </label>
+            <label class="bitacora-check"><input id="bitRequiereSeguimiento" type="checkbox"><span>Requiere seguimiento</span></label>
+          </div>
+          <div id="bitRegistroNotice" class="bitacora-notice">Al guardar, el evento queda inmutable. Cualquier corrección posterior se realiza mediante sustitución trazable.</div>
+          <div class="bitacora-actions">
+            <button id="btnBitGuardar" class="bitacora-primary" type="button">Guardar evento</button>
+          </div>
+        </div>
+
+        <div id="bitConsultaView" class="bitacora-view" hidden>
+          <div class="bitacora-toolbar">
+            <label class="bitacora-search"><span aria-hidden="true">⌕</span><input id="bitBuscar" type="search" placeholder="Buscar por folio o contenido" autocomplete="off"></label>
+            <select id="bitFiltroTipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select>
+          </div>
+          <div class="bitacora-filter-row">
+            <label><input id="bitMostrarSustituidos" type="checkbox"> Mostrar sustituidos</label>
+            <span id="bitConsultaCount">0 eventos</span>
+          </div>
+          <div id="bitEventosList" class="bitacora-list"></div>
+        </div>
+
+        <div id="bitSeguimientoView" class="bitacora-view" hidden>
+          <div class="bitacora-section-head">
+            <div><span class="bitacora-kicker">SEGUIMIENTO</span><h3>Eventos que requieren atención</h3></div>
+          </div>
+          <div id="bitSeguimientoList" class="bitacora-list"></div>
+        </div>
+
+        <div id="bitDetalleView" class="bitacora-view" hidden>
+          <button id="btnBitBack" class="bitacora-back" type="button">‹ Volver</button>
+          <div id="bitDetalle"></div>
+        </div>
+      </section>
+    </div>
+
     <div id="scheduleModal" class="modal-backdrop" hidden>
       <section class="schedule-modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
         <header class="schedule-bar">
@@ -176,7 +244,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.42</span>
+      <span id="versionLabel">NEXUS · v0.2.43</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
