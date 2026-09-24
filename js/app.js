@@ -5,8 +5,9 @@ import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
+import {initBitacora,setBitacoraContext,openBitacora} from "./bitacora.js";
 
-const VERSION="0.2.42";
+const VERSION="0.2.43";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -259,7 +260,7 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();
+  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -268,12 +269,13 @@ async function boot(){
   }
   currentContext=c;
   setTvContext(c);
-  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
+  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);setBitacoraContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
     if(card.dataset.module==="docs"){openDocuments();return}
     if(card.dataset.module==="schedule"){openSchedule();return}
+    if(card.dataset.module==="bitacora"){openBitacora();return}
     if(card.dataset.module==="training"){
       const target=getMemberAreaUrl({slug:"jorgeaad6759607"},"challenges");
       window.location.assign(target);
