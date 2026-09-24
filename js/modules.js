@@ -3,6 +3,7 @@ export const BASIC_MODULES=Object.freeze([
 {id:"training",name:"Mis Cursos",description:"Cursos vigentes y completados"},
 {id:"docs",name:"Documentos",description:"Documentos disponibles"},
 {id:"schedule",name:"Programación",description:"Actividades y agenda"},
+{id:"bitacora",name:"Bitácora",description:"Eventos y seguimiento"},
 {id:"admin",name:"Administración",description:"Gestión NEXUS",role:"ADM"}
 ]);
 export function renderModules(container,modules=BASIC_MODULES,context={}){
