@@ -13,6 +13,7 @@ function hasCapability(context,key){
   if(!key)return true;
   if(key==="mns"){
     const m=context?.mns;
+    if(m==null)return false;
     return bool(typeof m==="object"?(m.activo??m.activa??m.enabled??m.habilitado):m);
   }
   if(key==="bitacora"){
@@ -24,6 +25,7 @@ function hasCapability(context,key){
   }
   if(key==="informes"){
     const i=context?.informes||context?.reports;
+    if(i==null)return false;
     return bool(typeof i==="object"?(i.activo??i.activa??i.enabled??i.habilitado):i);
   }
   return false;
