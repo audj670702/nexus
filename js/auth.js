@@ -51,18 +51,25 @@ function restoreSessionContext(){
   }
 }
 
-function removeMemberIdFromUrl(){
+function removeAuthContextFromUrl(){
   const url=new URL(window.location.href);
-  if(!url.searchParams.has("memberId"))return;
-  url.searchParams.delete("memberId");
+  const params=["memberId","enteOperador","codigoContexto"];
+  const hasAuthContext=params.some(param=>url.searchParams.has(param));
+  if(!hasAuthContext)return;
+  params.forEach(param=>url.searchParams.delete(param));
   window.history.replaceState({},"",url.toString());
 }
 
-async function resolveMemberContext(memberId){
-  trace("NEXUS_CONTEXT_REQUEST",{endpoint:SYS_CONTEXT_URL,memberIdPresent:true});
+async function resolveMemberContext(memberId,enteOperador=""){
+  trace("NEXUS_CONTEXT_REQUEST",{
+    endpoint:SYS_CONTEXT_URL,
+    memberIdPresent:true,
+    enteOperadorPresent:Boolean(enteOperador)
+  });
 
   const url=new URL(SYS_CONTEXT_URL);
   url.searchParams.set("memberId",memberId);
+  if(enteOperador)url.searchParams.set("enteOperador",enteOperador);
 
   const response=await fetch(url.toString(),{
     method:"GET",
@@ -87,7 +94,7 @@ async function resolveMemberContext(memberId){
 
   const context=setContext(normalizeSysContext(result));
   saveSessionContext(context);
-  removeMemberIdFromUrl();
+  removeAuthContextFromUrl();
 
   trace("NEXUS_CONTEXT_OK",{
     memberId:context.memberId,
@@ -101,10 +108,14 @@ async function resolveMemberContext(memberId){
 export async function resolveAccessContext(){
   const url=new URL(window.location.href);
   const memberId=String(url.searchParams.get("memberId")||"").trim();
+  const enteOperador=String(url.searchParams.get("enteOperador")||"").trim();
 
   if(memberId){
-    trace("MEMBER_RETURN_RECEIVED",{memberIdPresent:true});
-    return resolveMemberContext(memberId);
+    trace("MEMBER_RETURN_RECEIVED",{
+      memberIdPresent:true,
+      enteOperadorPresent:Boolean(enteOperador)
+    });
+    return resolveMemberContext(memberId,enteOperador);
   }
 
   const restored=restoreSessionContext();
@@ -124,6 +135,8 @@ export async function resolveAccessContext(){
 export function startLogin(){
   const returnUrl=new URL(window.location.href);
   returnUrl.searchParams.delete("memberId");
+  returnUrl.searchParams.delete("enteOperador");
+  returnUrl.searchParams.delete("codigoContexto");
   returnUrl.searchParams.delete("sysAuth");
 
   const u=new URL(SYS_AUTH_URL);
