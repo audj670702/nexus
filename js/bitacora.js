@@ -2,12 +2,15 @@ let bitContext=null;
 let bitState={
   tipos:[],
   eventos:[],
-  facultades:{registro:false,consulta:false,seguimiento:false},
+  seguimientoEventos:[],
+  facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false},
   evidencias:false
 };
 
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es-MX").trim();
+const fmt=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString("es-MX")};
 
 function nowLocal(){
   const d=new Date();
@@ -29,13 +32,13 @@ function fillTypes(){
   $("#bitFiltroTipo").innerHTML='<option value="">Todos los tipos</option>'+options;
 }
 function renderEvents(){
-  const q=String($("#bitBuscar")?.value||"").trim().toLowerCase();
+  const q=norm($("#bitBuscar")?.value);
   const tipo=String($("#bitFiltroTipo")?.value||"");
   const showSub=$("#bitMostrarSustituidos")?.checked===true;
   const items=bitState.eventos.filter(e=>{
     if(!showSub&&String(e.estado||"VIGENTE").toUpperCase()==="SUSTITUIDO")return false;
     if(tipo&&String(e.tipoId||e.tipo?.id||"")!==tipo)return false;
-    const hay=`${e.folio||""} ${e.descripcion||""} ${e.tipoEtiqueta||e.tipo?.etiqueta||""}`.toLowerCase();
+    const hay=norm(`${e.folio||""} ${e.descripcion||""} ${e.comentarios||""} ${e.tipoEtiqueta||e.tipo?.etiqueta||""} ${e.registranteNombre||""}`);
     return !q||hay.includes(q);
   });
   $("#bitConsultaCount").textContent=`${items.length} evento${items.length===1?"":"s"}`;
@@ -47,7 +50,7 @@ function renderEvents(){
     </button>`).join(""):'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
 }
 function renderFollowup(){
-  const items=bitState.eventos.filter(e=>e.requiereSeguimiento===true&&String(e.estado||"VIGENTE").toUpperCase()==="VIGENTE");
+  const items=bitState.seguimientoEventos;
   $("#bitSeguimientoList").innerHTML=items.length?items.map(e=>`
     <button class="bitacora-item" type="button" data-bit-id="${esc(e.id||e._id||"")}">
       <span class="bitacora-folio">${esc(e.folio||"—")}</span>
@@ -56,18 +59,26 @@ function renderFollowup(){
     </button>`).join(""):'<div class="bitacora-empty">No hay eventos que requieran seguimiento dentro de tu alcance.</div>';
 }
 function openDetail(id){
-  const e=bitState.eventos.find(x=>String(x.id||x._id||"")===String(id||""));
+  const e=[...bitState.eventos,...bitState.seguimientoEventos].find(x=>String(x.id||x._id||"")===String(id||""));
   if(!e)return;
   ["#bitRegistroView","#bitConsultaView","#bitSeguimientoView"].forEach(s=>$(s).hidden=true);
   $("#bitDetalle").innerHTML=`
     <div class="bitacora-detail-row"><span>Folio</span><strong>${esc(e.folio||"—")}</strong></div>
     <div class="bitacora-detail-row"><span>Tipo</span><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"—")}</strong></div>
-    <div class="bitacora-detail-row"><span>Evento</span><strong>${esc(e.fechaHoraEvento||"—")}</strong></div>
-    <div class="bitacora-detail-row"><span>Registrado</span><strong>${esc(e.fechaHoraRegistro||"—")}</strong></div>
+    <div class="bitacora-detail-row"><span>Evento</span><strong>${esc(fmt(e.fechaHoraEvento))}</strong></div>
+    <div class="bitacora-detail-row"><span>Registrado</span><strong>${esc(fmt(e.fechaHoraRegistro))}</strong></div>
+    <div class="bitacora-detail-row"><span>Responsable</span><strong>${esc(e.registranteNombre||"—")}</strong></div>
     <div class="bitacora-detail-row"><span>Descripción</span><strong>${esc(e.descripcion||"—")}</strong></div>
     <div class="bitacora-detail-row"><span>Comentarios</span><strong>${esc(e.comentarios||"—")}</strong></div>
-    <div class="bitacora-detail-row"><span>Estado</span><strong>${esc(e.estado||"VIGENTE")}</strong></div>`;
+    <div class="bitacora-detail-row"><span>Estado</span><strong>${esc(e.estado||"VIGENTE")}</strong></div>
+    ${Array.isArray(e.seguimientos)&&e.seguimientos.length?e.seguimientos.map(s=>`<div class="bitacora-detail-row"><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><strong>${esc(s.nota||"")}</strong></div>`).join(""):""}
+    ${bitState.facultades.seguimiento===true&&e.requiereSeguimiento===true&&String(e.estado||"VIGENTE").toUpperCase()==="VIGENTE"?`<div class="bitacora-form"><label>Nueva anotación<textarea id="bitSeguimientoNota" rows="3" maxlength="2000" placeholder="Registra la anotación de seguimiento."></textarea></label></div><div class="bitacora-actions"><button id="btnBitGuardarSeguimiento" class="bitacora-primary" type="button">Guardar seguimiento</button></div>`:""}`;
   $("#bitDetalleView").hidden=false;
+  $("#btnBitGuardarSeguimiento")?.addEventListener("click",()=>{
+    const nota=String($("#bitSeguimientoNota")?.value||"").trim();
+    if(!nota)return;
+    document.dispatchEvent(new CustomEvent("nexus:bitacora-followup",{detail:{eventoId:String(e.id||e._id||""),nota}}));
+  });
 }
 function applyCapabilities(){
   $("#btnBitRegistro").hidden=bitState.facultades.registro!==true;
@@ -80,13 +91,14 @@ export function setBitacoraState(next={}){
   bitState={
     tipos:Array.isArray(next.tipos)?next.tipos:[],
     eventos:Array.isArray(next.eventos)?next.eventos:[],
-    facultades:{...bitState.facultades,...(next.facultades||{})},
+    seguimientoEventos:Array.isArray(next.seguimientoEventos)?next.seguimientoEventos:[],
+    facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false,...(next.facultades||{})},
     evidencias:next.evidencias===true
   };
   fillTypes();applyCapabilities();renderEvents();renderFollowup();
 }
 export function openBitacora(){
-  if(bitContext?.authenticated!==true)return;
+  if(bitContext?.authenticated!==true||bitContext?.bitacora?.activo!==true)return;
   const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
   $("#bitacoraModal").hidden=false;
   const first=bitState.facultades.registro===true?"registro":bitState.facultades.consulta===true?"consulta":"seguimiento";
