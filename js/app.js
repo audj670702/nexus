@@ -5,9 +5,9 @@ import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
-import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora} from "./bitacora.js";
+import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced} from "./bitacora.js";
 
-const VERSION="0.2.47";
+const VERSION="0.2.48";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -82,20 +82,48 @@ async function loadBitacoraState(context){
     setBitacoraState({});
   }
 }
-async function saveBitacoraEvent(detail={}){
+async function syncBitacoraEvidence(queueItem,evidence){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
-  if(!memberId||!codigoEO)return;
-  if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
-  const evidencias=[];
-  for(const file of Array.isArray(detail.evidencias)?detail.evidencias:[]){
-    if(file.size>10*1024*1024){window.alert("Cada evidencia debe pesar máximo 10 MB.");return}
-    evidencias.push({fileName:file.name,mimeType:file.type||"application/octet-stream",base64:await fileToDataUrl(file)});
-  }
-  const response=await fetch(`${API_BASE}/nexusBitacoraEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...detail,evidencias}})});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible registrar el evento.");
-  await loadBitacoraState(currentContext);
-  window.alert(data.mensaje||"Evento registrado.");
+  evidence={...evidence,syncStatus:"SUBIENDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(evidence.syncAttempts||0)+1,syncError:""};
+  await updateBitEvidence(evidence);
+  try{
+    const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
+    const prepared=await prep.json().catch(()=>({}));
+    if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
+    const form=new FormData();form.append("file",evidence.file,evidence.name);
+    const upload=await fetch(prepared.uploadUrl,{method:"POST",body:form});
+    const uploaded=await upload.json().catch(()=>null);
+    if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
+    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,upload:uploaded})});
+    const finalized=await fin.json().catch(()=>({}));
+    if(!fin.ok||finalized?.ok!==true)throw new Error(finalized?.mensaje||"No fue posible vincular la evidencia.");
+    evidence={...evidence,syncStatus:"SINCRONIZADA",syncError:"",serverEvidence:finalized.evidencia||null};
+  }catch(error){evidence={...evidence,syncStatus:"ERROR",syncError:error?.message||"Error de sincronización de evidencia."}}
+  await updateBitEvidence(evidence);
+}
+async function syncBitacoraItem(item){
+  const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+  if(!memberId||!codigoEO||!navigator.onLine)return;
+  item={...item,syncStatus:"SINCRONIZANDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(item.syncAttempts||0)+1,syncError:""};
+  await updateBitQueue(item);
+  try{
+    const response=await fetch(`${API_BASE}/nexusBitacoraEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible sincronizar el evento.");
+    item={...item,syncStatus:"SINCRONIZADO",serverId:String(data?.evento?.id||""),serverFolio:String(data?.evento?.folio||""),syncError:""};
+    await updateBitQueue(item);
+    for(const evidence of await getBitEvidence(item.localId)){if(evidence.syncStatus!=="SINCRONIZADA")await syncBitacoraEvidence(item,evidence)}
+    await loadBitacoraState(currentContext);
+  }catch(error){item={...item,syncStatus:"ERROR",syncError:error?.message||"Error de sincronización."};await updateBitQueue(item)}
+}
+let bitSyncRunning=false;
+async function syncBitacoraQueue(localId=""){
+  if(bitSyncRunning||!navigator.onLine)return;
+  bitSyncRunning=true;
+  try{
+    const items=await getPendingBitEvents();
+    for(const item of items){if(!localId||item.localId===localId)await syncBitacoraItem(item)}
+  }finally{bitSyncRunning=false;await notifyBitSynced()}
 }
 async function saveBitacoraFollowup(detail={}){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
@@ -317,6 +345,7 @@ async function boot(){
   setTvContext(c);
   setBitacoraContext(c);
   await loadBitacoraState(c);
+  syncBitacoraQueue();
   paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
@@ -330,7 +359,9 @@ async function boot(){
       window.location.assign(target);
     }
   });
-  document.addEventListener("nexus:bitacora-save",async e=>{try{await saveBitacoraEvent(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | SAVE_ERROR",error);window.alert(error?.message||"No fue posible registrar el evento.")}});
+  document.addEventListener("nexus:bitacora-local-saved",()=>syncBitacoraQueue());
+  document.addEventListener("nexus:bitacora-sync-request",()=>syncBitacoraQueue());
+  document.addEventListener("nexus:bitacora-retry",e=>syncBitacoraQueue(String(e.detail?.localId||"")));
   document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal()});
