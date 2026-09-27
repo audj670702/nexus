@@ -3,6 +3,7 @@ import {createLocalId,putQueueItem,listQueueItems,putEvidence,listEvidence,delet
 let bitContext=null;
 let bitState={tipos:[],eventos:[],seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false},evidencias:false};
 let selectedEvidence=[];
+let lockedLocalId="";
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es-MX").trim();
@@ -46,6 +47,13 @@ function renderSelectedEvidence(){
   box.innerHTML=selectedEvidence.map((x,i)=>`<div class="bit-evidence-chip"><span>${esc(x.name)}</span><button type="button" data-remove-evidence="${i}" aria-label="Eliminar ${esc(x.name)}">×</button></div>`).join("");
   box.hidden=!selectedEvidence.length;
 }
+function setRegisterLocked(locked,folio=""){
+  const form=$("#bitRegistroView");if(!form)return;
+  form.querySelectorAll("select,input,textarea").forEach(el=>el.disabled=locked);
+  $("#btnBitGuardar").hidden=locked;
+  const lock=$("#bitRegistroLock");lock.hidden=!locked;
+  $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
+}
 function clearRegisterForm(){
   $("#bitTipo").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
 }
@@ -72,8 +80,8 @@ async function saveLocalEvent(){
     if(file.size>10*1024*1024){window.alert(`La evidencia "${file.name}" excede 10 MB y no fue guardada.`);continue}
     await putEvidence({evidenceId:createLocalId("evi"),localId,file,name:file.name,type:file.type||"application/octet-stream",size:file.size,syncStatus:"PENDIENTE",syncAttempts:0,lastSyncAttempt:null,syncError:""});
   }
-  clearRegisterForm();await refreshLocalStatus();
-  const notice=$("#bitRegistroResult");notice.hidden=false;notice.textContent=navigator.onLine?"Registro guardado en este dispositivo.":"Registro guardado en este dispositivo. Se sincronizará al recuperar conexión.";
+  lockedLocalId=localId;setRegisterLocked(true);await refreshLocalStatus();
+  const notice=$("#bitRegistroResult");notice.hidden=false;notice.textContent=navigator.onLine?"🔒 Evento guardado · No puede modificarse.":"🔒 Evento guardado · No puede modificarse. Se sincronizará al recuperar conexión.";
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
@@ -90,12 +98,13 @@ export async function setBitacoraState(next={}){
 }
 export function openBitacora(){
   if(bitContext?.authenticated!==true)return;
+  lockedLocalId="";clearRegisterForm();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;
   const n=nowLocal();if(!$("#bitFecha").value)$("#bitFecha").value=n.fecha;if(!$("#bitHora").value)$("#bitHora").value=n.hora;
   $("#bitacoraModal").hidden=false;const first=bitState.facultades.registro===true?"registro":bitState.facultades.consulta===true?"consulta":"seguimiento";setTab(first);refreshLocalStatus();
 }
 export async function getPendingBitEvents(){return (await listQueueItems("BIT")).filter(x=>x.syncStatus!=="SINCRONIZADO")}
 export async function getBitEvidence(localId){return listEvidence(localId)}
-export async function updateBitQueue(item){await putQueueItem(item);await refreshLocalStatus()}
+export async function updateBitQueue(item){await putQueueItem(item);if(lockedLocalId&&item?.localId===lockedLocalId&&item?.serverFolio)setRegisterLocked(true,String(item.serverFolio));await refreshLocalStatus()}
 export async function updateBitEvidence(item){await putEvidence(item);await refreshLocalStatus()}
 export async function removeBitEvidence(evidenceId){await deleteEvidence(evidenceId);await refreshLocalStatus()}
 export async function notifyBitSynced(){await refreshLocalStatus()}
