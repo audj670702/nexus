@@ -90,7 +90,9 @@ async function syncBitacoraEvidence(queueItem,evidence){
     const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
     const prepared=await prep.json().catch(()=>({}));
     if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
-    const upload=await fetch(prepared.uploadUrl,{method:"PUT",headers:{"Content-Type":evidence.type||"application/octet-stream"},body:evidence.file});
+    const form=new FormData();
+    form.append("file",evidence.file,evidence.name);
+    const upload=await fetch(prepared.uploadUrl,{method:"POST",body:form});
     const uploaded=await upload.json().catch(()=>null);
     if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
     const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
