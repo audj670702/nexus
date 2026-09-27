@@ -77,6 +77,7 @@ async function saveLocalEvent(){
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
+export async function getCachedBitacoraAccess(){if(!bitContext?.memberId||!bitContext?.eo?.codigoEO)return null;return getReference(cacheKey())}
 export async function setBitacoraState(next={}){
   const hasServerState=Array.isArray(next.tipos);
   if(hasServerState&&bitContext?.memberId&&bitContext?.eo?.codigoEO)await putReference(cacheKey(),{tipos:next.tipos||[],facultades:next.facultades||{},evidencias:next.evidencias===true});
