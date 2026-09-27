@@ -5,7 +5,7 @@ import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
-import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced} from "./bitacora.js";
+import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
 const VERSION="0.2.48";
 
@@ -78,8 +78,8 @@ async function loadBitacoraState(context){
     setBitacoraState(data);
   }catch(error){
     console.error("NEXUS | BITACORA | STATE_ERROR",error);
-    context.bitacora={activo:false,facultades:{}};
-    setBitacoraState({});
+    const cached=await getCachedBitacoraAccess().catch(()=>null);
+    if(cached){context.bitacora={activo:cached?.facultades?.registro===true||cached?.facultades?.consulta===true||cached?.facultades?.seguimiento===true,facultades:cached.facultades||{}};await setBitacoraState(cached)}else{context.bitacora={activo:false,facultades:{}};await setBitacoraState({})}
   }
 }
 async function syncBitacoraEvidence(queueItem,evidence){
