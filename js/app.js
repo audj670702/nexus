@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.50";
+const VERSION="0.2.51";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -90,11 +90,10 @@ async function syncBitacoraEvidence(queueItem,evidence){
     const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
     const prepared=await prep.json().catch(()=>({}));
     if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
-    const form=new FormData();form.append("file",evidence.file,evidence.name);
-    const upload=await fetch(prepared.uploadUrl,{method:"POST",body:form});
+    const upload=await fetch(prepared.uploadUrl,{method:"PUT",headers:{"Content-Type":evidence.type||"application/octet-stream"},body:evidence.file});
     const uploaded=await upload.json().catch(()=>null);
     if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
-    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,upload:uploaded})});
+    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
     const finalized=await fin.json().catch(()=>({}));
     if(!fin.ok||finalized?.ok!==true)throw new Error(finalized?.mensaje||"No fue posible vincular la evidencia.");
     evidence={...evidence,syncStatus:"SINCRONIZADA",syncError:"",serverEvidence:finalized.evidencia||null};
