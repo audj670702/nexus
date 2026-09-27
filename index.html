@@ -142,7 +142,7 @@
 
         <div id="bitRegistroView" class="bitacora-view">
           <div class="bitacora-section-head">
-            <div><span class="bitacora-kicker">NUEVO EVENTO</span><h3>Registrar lo ocurrido</h3></div>
+            <div><span class="bitacora-kicker">NUEVO EVENTO</span><h3>Registrar lo ocurrido</h3></div><button id="bitSyncStatus" class="bit-sync-status" type="button" data-state="ok">● En línea · Todo sincronizado</button>
           </div>
           <div class="bitacora-form">
             <label>Tipo de evento
@@ -152,6 +152,7 @@
               <label>Fecha del evento<input id="bitFecha" type="date"></label>
               <label>Hora<input id="bitHora" type="time"></label>
             </div>
+            <label>Lugar <span class="bitacora-optional">Opcional</span><input id="bitLugar" type="text" maxlength="200" placeholder="Lugar donde ocurrió el evento"></label>
             <label>Descripción
               <textarea id="bitDescripcion" rows="5" maxlength="4000" placeholder="Describe qué ocurrió y los detalles necesarios para comprender el evento."></textarea>
             </label>
@@ -160,10 +161,13 @@
             </label>
             <label id="bitEvidenciaField" class="bitacora-evidence" hidden>Evidencias <span class="bitacora-optional">Opcional</span>
               <input id="bitEvidencias" type="file" multiple>
+              <div id="bitEvidenceSelected" class="bit-evidence-selected" hidden></div>
             </label>
             <label class="bitacora-check"><input id="bitRequiereSeguimiento" type="checkbox"><span>Requiere seguimiento</span></label>
           </div>
           <div id="bitRegistroNotice" class="bitacora-notice">Al guardar, el evento queda inmutable. Cualquier corrección posterior se realiza mediante sustitución trazable.</div>
+          <div id="bitRegistroResult" class="bit-register-result" hidden></div>
+          <div id="bitPendingPanel" class="bit-pending-panel" hidden></div>
           <div class="bitacora-actions">
             <button id="btnBitGuardar" class="bitacora-primary" type="button">Guardar evento</button>
           </div>
@@ -244,7 +248,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.47</span>
+      <span id="versionLabel">NEXUS · v0.2.48</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
