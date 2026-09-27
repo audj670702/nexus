@@ -5,9 +5,9 @@ import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
-import {initBitacora,setBitacoraContext,openBitacora} from "./bitacora.js";
+import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora} from "./bitacora.js";
 
-const VERSION="0.2.46";
+const VERSION="0.2.47";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -59,6 +59,52 @@ function getMemberAreaUrl(member,pageSlug){
   const url=new URL(`https://www.scad.mx/members-area/${encodeURIComponent(memberSlug)}/${pageSlug}`);
   url.searchParams.set("disableScrollToTop","true");
   return withWixReturnUrl(url.toString());
+}
+
+async function loadBitacoraState(context){
+  if(context?.authenticated!==true||!context?.memberId||!context?.eo?.codigoEO){
+    context.bitacora={activo:false,facultades:{}};
+    setBitacoraState({});
+    return;
+  }
+  try{
+    const url=new URL(`${API_BASE}/nexusBitacoraState`);
+    url.searchParams.set("memberId",context.memberId);
+    url.searchParams.set("codigoEO",context.eo.codigoEO);
+    const response=await fetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Bitácora.");
+    context.bitacora={activo:data.activo===true,facultades:data.facultades||{}};
+    setBitacoraState(data);
+  }catch(error){
+    console.error("NEXUS | BITACORA | STATE_ERROR",error);
+    context.bitacora={activo:false,facultades:{}};
+    setBitacoraState({});
+  }
+}
+async function saveBitacoraEvent(detail={}){
+  const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+  if(!memberId||!codigoEO)return;
+  if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
+  const evidencias=[];
+  for(const file of Array.isArray(detail.evidencias)?detail.evidencias:[]){
+    if(file.size>10*1024*1024){window.alert("Cada evidencia debe pesar máximo 10 MB.");return}
+    evidencias.push({fileName:file.name,mimeType:file.type||"application/octet-stream",base64:await fileToDataUrl(file)});
+  }
+  const response=await fetch(`${API_BASE}/nexusBitacoraEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...detail,evidencias}})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible registrar el evento.");
+  await loadBitacoraState(currentContext);
+  window.alert(data.mensaje||"Evento registrado.");
+}
+async function saveBitacoraFollowup(detail={}){
+  const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+  if(!memberId||!codigoEO||!detail.eventoId||!detail.nota)return;
+  const response=await fetch(`${API_BASE}/nexusBitacoraFollowup`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:detail.eventoId,nota:detail.nota})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible guardar el seguimiento.");
+  await loadBitacoraState(currentContext);
+  window.alert(data.mensaje||"Seguimiento registrado.");
 }
 
 function installedApp(){
@@ -269,7 +315,9 @@ async function boot(){
   }
   currentContext=c;
   setTvContext(c);
-  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);setBitacoraContext(c);
+  setBitacoraContext(c);
+  await loadBitacoraState(c);
+  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
@@ -282,6 +330,8 @@ async function boot(){
       window.location.assign(target);
     }
   });
+  document.addEventListener("nexus:bitacora-save",async e=>{try{await saveBitacoraEvent(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | SAVE_ERROR",error);window.alert(error?.message||"No fue posible registrar el evento.")}});
+  document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal()});
   document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
