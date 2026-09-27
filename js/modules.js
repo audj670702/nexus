@@ -33,12 +33,13 @@ function hasCapability(context,key){
 export function renderModules(container,modules=BASIC_MODULES,context={}){
   const authenticated=context?.authenticated===true;
   const roles=Array.isArray(context?.roles)?context.roles:[];
-  container.replaceChildren(...modules.map(m=>{
+  const visible=authenticated?modules.filter(m=>{const roleOk=!m.role||roles.includes(m.role);return roleOk&&hasCapability(context,m.capability)}):modules;
+  container.replaceChildren(...visible.map(m=>{
     const b=document.createElement("button");b.type="button";b.className="module-card";b.dataset.module=m.id;
     const allowed=authenticated&&(!m.role||roles.includes(m.role))&&hasCapability(context,m.capability);
     if(!allowed)b.classList.add("is-locked");
     const s=document.createElement("strong");s.textContent=m.name;
-    const d=document.createElement("span");d.textContent=allowed?m.description:(authenticated?"Acceso no habilitado":"Inicia sesión para acceder");
+    const d=document.createElement("span");d.textContent=allowed?m.description:"Inicia sesión para acceder";
     b.append(s,d);return b;
   }));
 }
