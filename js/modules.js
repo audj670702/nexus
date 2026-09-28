@@ -33,7 +33,8 @@ function hasCapability(context,key){
 export function renderModules(container,modules=BASIC_MODULES,context={}){
   const authenticated=context?.authenticated===true;
   const roles=(Array.isArray(context?.roles)?context.roles:[]).map(r=>String(r||"").trim().toUpperCase());
-  const visible=authenticated?modules.filter(m=>{const roleOk=!m.role||roles.includes(m.role);return roleOk&&hasCapability(context,m.capability)}):modules.filter(m=>m.id!=="admin");
+  const isAdm=roles.includes("ADM");
+  const visible=authenticated?modules.filter(m=>m.id==="admin"?isAdm:hasCapability(context,m.capability)):modules.filter(m=>m.id!=="admin");
   container.replaceChildren(...visible.map(m=>{
     const b=document.createElement("button");b.type="button";b.className="module-card";b.dataset.module=m.id;
     const allowed=authenticated&&(!m.role||roles.includes(m.role))&&hasCapability(context,m.capability);
