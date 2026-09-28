@@ -7,6 +7,14 @@
   <meta name="description" content="NEXUS · Conexión operativa">
   <title>NEXUS · Conexión operativa</title>
   <link rel="manifest" href="./manifest.json">
+  <script>
+    window.__nexusInstallPrompt=null;
+    window.addEventListener("beforeinstallprompt",function(event){
+      event.preventDefault();
+      window.__nexusInstallPrompt=event;
+    });
+    window.addEventListener("appinstalled",function(){window.__nexusInstallPrompt=null;});
+  </script>
   <link rel="stylesheet" href="./css/nexus.css">
 </head>
 <body>
@@ -251,7 +259,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.51</span>
+      <span id="versionLabel">NEXUS · v0.2.55</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
