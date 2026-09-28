@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.71";
+const VERSION="0.2.72";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -349,6 +349,14 @@ async function boot(){
     if(card.dataset.module==="bitacora"){openBitacora();return}
     if(card.dataset.module==="training"){
       window.location.assign(withWixReturnUrl("https://www.scad.mx/members-area"));return
+    }
+    if(card.dataset.module==="reports"){
+      const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+      if(!codigoEO){window.alert("No fue posible resolver la Empresa Operadora activa.");return}
+      const url=new URL("https://www.scad.mx/sys-informes");
+      url.searchParams.set("app","NEXUS");
+      url.searchParams.set("eo",codigoEO);
+      window.location.assign(url.toString());return
     }
     if(card.dataset.module==="admin"){
       window.location.assign("https://www.scad.mx/nexus-panel");return
