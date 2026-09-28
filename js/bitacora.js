@@ -4,6 +4,7 @@ let bitContext=null;
 let bitState={tipos:[],eventos:[],seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false},evidencias:false};
 let selectedEvidence=[];
 let lockedLocalId="";
+let selectedProgramacionId="";
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es-MX").trim();
@@ -16,7 +17,17 @@ function setTab(name){
   Object.values(map).forEach(([b,v])=>{$(b)?.classList.remove("is-active");if($(v))$(v).hidden=true});
   $("#bitDetalleView").hidden=true;const target=map[name]||map.consulta;$(target[0])?.classList.add("is-active");$(target[1]).hidden=false;
 }
-function fillProgramacion(){const el=$("#bitProgramacion");if(!el)return;const items=Array.isArray(bitContext?.actividades)?bitContext.actividades:[];el.innerHTML='<option value="">Sin actividad relacionada</option>'+items.map((a,i)=>{const id=String(a?.id||a?._id||i),title=String(a?.titulo||a?.nombre||a?.actividad||"Actividad"),raw=a?.inicio||a?.fechaInicio||a?.fecha||a?.start||"",d=raw?new Date(raw):null,when=d&&!Number.isNaN(d.getTime())?` · ${d.toLocaleString("es-MX")}`:"";return `<option value="${esc(id)}">${esc(title+when)}</option>`}).join("")}
+function activityDate(a){const raw=a?.inicio||a?.fechaInicio||a?.fecha||a?.start||"";if(!raw)return "";const d=new Date(raw);if(Number.isNaN(d.getTime()))return "";const pad=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function activityTime(a){const raw=a?.inicio||a?.fechaInicio||a?.fecha||a?.start||"";if(!raw)return "—";const d=new Date(raw);return Number.isNaN(d.getTime())?"—":d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}
+function activityTitle(a){return String(a?.titulo||a?.nombre||a?.actividad||"Actividad")}
+function activityType(a){return String(a?.tipoActividad||a?.tipoEtiqueta||a?.tipo||"")}
+function programacionItems(){return (Array.isArray(bitContext?.actividades)?bitContext.actividades:[]).slice().sort((a,b)=>{const ad=new Date(a?.inicio||a?.fechaInicio||a?.fecha||a?.start||0).getTime()||0,bd=new Date(b?.inicio||b?.fechaInicio||b?.fecha||b?.start||0).getTime()||0;return ad-bd||activityTitle(a).localeCompare(activityTitle(b),"es")})}
+function selectedActivity(){return programacionItems().find(a=>String(a?.id||a?._id||"")===selectedProgramacionId)||null}
+function paintProgramacionSelection(){const el=$("#bitRelacionResumen");if(!el)return;const a=selectedActivity();el.textContent=a?`${activityTime(a)} · ${activityTitle(a)}`:"Seleccionar actividad"}
+function fillProgramacionFilters(){const type=$("#bitRelacionTipo");if(!type)return;const current=type.value,types=[...new Set(programacionItems().map(activityType).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));type.innerHTML='<option value="">Todos</option>'+types.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");if(types.includes(current))type.value=current}
+function renderProgramacionPicker(){const list=$("#bitRelacionLista");if(!list)return;const all=$("#bitRelacionTodas")?.checked===true,date=String($("#bitRelacionFecha")?.value||""),type=String($("#bitRelacionTipo")?.value||""),q=norm($("#bitRelacionBuscar")?.value);const items=programacionItems().filter(a=>{if(!all&&date&&activityDate(a)!==date)return false;if(type&&activityType(a)!==type)return false;return !q||norm(`${activityTitle(a)} ${activityType(a)} ${a?.descripcion||""}`).includes(q)});$("#bitRelacionCount").textContent=`${items.length} actividad${items.length===1?"":"es"}`;list.innerHTML=items.length?items.map(a=>{const id=String(a?.id||a?._id||""),meta=[activityType(a),activityDate(a)].filter(Boolean).join(" · ");return `<button class="bit-relation-item" type="button" data-programacion-id="${esc(id)}"><span class="bit-relation-time">${esc(activityTime(a))}</span><span class="bit-relation-copy"><strong>${esc(activityTitle(a))}</strong><span>${esc(meta)}</span></span></button>`}).join(""):'<div class="bit-relation-empty">No hay actividades para los filtros seleccionados.</div>'}
+function openProgramacionPicker(){const modal=$("#bitRelacionModal");if(!modal)return;fillProgramacionFilters();$("#bitRelacionBuscar").value="";$("#bitRelacionTodas").checked=false;$("#bitRelacionFecha").value=String($("#bitFecha")?.value||nowLocal().fecha);renderProgramacionPicker();modal.hidden=false}
+function closeProgramacionPicker(){const modal=$("#bitRelacionModal");if(modal)modal.hidden=true}
 function fillTypes(){
   const active=bitState.tipos.filter(t=>t?.activo!==false);
   const options=active.map(t=>`<option value="${esc(t.id||t._id||t.clave||"")}">${esc(t.etiqueta||t.nombre||t.clave||"Tipo")}</option>`).join("");
@@ -50,13 +61,13 @@ function renderSelectedEvidence(){
 }
 function setRegisterLocked(locked,folio=""){
   const form=$("#bitRegistroView");if(!form)return;
-  form.querySelectorAll("select,input,textarea").forEach(el=>el.disabled=locked);
+  form.querySelectorAll("select,input,textarea").forEach(el=>el.disabled=locked);if($("#btnBitRelacionar"))$("#btnBitRelacionar").disabled=locked;
   $("#btnBitGuardar").hidden=locked;
   const lock=$("#bitRegistroLock");lock.hidden=!locked;
   $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
 }
 function clearRegisterForm(){
-  $("#bitTipo").value="";if($("#bitProgramacion"))$("#bitProgramacion").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
+  $("#bitTipo").value="";selectedProgramacionId="";paintProgramacionSelection();$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
 }
 async function refreshLocalStatus(){
   const items=await listQueueItems("BIT");const pending=items.filter(x=>x.syncStatus!=="SINCRONIZADO");const errors=pending.filter(x=>x.syncStatus==="ERROR");
@@ -72,7 +83,7 @@ async function renderPending(items=null){
   panel.innerHTML=pending.length?pending.map(x=>`<div class="bit-pending-row"><div><strong>${esc(x.serverFolio||x.localId)}</strong><span>${esc(fmt(x.createdLocalAt))}</span></div><span>${esc(x.syncStatus)}</span>${x.syncError?`<small>${esc(x.syncError)}</small>`:""}${x.syncStatus==="ERROR"?`<button type="button" data-retry-local-id="${esc(x.localId)}">Reintentar</button>`:""}</div>`).join(""):'<div class="bitacora-empty">No hay registros pendientes.</div>';
 }
 async function saveLocalEvent(){
-  const detail={tipoId:String($("#bitTipo").value||""),programacionId:String($("#bitProgramacion")?.value||""),fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
+  const detail={tipoId:String($("#bitTipo").value||""),programacionId:selectedProgramacionId,fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
   if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
   const localId=createLocalId("bit"),createdLocalAt=new Date().toISOString();
   const queueItem={localId,module:"BIT",operation:"REGISTER_EVENT",payload:detail,syncStatus:"PENDIENTE",createdLocalAt,lastSyncAttempt:null,syncError:"",syncAttempts:0,serverId:"",serverFolio:""};
@@ -98,7 +109,7 @@ export async function setBitacoraState(next={}){
 }
 export function openBitacora(){
   if(bitContext?.authenticated!==true)return;
-  fillProgramacion();lockedLocalId="";clearRegisterForm();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;
+  lockedLocalId="";clearRegisterForm();fillProgramacionFilters();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;
   const n=nowLocal();if(!$("#bitFecha").value)$("#bitFecha").value=n.fecha;if(!$("#bitHora").value)$("#bitHora").value=n.hora;
   $("#bitacoraModal").hidden=false;const first=bitState.facultades.registro===true?"registro":bitState.facultades.consulta===true?"consulta":"seguimiento";setTab(first);refreshLocalStatus();
 }
@@ -113,6 +124,7 @@ export function initBitacora(){
   $("#btnCloseBitacora").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",e=>{if(e.target===modal)modal.hidden=true});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)modal.hidden=true});
   $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>setTab("consulta"));
   $("#bitBuscar").addEventListener("input",renderEvents);$("#bitFiltroTipo").addEventListener("change",renderEvents);$("#bitMostrarSustituidos").addEventListener("change",renderEvents);$("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});
+  $("#btnBitRelacionar")?.addEventListener("click",openProgramacionPicker);$("#btnBitRelacionCerrar")?.addEventListener("click",closeProgramacionPicker);$("#bitRelacionModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeProgramacionPicker()});$("#bitRelacionBuscar")?.addEventListener("input",renderProgramacionPicker);$("#bitRelacionFecha")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTipo")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTodas")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionLista")?.addEventListener("click",e=>{const row=e.target.closest("[data-programacion-id]");if(!row)return;selectedProgramacionId=String(row.dataset.programacionId||"");paintProgramacionSelection();closeProgramacionPicker()});$("#bitFecha")?.addEventListener("change",()=>{if(!selectedProgramacionId)return;const a=selectedActivity();if(a&&activityDate(a)!==String($("#bitFecha").value||"")){selectedProgramacionId="";paintProgramacionSelection()}});
   $("#bitEvidencias").addEventListener("change",e=>{selectedEvidence=[...selectedEvidence,...Array.from(e.target.files||[])].slice(0,10);e.target.value="";renderSelectedEvidence()});
   $("#bitEvidenceSelected").addEventListener("click",e=>{const b=e.target.closest("[data-remove-evidence]");if(!b)return;selectedEvidence.splice(Number(b.dataset.removeEvidence),1);renderSelectedEvidence()});
   $("#btnBitGuardar").addEventListener("click",()=>saveLocalEvent().catch(error=>window.alert(error?.message||"No fue posible guardar el registro en este dispositivo.")));
