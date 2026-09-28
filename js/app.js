@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.56";
+const VERSION="0.2.57";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -199,15 +199,8 @@ function initInstallFlow(){
 }
 
 function eoInfoRows(eo={}){
-  const fields=[
-    ["Código",firstValue(eo,["codigoEO","codigo","clave"])],
-    ["Nombre",firstValue(eo,["nombreMostrar","nombre","razonSocial"])],
-    ["Razón social",firstValue(eo,["razonSocial","nombreLegal"])],
-    ["Correo",firstValue(eo,["email","correo"])],
-    ["Teléfono",firstValue(eo,["telefono","phone"])],
-    ["Sitio",firstValue(eo,["sitioWeb","web","website","url"])]
-  ].filter(([,v])=>v);
-  return fields.length?fields.map(([k,v])=>`<div><span>${k}</span><strong>${String(v)}</strong></div>`).join(""):"<div><span>Información</span><strong>Sin datos adicionales disponibles.</strong></div>";
+  const description=firstValue(eo,["descripcion","descripcionEO","descripcionPublica","description"]);
+  return description?`<p class="eo-description">${String(description)}</p>`:'<p class="eo-description eo-description-empty">Sin descripción disponible.</p>';
 }
 function paintEo(eo){
   const name=eo?.nombreMostrar||eo?.nombre||"Información pública";
@@ -357,7 +350,10 @@ async function boot(){
     if(card.dataset.module==="training"){
       const target=getMemberAreaUrl(currentContext?.user||{},"challenges");
       if(target==="#"){console.error("NEXUS | CAPACITACION | MEMBER_SLUG_MISSING");return}
-      window.location.assign(target);
+      window.location.assign(target);return
+    }
+    if(card.dataset.module==="admin"){
+      window.location.assign("https://nexus.scad.mx/nexus-panel");return
     }
   });
   document.addEventListener("nexus:bitacora-local-saved",()=>syncBitacoraQueue());
@@ -365,7 +361,7 @@ async function boot(){
   document.addEventListener("nexus:bitacora-retry",e=>syncBitacoraQueue(String(e.detail?.localId||"")));
   document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
-  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal()});
+  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://nexus.scad.mx/nexus-panel")});
   document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
