@@ -164,7 +164,10 @@
               <label>Hora<input id="bitHora" type="time"></label>
               <label class="bitacora-check bitacora-followup-check"><input id="bitRequiereSeguimiento" type="checkbox"><span>Seguimiento requerido</span></label>
             </div>
-            <label>Actividad programada <span class="bitacora-optional">Opcional</span><select id="bitProgramacion"><option value="">Sin actividad relacionada</option></select></label>
+            <div class="bit-relation-field">
+              <span class="bit-relation-label">Relacionar actividad</span>
+              <button id="btnBitRelacionar" class="bit-relation-trigger" type="button"><span id="bitRelacionResumen">Seleccionar actividad</span><span aria-hidden="true">›</span></button>
+            </div>
             <label>Lugar <span class="bitacora-optional">Opcional</span><input id="bitLugar" type="text" maxlength="200" placeholder="Lugar donde ocurrió el evento"></label>
             <label>Descripción
               <textarea id="bitDescripcion" rows="5" maxlength="4000" placeholder="Describe qué ocurrió y los detalles necesarios para comprender el evento."></textarea>
@@ -176,6 +179,21 @@
               <span class="bit-file-picker"><span class="bit-file-button">Elegir archivo</span><span class="bit-file-help">Adjuntar evidencia</span><input id="bitEvidencias" type="file" multiple></span>
               <div id="bitEvidenceSelected" class="bit-evidence-selected" hidden></div>
             </label>
+          </div>
+          <div id="bitRelacionModal" class="bit-relation-backdrop" hidden>
+            <section class="bit-relation-modal" role="dialog" aria-modal="true" aria-labelledby="bitRelacionTitle">
+              <header class="bit-relation-head"><h4 id="bitRelacionTitle">Relacionar actividad</h4><button id="btnBitRelacionCerrar" type="button" aria-label="Cerrar">×</button></header>
+              <div class="bit-relation-tools">
+                <input id="bitRelacionBuscar" type="search" placeholder="Buscar actividad" autocomplete="off">
+                <div class="bit-relation-filters">
+                  <label>Fecha<input id="bitRelacionFecha" type="date"></label>
+                  <label>Tipo<select id="bitRelacionTipo"><option value="">Todos</option></select></label>
+                </div>
+                <label class="bit-relation-all"><input id="bitRelacionTodas" type="checkbox"> Mostrar todas</label>
+              </div>
+              <div id="bitRelacionCount" class="bit-relation-count"></div>
+              <div id="bitRelacionLista" class="bit-relation-list"></div>
+            </section>
           </div>
           <div id="bitRegistroLock" class="bit-register-lock" hidden>🔒 Evento asegurado · No puede modificarse</div>
           <div id="bitRegistroResult" class="bit-register-result" hidden></div>
@@ -260,7 +278,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.69</span>
+      <span id="versionLabel">NEXUS · v0.2.70</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 Mns0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
