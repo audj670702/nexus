@@ -32,7 +32,7 @@ function hasCapability(context,key){
 }
 export function renderModules(container,modules=BASIC_MODULES,context={}){
   const authenticated=context?.authenticated===true;
-  const roles=(Array.isArray(context?.roles)?context.roles:[]).map(r=>String(r||"").trim().toUpperCase());
+  const roles=(Array.isArray(context?.user?.roles)?context.user.roles:Array.isArray(context?.roles)?context.roles:[]).map(r=>String(r||"").trim().toUpperCase());
   const isAdm=roles.includes("ADM");
   const visible=authenticated?modules.filter(m=>m.id==="admin"?isAdm:hasCapability(context,m.capability)):modules.filter(m=>m.id!=="admin");
   container.replaceChildren(...visible.map(m=>{
