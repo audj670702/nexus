@@ -1,7 +1,7 @@
 import {createLocalId,putQueueItem,listQueueItems,putEvidence,listEvidence,deleteEvidence,putReference,getReference} from "./local-first.js";
 
 let bitContext=null;
-let bitState={tipos:[],eventos:[],seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false},evidencias:false};
+let bitState={tipos:[],eventos:[],seguimientoEventos:[],programacion:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false},evidencias:false};
 let selectedEvidence=[];
 let lockedLocalId="";
 const $=s=>document.querySelector(s);
@@ -15,6 +15,14 @@ function setTab(name){
   const map={registro:["#btnBitRegistro","#bitRegistroView"],consulta:["#btnBitConsulta","#bitConsultaView"],seguimiento:["#btnBitSeguimiento","#bitSeguimientoView"]};
   Object.values(map).forEach(([b,v])=>{$(b)?.classList.remove("is-active");if($(v))$(v).hidden=true});
   $("#bitDetalleView").hidden=true;const target=map[name]||map.consulta;$(target[0])?.classList.add("is-active");$(target[1]).hidden=false;
+}
+const progId=a=>String(a?.id||a?._id||"");
+const progTitle=a=>String(a?.titulo||a?.nombre||a?.actividad||"Actividad");
+const progStart=a=>a?.inicio||a?.fechaInicio||a?.fecha||a?.start||null;
+function fillProgramacion(){
+  const el=$("#bitProgramacion");if(!el)return;
+  const items=Array.isArray(bitState.programacion)?bitState.programacion:[];
+  el.innerHTML='<option value="">Sin actividad relacionada</option>'+items.map(a=>{const d=progStart(a),fecha=d&&!Number.isNaN(new Date(d).getTime())?new Date(d).toLocaleString("es-MX"):"";return `<option value="${esc(progId(a))}">${esc(progTitle(a))}${fecha?" · "+esc(fecha):""}</option>`}).join("");
 }
 function fillTypes(){
   const active=bitState.tipos.filter(t=>t?.activo!==false);
@@ -35,7 +43,7 @@ function renderFollowup(){
 function openDetail(id){
   const e=[...bitState.eventos,...bitState.seguimientoEventos].find(x=>String(x.id||x._id||"")===String(id||""));if(!e)return;
   ["#bitRegistroView","#bitConsultaView","#bitSeguimientoView"].forEach(s=>$(s).hidden=true);
-  $("#bitDetalle").innerHTML=`<div class="bitacora-detail-row"><span>Folio</span><strong>${esc(e.folio||"—")}</strong></div><div class="bitacora-detail-row"><span>Tipo</span><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"—")}</strong></div><div class="bitacora-detail-row"><span>Evento</span><strong>${esc(fmt(e.fechaHoraEvento))}</strong></div><div class="bitacora-detail-row"><span>Lugar</span><strong>${esc(e.lugar||"—")}</strong></div><div class="bitacora-detail-row"><span>Registrado</span><strong>${esc(fmt(e.fechaHoraRegistro))}</strong></div><div class="bitacora-detail-row"><span>Responsable</span><strong>${esc(e.registranteNombre||"—")}</strong></div><div class="bitacora-detail-row"><span>Descripción</span><strong>${esc(e.descripcion||"—")}</strong></div><div class="bitacora-detail-row"><span>Comentarios</span><strong>${esc(e.comentarios||"—")}</strong></div><div class="bitacora-detail-row"><span>Estado</span><strong>${esc(e.estado||"VIGENTE")}</strong></div>${Array.isArray(e.seguimientos)&&e.seguimientos.length?e.seguimientos.map(s=>`<div class="bitacora-detail-row"><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><strong>${esc(s.nota||"")}</strong></div>`).join(""):""}${bitState.facultades.seguimiento===true&&e.requiereSeguimiento===true&&String(e.estado||"VIGENTE").toUpperCase()==="VIGENTE"?'<div class="bitacora-form"><label>Nueva anotación<textarea id="bitSeguimientoNota" rows="3" maxlength="2000" placeholder="Registra la anotación de seguimiento."></textarea></label></div><div class="bitacora-actions"><button id="btnBitGuardarSeguimiento" class="bitacora-primary" type="button">Guardar seguimiento</button></div>':""}`;
+  $("#bitDetalle").innerHTML=`<div class="bitacora-detail-row"><span>Folio</span><strong>${esc(e.folio||"—")}</strong></div><div class="bitacora-detail-row"><span>Tipo</span><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"—")}</strong></div><div class="bitacora-detail-row"><span>Evento</span><strong>${esc(fmt(e.fechaHoraEvento))}</strong></div>${e.programacionId?`<div class="bitacora-detail-row"><span>Actividad programada</span><strong>${esc(progTitle(bitState.programacion.find(a=>progId(a)===String(e.programacionId))||{})||"Actividad relacionada")}</strong></div>`:""}<div class="bitacora-detail-row"><span>Lugar</span><strong>${esc(e.lugar||"—")}</strong></div><div class="bitacora-detail-row"><span>Registrado</span><strong>${esc(fmt(e.fechaHoraRegistro))}</strong></div><div class="bitacora-detail-row"><span>Responsable</span><strong>${esc(e.registranteNombre||"—")}</strong></div><div class="bitacora-detail-row"><span>Descripción</span><strong>${esc(e.descripcion||"—")}</strong></div><div class="bitacora-detail-row"><span>Comentarios</span><strong>${esc(e.comentarios||"—")}</strong></div><div class="bitacora-detail-row"><span>Estado</span><strong>${esc(e.estado||"VIGENTE")}</strong></div>${Array.isArray(e.seguimientos)&&e.seguimientos.length?e.seguimientos.map(s=>`<div class="bitacora-detail-row"><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><strong>${esc(s.nota||"")}</strong></div>`).join(""):""}${bitState.facultades.seguimiento===true&&e.requiereSeguimiento===true&&String(e.estado||"VIGENTE").toUpperCase()==="VIGENTE"?'<div class="bitacora-form"><label>Nueva anotación<textarea id="bitSeguimientoNota" rows="3" maxlength="2000" placeholder="Registra la anotación de seguimiento."></textarea></label></div><div class="bitacora-actions"><button id="btnBitGuardarSeguimiento" class="bitacora-primary" type="button">Guardar seguimiento</button></div>':""}`;
   $("#bitDetalleView").hidden=false;
   $("#btnBitGuardarSeguimiento")?.addEventListener("click",()=>{const nota=String($("#bitSeguimientoNota")?.value||"").trim();if(nota)document.dispatchEvent(new CustomEvent("nexus:bitacora-followup",{detail:{eventoId:String(e.id||e._id||""),nota}}))});
 }
@@ -55,7 +63,7 @@ function setRegisterLocked(locked,folio=""){
   $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
 }
 function clearRegisterForm(){
-  $("#bitTipo").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
+  $("#bitTipo").value="";if($("#bitProgramacion"))$("#bitProgramacion").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
 }
 async function refreshLocalStatus(){
   const items=await listQueueItems("BIT");const pending=items.filter(x=>x.syncStatus!=="SINCRONIZADO");const errors=pending.filter(x=>x.syncStatus==="ERROR");
@@ -71,7 +79,7 @@ async function renderPending(items=null){
   panel.innerHTML=pending.length?pending.map(x=>`<div class="bit-pending-row"><div><strong>${esc(x.serverFolio||x.localId)}</strong><span>${esc(fmt(x.createdLocalAt))}</span></div><span>${esc(x.syncStatus)}</span>${x.syncError?`<small>${esc(x.syncError)}</small>`:""}${x.syncStatus==="ERROR"?`<button type="button" data-retry-local-id="${esc(x.localId)}">Reintentar</button>`:""}</div>`).join(""):'<div class="bitacora-empty">No hay registros pendientes.</div>';
 }
 async function saveLocalEvent(){
-  const detail={tipoId:String($("#bitTipo").value||""),fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
+  const detail={tipoId:String($("#bitTipo").value||""),programacionId:String($("#bitProgramacion")?.value||""),fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
   if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
   const localId=createLocalId("bit"),createdLocalAt=new Date().toISOString();
   const queueItem={localId,module:"BIT",operation:"REGISTER_EVENT",payload:detail,syncStatus:"PENDIENTE",createdLocalAt,lastSyncAttempt:null,syncError:"",syncAttempts:0,serverId:"",serverFolio:""};
@@ -84,6 +92,7 @@ async function saveLocalEvent(){
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
+export function setBitacoraProgramacion(items=[]){bitState.programacion=Array.isArray(items)?items:[];fillProgramacion()}
 export async function getCachedBitacoraAccess(){if(!bitContext?.memberId||!bitContext?.eo?.codigoEO)return null;return getReference(cacheKey())}
 export async function setBitacoraState(next={}){
   const hasServerState=Array.isArray(next.tipos);
@@ -92,8 +101,8 @@ export async function setBitacoraState(next={}){
   if(!hasServerState&&bitContext?.memberId&&bitContext?.eo?.codigoEO){
     const cached=await getReference(cacheKey());if(cached)source={...next,...cached};
   }
-  bitState={tipos:Array.isArray(source.tipos)?source.tipos:[],eventos:Array.isArray(source.eventos)?source.eventos:[],seguimientoEventos:Array.isArray(source.seguimientoEventos)?source.seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false,...(source.facultades||{})},evidencias:source.evidencias===true};
-  fillTypes();applyCapabilities();renderEvents();renderFollowup();await refreshLocalStatus();
+  bitState={tipos:Array.isArray(source.tipos)?source.tipos:[],programacion:Array.isArray(bitState.programacion)?bitState.programacion:[],eventos:Array.isArray(source.eventos)?source.eventos:[],seguimientoEventos:Array.isArray(source.seguimientoEventos)?source.seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false,...(source.facultades||{})},evidencias:source.evidencias===true};
+  fillTypes();fillProgramacion();applyCapabilities();renderEvents();renderFollowup();await refreshLocalStatus();
 }
 export function openBitacora(){
   if(bitContext?.authenticated!==true)return;
