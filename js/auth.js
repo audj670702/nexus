@@ -120,19 +120,11 @@ export async function resolveAccessContext(){
 
   const restored=restoreSessionContext();
   if(restored){
-    trace("SESSION_CONTEXT_REFRESH",{
+    trace("SESSION_CONTEXT_RESTORED",{
       memberId:restored.memberId||null,
       roles:Array.isArray(restored.roles)?restored.roles:[]
     });
-    if(restored.memberId){
-      try{return await resolveMemberContext(restored.memberId,restored?.eo?.codigoContexto||restored?.eo?.codigoEO||"")}
-      catch(error){
-        try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
-        clearContext();
-        throw error;
-      }
-    }
-    try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
+    return setContext(restored);
   }
 
   trace("VISITOR_CONTEXT",{reason:"MEMBER_ID_NOT_PRESENT"});
