@@ -24,6 +24,14 @@ function fillProgramacion(){
   const items=Array.isArray(bitState.programacion)?bitState.programacion:[];
   el.innerHTML='<option value="">Sin actividad relacionada</option>'+items.map(a=>{const d=progStart(a),fecha=d&&!Number.isNaN(new Date(d).getTime())?new Date(d).toLocaleString("es-MX"):"";return `<option value="${esc(progId(a))}">${esc(progTitle(a))}${fecha?" · "+esc(fecha):""}</option>`}).join("");
 }
+const progId=a=>String(a?.id||a?._id||"");
+const progTitle=a=>String(a?.titulo||a?.nombre||a?.actividad||"Actividad");
+const progStart=a=>a?.inicio||a?.fechaInicio||a?.fecha||a?.start||null;
+function fillProgramacion(){
+  const el=$("#bitProgramacion");if(!el)return;
+  const items=Array.isArray(bitState.programacion)?bitState.programacion:[];
+  el.innerHTML='<option value="">Sin actividad relacionada</option>'+items.map(a=>{const d=progStart(a),fecha=d&&!Number.isNaN(new Date(d).getTime())?new Date(d).toLocaleString("es-MX"):"";return `<option value="${esc(progId(a))}">${esc(progTitle(a))}${fecha?" · "+esc(fecha):""}</option>`}).join("");
+}
 function fillTypes(){
   const active=bitState.tipos.filter(t=>t?.activo!==false);
   const options=active.map(t=>`<option value="${esc(t.id||t._id||t.clave||"")}">${esc(t.etiqueta||t.nombre||t.clave||"Tipo")}</option>`).join("");
@@ -92,6 +100,7 @@ async function saveLocalEvent(){
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
+export function setBitacoraProgramacion(items=[]){bitState.programacion=Array.isArray(items)?items:[];fillProgramacion()}
 export function setBitacoraProgramacion(items=[]){bitState.programacion=Array.isArray(items)?items:[];fillProgramacion()}
 export async function getCachedBitacoraAccess(){if(!bitContext?.memberId||!bitContext?.eo?.codigoEO)return null;return getReference(cacheKey())}
 export async function setBitacoraState(next={}){
