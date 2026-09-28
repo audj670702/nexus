@@ -26,6 +26,7 @@ function normalizeSysContext(result={}){
     auth:result?.auth||null,
     cca:result?.cca||null,
     mns:result?.mns||result?.mensajeria||null,
+    informes:result?.informes||result?.reports||null,
     app:result?.app||null,
     actividades:Array.isArray(result?.actividades)?result.actividades:(Array.isArray(result?.programacion)?result.programacion:[]),
     documentos:Array.isArray(result?.documentos)?result.documentos:[],
