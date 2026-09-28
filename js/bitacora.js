@@ -16,6 +16,7 @@ function setTab(name){
   Object.values(map).forEach(([b,v])=>{$(b)?.classList.remove("is-active");if($(v))$(v).hidden=true});
   $("#bitDetalleView").hidden=true;const target=map[name]||map.consulta;$(target[0])?.classList.add("is-active");$(target[1]).hidden=false;
 }
+function fillProgramacion(){const el=$("#bitProgramacion");if(!el)return;const items=Array.isArray(bitContext?.actividades)?bitContext.actividades:[];el.innerHTML='<option value="">Sin actividad relacionada</option>'+items.map((a,i)=>{const id=String(a?.id||a?._id||i),title=String(a?.titulo||a?.nombre||a?.actividad||"Actividad"),raw=a?.inicio||a?.fechaInicio||a?.fecha||a?.start||"",d=raw?new Date(raw):null,when=d&&!Number.isNaN(d.getTime())?` · ${d.toLocaleString("es-MX")}`:"";return `<option value="${esc(id)}">${esc(title+when)}</option>`}).join("")}
 function fillTypes(){
   const active=bitState.tipos.filter(t=>t?.activo!==false);
   const options=active.map(t=>`<option value="${esc(t.id||t._id||t.clave||"")}">${esc(t.etiqueta||t.nombre||t.clave||"Tipo")}</option>`).join("");
@@ -55,7 +56,7 @@ function setRegisterLocked(locked,folio=""){
   $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
 }
 function clearRegisterForm(){
-  $("#bitTipo").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
+  $("#bitTipo").value="";if($("#bitProgramacion"))$("#bitProgramacion").value="";$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
 }
 async function refreshLocalStatus(){
   const items=await listQueueItems("BIT");const pending=items.filter(x=>x.syncStatus!=="SINCRONIZADO");const errors=pending.filter(x=>x.syncStatus==="ERROR");
@@ -71,7 +72,7 @@ async function renderPending(items=null){
   panel.innerHTML=pending.length?pending.map(x=>`<div class="bit-pending-row"><div><strong>${esc(x.serverFolio||x.localId)}</strong><span>${esc(fmt(x.createdLocalAt))}</span></div><span>${esc(x.syncStatus)}</span>${x.syncError?`<small>${esc(x.syncError)}</small>`:""}${x.syncStatus==="ERROR"?`<button type="button" data-retry-local-id="${esc(x.localId)}">Reintentar</button>`:""}</div>`).join(""):'<div class="bitacora-empty">No hay registros pendientes.</div>';
 }
 async function saveLocalEvent(){
-  const detail={tipoId:String($("#bitTipo").value||""),fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
+  const detail={tipoId:String($("#bitTipo").value||""),programacionId:String($("#bitProgramacion")?.value||""),fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
   if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
   const localId=createLocalId("bit"),createdLocalAt=new Date().toISOString();
   const queueItem={localId,module:"BIT",operation:"REGISTER_EVENT",payload:detail,syncStatus:"PENDIENTE",createdLocalAt,lastSyncAttempt:null,syncError:"",syncAttempts:0,serverId:"",serverFolio:""};
@@ -97,7 +98,7 @@ export async function setBitacoraState(next={}){
 }
 export function openBitacora(){
   if(bitContext?.authenticated!==true)return;
-  lockedLocalId="";clearRegisterForm();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;
+  fillProgramacion();lockedLocalId="";clearRegisterForm();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;
   const n=nowLocal();if(!$("#bitFecha").value)$("#bitFecha").value=n.fecha;if(!$("#bitHora").value)$("#bitHora").value=n.hora;
   $("#bitacoraModal").hidden=false;const first=bitState.facultades.registro===true?"registro":bitState.facultades.consulta===true?"consulta":"seguimiento";setTab(first);refreshLocalStatus();
 }
