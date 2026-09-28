@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.54";
+const VERSION="0.2.55";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -151,7 +151,7 @@ function paintCca(c){
   const b=ccaBits(c);
   document.querySelector("#ccaLabel").textContent=`CCA · Se${+b.Se} Us${+b.Us} Eo${+b.Eo} Mns${+b.Mns} App${+b.App}`;
 }
-let deferredInstallPrompt=null;
+let deferredInstallPrompt=window.__nexusInstallPrompt||null;
 function isIosDevice(){return /iphone|ipad|ipod/i.test(window.navigator.userAgent)}
 function renderInstallOption(){
   const button=document.querySelector("#installButton");
@@ -180,16 +180,18 @@ function initInstallFlow(){
   document.querySelector("#iosTutorialClose")?.addEventListener("click",closeIosTutorial);
   document.querySelector("#iosTutorialModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeIosTutorial()});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.querySelector("#iosTutorialModal")?.hidden)closeIosTutorial()});
-  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;renderInstallOption()});
-  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;renderInstallOption()});
+  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();window.__nexusInstallPrompt=event;deferredInstallPrompt=event;renderInstallOption()});
+  window.addEventListener("appinstalled",()=>{window.__nexusInstallPrompt=null;deferredInstallPrompt=null;renderInstallOption()});
   document.querySelector("#installButton")?.addEventListener("click",async()=>{
     if(installedApp())return;
     if(isIosDevice()){openIosTutorial();return}
+    deferredInstallPrompt=deferredInstallPrompt||window.__nexusInstallPrompt||null;
     if(!deferredInstallPrompt){window.alert("La instalación todavía no está disponible. Abre el menú del navegador y selecciona Instalar app o Instalar NEXUS.");return}
     const button=document.querySelector("#installButton");
     button.disabled=true;button.textContent="Instalando...";
     deferredInstallPrompt.prompt();
     await deferredInstallPrompt.userChoice;
+    window.__nexusInstallPrompt=null;
     deferredInstallPrompt=null;
     button.disabled=false;renderInstallOption();
   });
