@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.61";
+const VERSION="0.2.62";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -340,7 +340,7 @@ async function boot(){
   setBitacoraContext(c);
   await loadBitacoraState(c);
   syncBitacoraQueue();
-  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
+  paintContext(c);renderInstallOption();const moduleSource=(Array.isArray(c?.roles)&&c.roles.some(r=>String(r||"").trim().toUpperCase()==="ADM"))?BASIC_MODULES:BASIC_MODULES.filter(m=>m.id!=="admin");renderModules(document.querySelector("#modulesGrid"),moduleSource,c);setDocumentsContext(c);setScheduleContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
     if(!card||card.classList.contains("is-locked"))return;
@@ -362,6 +362,6 @@ async function boot(){
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://nexus.scad.mx/nexus-panel")});
   document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
-  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
+  if("serviceWorker" in navigator)window.addEventListener("load",async()=>{try{const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith("nexus-")).map(k=>caches.delete(k)))}catch(error){console.warn("NEXUS | CACHE_RESET",error)}});
 }
 boot().catch(console.error);
