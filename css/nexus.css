@@ -218,3 +218,21 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 /* BIT · UI registro asegurado · v0.2.49 */
 .bitacora-type-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px;align-items:end}.bitacora-type-row label{min-width:0}.bitacora-current-folio{padding:0 0 10px;font-size:.66rem;font-weight:650;color:var(--muted);white-space:nowrap}.bit-register-lock{margin-top:10px;font-size:.66rem;font-weight:800;color:#28744f}.bitacora-form input::placeholder,.bitacora-form textarea::placeholder{font-weight:400;color:var(--muted);opacity:.78}.bitacora-form select:disabled,.bitacora-form input:disabled,.bitacora-form textarea:disabled{background:#f7f9fc;color:var(--ink);opacity:1;cursor:not-allowed}
 @media(max-width:559px){.bitacora-type-row{grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px}.bitacora-current-folio{font-size:.61rem}}
+
+
+/* BIT · Registro UI · v0.2.56 */
+.bitacora-tabs{gap:4px;padding:5px;background:#205985;border-bottom:0}
+.bitacora-tabs button{border:0;border-radius:6px;background:transparent;color:rgba(255,255,255,.78);padding:9px 7px}
+.bitacora-tabs button:hover{background:rgba(255,255,255,.10);color:#fff}
+.bitacora-tabs button.is-active{background:#fff;color:#205985;border-bottom-color:transparent;box-shadow:0 1px 3px rgba(10,35,60,.16)}
+.bitacora-section-head h3{margin:0;font-size:1rem;font-weight:850}
+.bitacora-date-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr) minmax(0,1fr);align-items:end}
+.bitacora-followup-check{height:38px;display:flex!important;align-items:center!important;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#f8fafc;white-space:nowrap}
+.bitacora-followup-check span{font-size:.64rem;font-weight:800}
+.bitacora-evidence>input{display:none}
+.bit-file-picker{display:flex;align-items:center;gap:9px}
+.bit-file-picker input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.bit-file-button{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 13px;border:1px solid #205985;border-radius:7px;background:#205985;color:#fff;font-size:.66rem;font-weight:850;cursor:pointer;box-shadow:0 1px 2px rgba(18,43,77,.12)}
+.bit-file-button:hover{background:#17496f}
+.bit-file-help{font-size:.61rem;font-weight:600;color:var(--muted)}
+@media(max-width:559px){.bitacora-date-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}.bitacora-followup-check{grid-column:1/-1;height:34px}.bit-file-picker{gap:7px}.bit-file-help{font-size:.58rem}}
