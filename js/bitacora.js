@@ -81,7 +81,6 @@ async function saveLocalEvent(){
     await putEvidence({evidenceId:createLocalId("evi"),localId,file,name:file.name,type:file.type||"application/octet-stream",size:file.size,syncStatus:"PENDIENTE",syncAttempts:0,lastSyncAttempt:null,syncError:""});
   }
   lockedLocalId=localId;setRegisterLocked(true);await refreshLocalStatus();
-  const notice=$("#bitRegistroResult");notice.hidden=false;notice.textContent=navigator.onLine?"🔒 Evento guardado · No puede modificarse.":"🔒 Evento guardado · No puede modificarse. Se sincronizará al recuperar conexión.";
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
