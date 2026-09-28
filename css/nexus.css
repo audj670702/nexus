@@ -244,10 +244,10 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .eo-modal-info{padding:22px 24px 26px}
 .eo-description{margin:0;color:var(--ink);font-size:.78rem;line-height:1.65;font-weight:500;white-space:pre-wrap}
 .eo-description-empty{color:var(--muted);font-style:italic}
-.tv-channels{display:flex;gap:7px;padding:5px;background:#edf3f9;border-radius:10px}
-.channel{flex:1;min-height:36px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:8px;background:transparent;color:#526985;font-size:.60rem;font-weight:850;cursor:pointer;transition:background .15s ease,color .15s ease,box-shadow .15s ease}
-.channel:hover{background:rgba(255,255,255,.72);color:#205985}
-.channel.is-active{background:#fff;color:#205985;border-color:#d8e4f0;box-shadow:0 2px 7px rgba(25,66,105,.12)}
-.channel-icon{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:#dfeaf5;color:#205985;font-size:.72rem;font-weight:900}
-.channel.is-active .channel-icon{background:#205985;color:#fff}
-@media(max-width:559px){.eo-modal-head{padding:20px 18px 15px}.eo-modal-info{padding:18px}.tv-channels{gap:5px}.channel{min-height:34px;font-size:.56rem}}
+.tv-channels{display:flex;justify-content:center;gap:5px;padding:0;background:transparent}
+.channel{flex:0 0 auto;min-height:28px;padding:0 9px;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #d9e3ed;border-radius:7px;background:#fff;color:#60748b;font-size:.56rem;font-weight:800;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.channel:hover{border-color:#b8cada;color:#205985}
+.channel.is-active{background:#205985;color:#fff;border-color:#205985;box-shadow:none}
+.channel-icon{display:inline-grid;place-items:center;width:14px;height:14px;background:transparent;color:inherit;font-size:.62rem;font-weight:900}
+.channel.is-active .channel-icon{background:transparent;color:inherit}
+@media(max-width:559px){.eo-modal-head{padding:20px 18px 15px}.eo-modal-info{padding:18px}.tv-channels{gap:4px}.channel{min-height:27px;padding:0 8px;font-size:.54rem}}
