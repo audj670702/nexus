@@ -5,9 +5,9 @@ import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
-import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
+import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess,setBitacoraProgramacion} from "./bitacora.js";
 
-const VERSION="0.2.66";
+const VERSION="0.2.67";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -338,6 +338,7 @@ async function boot(){
   currentContext=c;
   setTvContext(c);
   setBitacoraContext(c);
+  setBitacoraProgramacion(Array.isArray(c?.actividades)?c.actividades:[]);
   await loadBitacoraState(c);
   syncBitacoraQueue();
   paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
