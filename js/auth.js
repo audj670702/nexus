@@ -125,7 +125,7 @@ export async function resolveAccessContext(){
       roles:Array.isArray(restored.roles)?restored.roles:[]
     });
     if(restored.memberId){
-      try{return await resolveMemberContext(restored.memberId,restored?.eo?.codigoEO||"")}
+      try{return await resolveMemberContext(restored.memberId,restored?.eo?.codigoContexto||restored?.eo?.codigoEO||"")}
       catch(error){
         try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
         clearContext();
