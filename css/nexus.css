@@ -236,3 +236,18 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .bit-file-button:hover{background:#17496f}
 .bit-file-help{font-size:.61rem;font-weight:600;color:var(--muted)}
 @media(max-width:559px){.bitacora-date-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}.bitacora-followup-check{grid-column:1/-1;height:34px}.bit-file-picker{gap:7px}.bit-file-help{font-size:.58rem}}
+
+
+/* NEXUS · EO + TV UI · v0.2.57 */
+.eo-modal{width:min(520px,100%);padding:0;overflow:hidden;border:0;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(15,40,70,.26)}
+.eo-modal-head{padding:24px 24px 18px;background:linear-gradient(135deg,#f7faff,#eef5fc);border-bottom:1px solid var(--line)}
+.eo-modal-info{padding:22px 24px 26px}
+.eo-description{margin:0;color:var(--ink);font-size:.78rem;line-height:1.65;font-weight:500;white-space:pre-wrap}
+.eo-description-empty{color:var(--muted);font-style:italic}
+.tv-channels{display:flex;gap:7px;padding:5px;background:#edf3f9;border-radius:10px}
+.channel{flex:1;min-height:36px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:8px;background:transparent;color:#526985;font-size:.60rem;font-weight:850;cursor:pointer;transition:background .15s ease,color .15s ease,box-shadow .15s ease}
+.channel:hover{background:rgba(255,255,255,.72);color:#205985}
+.channel.is-active{background:#fff;color:#205985;border-color:#d8e4f0;box-shadow:0 2px 7px rgba(25,66,105,.12)}
+.channel-icon{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:#dfeaf5;color:#205985;font-size:.72rem;font-weight:900}
+.channel.is-active .channel-icon{background:#205985;color:#fff}
+@media(max-width:559px){.eo-modal-head{padding:20px 18px 15px}.eo-modal-info{padding:18px}.tv-channels{gap:5px}.channel{min-height:34px;font-size:.56rem}}
