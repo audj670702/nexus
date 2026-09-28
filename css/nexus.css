@@ -132,7 +132,7 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .tv-console{position:relative}
 .tv-monitor{position:relative}
 .tv-monitor video,.tv-youtube-frame{position:absolute;inset:0;width:100%;height:100%;display:block;border:0;object-fit:contain;background:#071a33}
-.tv-controls{position:relative}
+.tv-controls{position:static}
 .tv-channels{width:100%}
 .channel{font-size:.54rem}
 #btnTvMute,#btnTvExpand{
@@ -160,14 +160,14 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .modules-section{margin-top:18px}
 #btnTvMute{
   bottom:auto;
-  top:4px;
+  top:5px;
   font-size:.82rem;
   line-height:1;
 }
 @media(max-width:559px){
   .brand-logo{max-width:108px;max-height:40px}
   .modules-section{margin-top:18px}
-  #btnTvMute{top:4px;font-size:.82rem}
+  #btnTvMute{top:5px;font-size:.82rem}
 }
 
 
