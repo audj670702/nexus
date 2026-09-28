@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.65";
+const VERSION="0.2.66";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -351,7 +351,7 @@ async function boot(){
       window.location.assign(withWixReturnUrl("https://www.scad.mx/members-area"));return
     }
     if(card.dataset.module==="admin"){
-      window.location.assign("https://nexus.scad.mx/nexus-panel");return
+      window.location.assign("https://www.scad.mx/nexus-panel");return
     }
   });
   document.addEventListener("nexus:bitacora-local-saved",()=>syncBitacoraQueue());
@@ -359,7 +359,7 @@ async function boot(){
   document.addEventListener("nexus:bitacora-retry",e=>syncBitacoraQueue(String(e.detail?.localId||"")));
   document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
-  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://nexus.scad.mx/nexus-panel")});
+  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://www.scad.mx/nexus-panel")});
   document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
