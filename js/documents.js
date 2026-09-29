@@ -50,14 +50,7 @@ function renderList(){
 function viewDocument(d){
   const url=docUrl(d);if(!url)return;
   const seen=seenSet(ctx),id=docId(d);if(id){seen.add(id);saveSeen(ctx,seen);renderBadge()}
-  document.querySelector("#documentsList").hidden=true;
-  document.querySelector("#documentsCount").hidden=true;
-  document.querySelector("#documentsToolbar")?.setAttribute("hidden","");
-  const viewer=document.querySelector("#documentViewer");
-  document.querySelector("#documentViewerTitle").textContent=docTitle(d);
-  const external=document.querySelector("#documentOpenExternal");external.href=url;
-  const frame=document.querySelector("#documentFrame");frame.src=url;
-  viewer.hidden=false;
+  window.open(url,"_blank","noopener,noreferrer");
 }
 function showList(){
   const frame=document.querySelector("#documentFrame");frame.removeAttribute("src");
