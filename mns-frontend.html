@@ -93,7 +93,7 @@ button{cursor:pointer}
 'use strict';
 
 const CHANNEL = 'MNS_FRONTEND';
-const VERSION = '0.5.30';
+const VERSION = '0.5.31';
 const REQUEST_TIMEOUT = 15000;
 
 document.getElementById('mnsVersion').textContent=`v${VERSION}`;
@@ -255,6 +255,62 @@ function renderContacts(target='#contactsList',filter=''){
           <span class="chev">›</span>
         </button>`).join(''):'<div class="empty">Sin contactos disponibles.</div>'}
     </div>`;
+}
+
+async function renderContactSearch(offset=0,append=false){
+  const raw=$('#contactSearch').value.trim();
+  if(contactsTopMode!=='contacts'){
+    renderContacts('#contactsList',raw);
+    applyContactsTopMode();
+    return;
+  }
+  if(!raw){
+    renderContacts();
+    applyContactsTopMode();
+    return;
+  }
+  if(raw.length<3){
+    $('#contactsList').innerHTML='<div class="group-title">CONTACTOS</div><div class="empty">Escribe al menos 3 caracteres.</div>';
+    applyContactsTopMode();
+    return;
+  }
+  const cacheKey=`top|${raw.toLocaleLowerCase('es-MX')}|${offset}`;
+  let r=state.exactSearchCache.get(cacheKey)||null;
+  if(!r){
+    if(!append) $('#contactsList').innerHTML='<div class="group-title">CONTACTOS</div><div class="empty">Buscando…</div>';
+    try{
+      r=await request('mnsSearchUserExact',{
+        appId:state.context.appId,
+        eoId:state.context.eoId,
+        query:raw,
+        offset
+      });
+      state.exactSearchCache.set(cacheKey,r);
+    }catch(e){
+      if($('#contactSearch').value.trim()===raw){
+        $('#contactsList').innerHTML='<div class="group-title">CONTACTOS</div><div class="empty">No fue posible realizar la búsqueda.</div>';
+      }
+      return;
+    }
+  }
+  if($('#contactSearch').value.trim()!==raw || contactsTopMode!=='contacts') return;
+  const users=Array.isArray(r?.users)?r.users:[];
+  const rows=users.map(u=>`
+    <button class="contact-row" data-contact-kind="NEWUSER" data-contact-id="${esc(u.memberId)}">
+      <div class="avatar">${esc(initials(u.nombreVisible))}</div>
+      <div class="row-main"><div class="name">${esc(u.nombreVisible)}</div></div>
+      <span class="chev">›</span>
+    </button>`).join('');
+  if(!append){
+    $('#contactsList').innerHTML=`<div class="group-title">CONTACTOS</div><div class="contact-list" data-top-search-results>${rows||'<div class="empty">Sin coincidencias.</div>'}</div>`;
+  }else if(users.length){
+    $('#contactsList').querySelector('[data-top-search-results]')?.insertAdjacentHTML('beforeend',rows);
+  }
+  $('#contactsList').querySelector('[data-top-search-more]')?.remove();
+  if(r?.hasMore){
+    $('#contactsList').insertAdjacentHTML('beforeend',`<button class="search-more" type="button" data-top-search-more data-next-offset="${Number(r.nextOffset)||offset+10}">Ver más</button>`);
+  }
+  applyContactsTopMode();
 }
 
 function renderNewContacts(){
@@ -540,9 +596,13 @@ function applyContactsTopMode(){
   $('#contactsTabRoles').classList.toggle('on',contactsTopMode==='roles');
   $('#contactsTabContacts').classList.toggle('on',contactsTopMode==='contacts');
 }
-$('#contactSearch').addEventListener('input',()=>{renderContacts('#contactsList',$('#contactSearch').value);applyContactsTopMode()});
-$('#contactsTabRoles').onclick=()=>{contactsTopMode='roles';applyContactsTopMode()};
-$('#contactsTabContacts').onclick=()=>{contactsTopMode='contacts';applyContactsTopMode()};
+let contactSearchTimer=null;
+$('#contactSearch').addEventListener('input',()=>{
+  clearTimeout(contactSearchTimer);
+  contactSearchTimer=setTimeout(()=>renderContactSearch(0,false),180);
+});
+$('#contactsTabRoles').onclick=()=>{contactsTopMode='roles';renderContacts('#contactsList',$('#contactSearch').value);applyContactsTopMode()};
+$('#contactsTabContacts').onclick=()=>{contactsTopMode='contacts';renderContactSearch(0,false)};
 $('#newContactsSearch').addEventListener('input',renderNewContacts);
 $('#newRolesSearch').addEventListener('input',renderNewRoles);
 
@@ -590,6 +650,11 @@ $$('[data-newtab]').forEach(b=>b.onclick=()=>{
 $('#btnNewClose').onclick=()=>$('#newOverlay').classList.remove('on');
 
 document.addEventListener('click',e=>{
+  const topMore=e.target.closest('[data-top-search-more]');
+  if(topMore){
+    renderContactSearch(Number(topMore.dataset.nextOffset)||0,true);
+    return;
+  }
   const more=e.target.closest('[data-search-more]');
   if(more){
     renderExactResult(Number(more.dataset.nextOffset)||0,true);
