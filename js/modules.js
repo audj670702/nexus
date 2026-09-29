@@ -1,5 +1,5 @@
 export const BASIC_MODULES=Object.freeze([
-{id:"mns",name:"Mensajería",description:"Comunicación MNS",capability:"mns"},
+{id:"mns",name:"Mensajería",description:"Comunicación MNS"},
 {id:"training",name:"Mis Cursos",description:"Cursos vigentes y completados"},
 {id:"docs",name:"Documentos",description:"Documentos disponibles"},
 {id:"schedule",name:"Programación",description:"Actividades y agenda"},
