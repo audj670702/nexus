@@ -3,7 +3,7 @@ import { getContext } from './context.js';
 // NEXUS · Integración MNS SYS · v1.1.0
 // MNS consume la autenticación/contexto ya resuelto por NEXUS; no mantiene autenticación propia.
 const CHANNEL='MNS_FRONTEND';
-const FRAME_URL='./mns-frontend-v052.html?v=0.5.30';
+const FRAME_URL='./mns-frontend-v052.html?v=0.5.31';
 const MNS_KEY='MNS-E8WRQH8ZCZ8Z';
 const BRIDGE_URL='https://www.scad.mx/_functions/mnsBridge';
 let activeContext=null;
