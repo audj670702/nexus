@@ -32,7 +32,7 @@ async function invokeMns(action,payload={}){
   const ctx=resolveMnsContext(activeContext);
   const response=await fetch(BRIDGE_URL,{method:'POST',mode:'cors',cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action,payload:{...payload,...ctx}})});
   const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data?.error||data?.mensaje||\`MNS no respondió (\${response.status}).\`);
+  if(!response.ok)throw new Error(data?.error||data?.mensaje||`MNS no respondió (${response.status}).`);
   if(data?.ok!==true)throw new Error(data?.error||data?.mensaje||'No fue posible completar la operación.');
   return data.data;
 }
