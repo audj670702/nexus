@@ -143,13 +143,12 @@ function ccaBits(c){
   const se=firstValue(cca,["Se","se","sesion","sesionWix"])??firstValue(auth,["sesionWix","session","sesion","authenticated"]);
   const us=firstValue(cca,["Us","us","usuario","usuarioActivo"])??firstValue(c?.user,["activo","active","estatus"]);
   const eo=firstValue(cca,["Eo","eo"])??!!c?.eo;
-  const mns=firstValue(cca,["Mns","mns"])??(typeof c?.mns==="object"?firstValue(c.mns,["activo","activa","enabled","habilitado"]):c?.mns);
   const app=installedApp();
-  return {Se:asBool(se??c?.authenticated),Us:asBool(us??!!c?.user),Eo:asBool(eo),Mns:asBool(mns),App:asBool(app)};
+  return {Se:asBool(se??c?.authenticated),Us:asBool(us??!!c?.user),Eo:asBool(eo),App:asBool(app)};
 }
 function paintCca(c){
   const b=ccaBits(c);
-  document.querySelector("#ccaLabel").textContent=`CCA · Se${+b.Se} Us${+b.Us} Eo${+b.Eo} Mns${+b.Mns} App${+b.App}`;
+  document.querySelector("#ccaLabel").textContent=`CCA · Se${+b.Se} Us${+b.Us} Eo${+b.Eo} App${+b.App}`;
 }
 let deferredInstallPrompt=window.__nexusInstallPrompt||null;
 function isIosDevice(){return /iphone|ipad|ipod/i.test(window.navigator.userAgent)}
@@ -369,7 +368,6 @@ async function boot(){
   document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://www.scad.mx/nexus-panel")});
-  document.addEventListener("nexus:mns-active",()=>{if(currentContext){currentContext.mns={...(currentContext.mns||{}),activo:true};paintCca(currentContext)}});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
 }
