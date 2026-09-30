@@ -5,6 +5,7 @@ let bitState={tipos:[],eventos:[],seguimientoEventos:[],facultades:{registro:fal
 let selectedEvidence=[];
 let lockedLocalId="";
 let selectedProgramacionId="";
+let selectedDetailEvent=null;
 let lastSavedSnapshot=null;
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -155,13 +156,30 @@ function renderFollowup(){
   const items=bitState.seguimientoEventos;
   $("#bitSeguimientoList").innerHTML=items.length?items.map(e=>`<button class="bitacora-item" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-folio">${esc(e.folio||"—")}</span><span class="bitacora-item-copy"><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"Evento")}</strong><span>${esc(e.descripcion||"")}</span></span><span class="bitacora-item-state">SEGUIMIENTO</span></button>`).join(""):'<div class="bitacora-empty">No hay eventos que requieran seguimiento dentro de tu alcance.</div>';
 }
-function openDetail(id){
-  const e=[...bitState.eventos,...bitState.seguimientoEventos].find(x=>String(x.id||x._id||"")===String(id||""));if(!e)return;
-  ["#bitRegistroView","#bitConsultaView","#bitSeguimientoView"].forEach(s=>$(s).hidden=true);
-  $("#bitDetalle").innerHTML=`<div class="bitacora-detail-row"><span>Folio</span><strong>${esc(e.folio||"—")}</strong></div><div class="bitacora-detail-row"><span>Tipo</span><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"—")}</strong></div><div class="bitacora-detail-row"><span>Evento</span><strong>${esc(fmt(e.fechaHoraEvento))}</strong></div><div class="bitacora-detail-row"><span>Lugar</span><strong>${esc(e.lugar||"—")}</strong></div><div class="bitacora-detail-row"><span>Registrado</span><strong>${esc(fmt(e.fechaHoraRegistro))}</strong></div><div class="bitacora-detail-row"><span>Responsable</span><strong>${esc(e.registranteNombre||"—")}</strong></div><div class="bitacora-detail-row"><span>Descripción</span><strong>${esc(e.descripcion||"—")}</strong></div><div class="bitacora-detail-row"><span>Comentarios</span><strong>${esc(e.comentarios||"—")}</strong></div><div class="bitacora-detail-row"><span>Estado</span><strong>${esc(e.estado||"VIGENTE")}</strong></div>${Array.isArray(e.seguimientos)&&e.seguimientos.length?e.seguimientos.map(s=>`<div class="bitacora-detail-row"><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><strong>${esc(s.nota||"")}</strong></div>`).join(""):""}${bitState.facultades.seguimiento===true&&e.requiereSeguimiento===true&&String(e.estado||"VIGENTE").toUpperCase()==="VIGENTE"?'<div class="bitacora-form"><label>Nueva anotación<textarea id="bitSeguimientoNota" rows="3" maxlength="2000" placeholder="Registra la anotación de seguimiento."></textarea></label></div><div class="bitacora-actions"><button id="btnBitGuardarSeguimiento" class="bitacora-primary" type="button">Guardar seguimiento</button></div>':""}`;
-  $("#bitDetalleView").hidden=false;
-  $("#btnBitGuardarSeguimiento")?.addEventListener("click",()=>{const nota=String($("#bitSeguimientoNota")?.value||"").trim();if(nota)document.dispatchEvent(new CustomEvent("nexus:bitacora-followup",{detail:{eventoId:String(e.id||e._id||""),nota}}))});
+function eventEvidenceList(e){const x=e?.evidencias||e?.evidence||e?.archivos||e?.adjuntos||[];return Array.isArray(x)?x:[]}
+function evidenceUrl(x){return typeof x==="string"?x:String(x?.url||x?.fileUrl||x?.downloadUrl||x?.src||"")}
+function evidenceIsImage(x){const t=String(x?.type||x?.mimeType||"").toLowerCase(),u=evidenceUrl(x).toLowerCase();return t.startsWith("image/")||/\.(png|jpe?g|webp|gif)(\?|$)/.test(u)}
+function renderEventCard(e){
+ const cls=eventClassState(e),dot=cls==="REGULAR"?"regular":cls==="TIP_CONSULTADA"?"tip-read":"tip-pending",act=eventActivity(e),ev=eventEvidenceList(e),seg=Array.isArray(e?.seguimientos)?e.seguimientos:[];
+ return `<div class="bit-saved-head"><div><i class="bit-status-symbol ${dot}"></i><strong>${isTipEvent(e)?"Tarjeta Informativa Prioritaria":"Registro de Bitácora"}</strong></div><span>Reg. ${esc(eventRegister(e))}</span></div>
+ <div class="bit-saved-line"><span>Tipo de evento</span><strong>${esc(e?.tipoEtiqueta||e?.tipo?.etiqueta||"—")}</strong></div>
+ <div class="bit-saved-line"><span>Fecha / hora</span><strong>${esc(eventColumnValue(e,"fecha"))} · ${esc(eventColumnValue(e,"hora"))}</strong></div>
+ ${act?`<div class="bit-saved-line"><span>Actividad relacionada</span><strong>${esc(act)}</strong></div>`:""}${e?.lugar?`<div class="bit-saved-line"><span>Lugar</span><strong>${esc(e.lugar)}</strong></div>`:""}
+ <div class="bit-saved-block"><span>Descripción</span><p>${esc(e?.descripcion||"—")}</p></div>${e?.comentarios?`<div class="bit-saved-block"><span>Comentarios</span><p>${esc(e.comentarios)}</p></div>`:""}
+ <div class="bit-saved-line"><span>Responsable del registro</span><strong>${esc(e?.registranteNombre||e?.responsableRegistro||"—")}</strong></div><div class="bit-saved-line"><span>Fecha de registro</span><strong>${esc(fmt(e?.fechaHoraRegistro))}</strong></div>
+ ${ev.length?`<div class="bit-card-evidence"><span>Evidencia</span><div>${ev.map((x,i)=>{const u=evidenceUrl(x),n=String(x?.name||x?.nombre||`Evidencia ${i+1}`);return u?(evidenceIsImage(x)?`<img src="${esc(u)}" alt="${esc(n)}">`:`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(n)}</a>`):`<span>${esc(n)}</span>`}).join("")}</div></div>`:""}
+ ${seg.length?`<div class="bit-card-section"><strong>Seguimiento</strong>${seg.map(s=>`<div><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><p>${esc(s.nota||"")}</p></div>`).join("")}</div>`:""}`;
 }
+async function exportCardPdf(e){
+ if(!e)return;try{const JsPDF=await loadJsPdf(),doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"}),logo=await imageDataUrl(eoAvatarUrl());let x=18;if(logo){try{doc.addImage(logo,"JPEG",18,12,18,18);x=40}catch(_){}}
+ doc.setFontSize(15);doc.text(isTipEvent(e)?"Tarjeta Informativa Prioritaria":"Registro de Bitácora",x,19);doc.setFontSize(9);doc.text(`${reportTitle()} · Reg. ${eventRegister(e)}`,x,25);let y=36;
+ const line=(k,v)=>{if(!v)return;doc.setFontSize(8);doc.text(k,18,y);doc.setFontSize(9);const z=doc.splitTextToSize(String(v),125);doc.text(z,62,y);y+=Math.max(7,z.length*4.2)};
+ line("Tipo",e?.tipoEtiqueta||e?.tipo?.etiqueta||"—");line("Fecha / hora",`${eventColumnValue(e,"fecha")} · ${eventColumnValue(e,"hora")}`);line("Actividad",eventActivity(e));line("Lugar",e?.lugar);line("Responsable",e?.registranteNombre||e?.responsableRegistro||"—");
+ const block=(k,v)=>{if(!v)return;doc.setFontSize(8);doc.text(k,18,y);y+=5;doc.setFontSize(9);const z=doc.splitTextToSize(String(v),174);doc.text(z,18,y);y+=Math.max(9,z.length*4.2+4)};block("Descripción",e?.descripcion||"—");block("Comentarios",e?.comentarios);
+ for(const ev of eventEvidenceList(e).filter(evidenceIsImage).slice(0,3)){const data=await imageDataUrl(evidenceUrl(ev));if(!data)continue;if(y>240){doc.addPage();y=18}try{doc.addImage(data,"JPEG",18,y,80,55);y+=61}catch(_){}}
+ const seg=Array.isArray(e?.seguimientos)?e.seguimientos:[];if(seg.length){if(y>245){doc.addPage();y=18}block("Seguimiento","");for(const s of seg)block(`${fmt(s.fechaRegistro)} · ${s.autorNombre||"Usuario"}`,s.nota||"")}
+ doc.save(`BIT_Tarjeta_${eventRegister(e)}.pdf`)}catch(err){window.alert(err?.message||"No fue posible generar la Tarjeta PDF.")}}
+function openDetail(id){const e=[...bitState.eventos,...bitState.seguimientoEventos].find(x=>String(x.id||x._id||"")===String(id||""));if(!e)return;selectedDetailEvent=e;["#bitRegistroView","#bitConsultaView","#bitSeguimientoView"].forEach(s=>$(s).hidden=true);$("#bitDetalle").innerHTML=renderEventCard(e);$("#bitDetalleView").hidden=false}
 function applyCapabilities(){
   $("#btnBitRegistro").hidden=bitState.facultades.registro!==true;$("#btnBitConsulta").hidden=bitState.facultades.consulta!==true;$("#btnBitSeguimiento").hidden=bitState.facultades.seguimiento!==true;$("#bitEvidenciaField").hidden=bitState.evidencias!==true;
 }
@@ -260,7 +278,7 @@ export async function notifyBitSynced(){await refreshLocalStatus()}
 export function initBitacora(){
   const modal=$("#bitacoraModal");if(!modal)return;
   $("#btnCloseBitacora").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",e=>{if(e.target===modal)modal.hidden=true});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)modal.hidden=true});
-  $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>setTab("consulta"));
+  $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>{selectedDetailEvent=null;setTab("consulta")});$("#btnBitTarjetaPdf")?.addEventListener("click",()=>exportCardPdf(selectedDetailEvent));
   $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
   $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open));$("#btnBitFiltros").classList.toggle("is-selected",open)});
   $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open));$("#btnBitColumnas").classList.toggle("is-selected",open)});
