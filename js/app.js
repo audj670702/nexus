@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.77";
+const VERSION="0.2.78";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -198,7 +198,7 @@ function initInstallFlow(){
 }
 
 function eoInfoRows(eo={}){
-  const description=firstValue(eo,["descripcion","descripcionEO","descripcionPublica","description"]);
+  const description=firstValue(eo,["descripcionEo","descripcion","descripcionEO","descripcionPublica","description"]);
   return description?`<p class="eo-description">${String(description)}</p>`:'<p class="eo-description eo-description-empty">Sin descripción disponible.</p>';
 }
 function paintEo(eo){
