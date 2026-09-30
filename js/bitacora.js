@@ -5,6 +5,7 @@ let bitState={tipos:[],eventos:[],seguimientoEventos:[],facultades:{registro:fal
 let selectedEvidence=[];
 let lockedLocalId="";
 let selectedProgramacionId="";
+let lastSavedSnapshot=null;
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es-MX").trim();
@@ -60,15 +61,42 @@ function renderSelectedEvidence(){
   box.innerHTML=selectedEvidence.map((x,i)=>`<div class="bit-evidence-chip"><span>${esc(x.name)}</span><button type="button" data-remove-evidence="${i}" aria-label="Eliminar ${esc(x.name)}">×</button></div>`).join("");
   box.hidden=!selectedEvidence.length;
 }
+function typeLabel(id){const t=bitState.tipos.find(x=>String(x.id||x._id||x.clave||"")===String(id||""));return String(t?.etiqueta||t?.nombre||t?.clave||"—")}
+function evidencePreviewHtml(files=[],isTip=false){
+  if(!files.length)return "";
+  const images=files.filter(f=>String(f.type||"").startsWith("image/"));
+  if(isTip&&images.length){
+    const src=URL.createObjectURL(images[0]);
+    return `<div class="bit-saved-evidence"><span>Evidencia</span><img src="${esc(src)}" alt="Evidencia principal de la TIP"></div>`;
+  }
+  return `<div class="bit-saved-line"><span>Evidencia</span><button id="btnBitVerEvidencia" class="bit-evidence-action" type="button">Ver evidencia${files.length>1?"s":""}</button></div>`;
+}
+function renderSavedRegister(folio=""){
+  const box=$("#bitRegistroSaved");if(!box||!lastSavedSnapshot)return;
+  const s=lastSavedSnapshot,a=s.programacionId?selectedActivity():null;
+  box.innerHTML=`<div class="bit-saved-head"><div><span class="bit-tip-dot ${s.esTip?"bit-tip-dot-red bit-tip-pulse":"bit-tip-dot-black"}" aria-hidden="true"></span><strong>${s.esTip?"Tarjeta Informativa Prioritaria":"Registro de Bitácora"}</strong></div><span>${esc(folio||"Pendiente de sincronización")}</span></div>
+    <div class="bit-saved-line"><span>Tipo de evento</span><strong>${esc(typeLabel(s.tipoId))}</strong></div>
+    <div class="bit-saved-line"><span>Fecha / hora</span><strong>${esc(s.fecha)} · ${esc(s.hora)}</strong></div>
+    ${a?`<div class="bit-saved-line"><span>Actividad relacionada</span><strong>${esc(activityTitle(a))}</strong></div>`:""}
+    ${s.lugar?`<div class="bit-saved-line"><span>Lugar</span><strong>${esc(s.lugar)}</strong></div>`:""}
+    <div class="bit-saved-block"><span>Descripción</span><p>${esc(s.descripcion)}</p></div>
+    ${s.comentarios?`<div class="bit-saved-block"><span>Comentarios</span><p>${esc(s.comentarios)}</p></div>`:""}
+    <div class="bit-saved-line"><span>Seguimiento</span><strong>${s.requiereSeguimiento?"Requerido":"No requerido"}</strong></div>
+    ${evidencePreviewHtml(selectedEvidence,s.esTip)}`;
+  box.hidden=false;
+  $("#btnBitVerEvidencia")?.addEventListener("click",()=>{const f=selectedEvidence[0];if(!f)return;const url=URL.createObjectURL(f);window.open(url,"_blank","noopener,noreferrer")});
+}
 function setRegisterLocked(locked,folio=""){
   const form=$("#bitRegistroView");if(!form)return;
-  form.querySelectorAll("select,input,textarea").forEach(el=>el.disabled=locked);if($("#btnBitRelacionar"))$("#btnBitRelacionar").disabled=locked;
-  $("#btnBitGuardar").hidden=locked;
+  $("#bitacoraForm")?.toggleAttribute("hidden",locked);
+  const formBox=form.querySelector(".bitacora-form");if(formBox)formBox.hidden=locked;
+  $("#btnBitGuardar").hidden=locked;$("#btnBitNuevo").hidden=!locked;
   const lock=$("#bitRegistroLock");lock.hidden=!locked;
   $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
+  if(locked)renderSavedRegister(folio);else if($("#bitRegistroSaved"))$("#bitRegistroSaved").hidden=true;
 }
 function clearRegisterForm(){
-  $("#bitTipo").value="";selectedProgramacionId="";paintProgramacionSelection();$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
+  $("#bitTipo").value="";selectedProgramacionId="";paintProgramacionSelection();$("#bitLugar").value="";$("#bitDescripcion").value="";$("#bitComentarios").value="";$("#bitRequiereSeguimiento").checked=false;$("#bitEsTip").checked=false;$("#bitEvidencias").value="";selectedEvidence=[];lastSavedSnapshot=null;renderSelectedEvidence();const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;
 }
 async function refreshLocalStatus(){
   const items=await listQueueItems("BIT");const pending=items.filter(x=>x.syncStatus!=="SINCRONIZADO");const errors=pending.filter(x=>x.syncStatus==="ERROR");
@@ -84,7 +112,7 @@ async function renderPending(items=null){
   panel.innerHTML=pending.length?pending.map(x=>`<div class="bit-pending-row"><div><strong>${esc(x.serverFolio||x.localId)}</strong><span>${esc(fmt(x.createdLocalAt))}</span></div><span>${esc(x.syncStatus)}</span>${x.syncError?`<small>${esc(x.syncError)}</small>`:""}${x.syncStatus==="ERROR"?`<button type="button" data-retry-local-id="${esc(x.localId)}">Reintentar</button>`:""}</div>`).join(""):'<div class="bitacora-empty">No hay registros pendientes.</div>';
 }
 async function saveLocalEvent(){
-  const detail={tipoId:String($("#bitTipo").value||""),programacionId:selectedProgramacionId,fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true};
+  const detail={tipoId:String($("#bitTipo").value||""),programacionId:selectedProgramacionId,fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true,esTip:$("#bitEsTip").checked===true};
   if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){window.alert("Completa Tipo de evento, fecha, hora y descripción.");return}
   const localId=createLocalId("bit"),createdLocalAt=new Date().toISOString();
   const queueItem={localId,module:"BIT",operation:"REGISTER_EVENT",payload:detail,syncStatus:"PENDIENTE",createdLocalAt,lastSyncAttempt:null,syncError:"",syncAttempts:0,serverId:"",serverFolio:""};
@@ -93,7 +121,7 @@ async function saveLocalEvent(){
     if(file.size>10*1024*1024){window.alert(`La evidencia "${file.name}" excede 10 MB y no fue guardada.`);continue}
     await putEvidence({evidenceId:createLocalId("evi"),localId,file,name:file.name,type:file.type||"application/octet-stream",size:file.size,syncStatus:"PENDIENTE",syncAttempts:0,lastSyncAttempt:null,syncError:""});
   }
-  lockedLocalId=localId;setRegisterLocked(true);await refreshLocalStatus();
+  lastSavedSnapshot={...detail};lockedLocalId=localId;setRegisterLocked(true);await refreshLocalStatus();
   document.dispatchEvent(new CustomEvent("nexus:bitacora-local-saved",{detail:{localId}}));
 }
 export function setBitacoraContext(context){bitContext=context||null}
@@ -129,6 +157,7 @@ export function initBitacora(){
   $("#bitEvidencias").addEventListener("change",e=>{selectedEvidence=[...selectedEvidence,...Array.from(e.target.files||[])].slice(0,10);e.target.value="";renderSelectedEvidence()});
   $("#bitEvidenceSelected").addEventListener("click",e=>{const b=e.target.closest("[data-remove-evidence]");if(!b)return;selectedEvidence.splice(Number(b.dataset.removeEvidence),1);renderSelectedEvidence()});
   $("#btnBitGuardar").addEventListener("click",()=>saveLocalEvent().catch(error=>window.alert(error?.message||"No fue posible guardar el registro en este dispositivo.")));
+  $("#btnBitNuevo").addEventListener("click",()=>{lockedLocalId="";clearRegisterForm();setRegisterLocked(false);$("#bitRegistroResult").hidden=true;const n=nowLocal();$("#bitFecha").value=n.fecha;$("#bitHora").value=n.hora;});
   $("#bitSyncStatus").addEventListener("click",()=>{const p=$("#bitPendingPanel");p.hidden=!p.hidden;if(!p.hidden)renderPending()});
   $("#bitPendingPanel").addEventListener("click",e=>{const b=e.target.closest("[data-retry-local-id]");if(b)document.dispatchEvent(new CustomEvent("nexus:bitacora-retry",{detail:{localId:b.dataset.retryLocalId}}))});
   window.addEventListener("online",()=>{refreshLocalStatus();document.dispatchEvent(new CustomEvent("nexus:bitacora-sync-request"))});window.addEventListener("offline",refreshLocalStatus);
