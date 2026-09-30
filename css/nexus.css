@@ -351,3 +351,19 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .bit-card-evidence{display:grid;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.67rem}.bit-card-evidence>span,.bit-card-section>strong{color:var(--muted);font-weight:650}.bit-card-evidence>div{display:flex;flex-wrap:wrap;gap:8px}.bit-card-evidence img{display:block;width:min(220px,100%);height:150px;object-fit:contain;border:1px solid var(--line);border-radius:7px;background:#f8fafc}.bit-card-evidence a{color:#205985;font-weight:800}
 .bit-card-section{padding:10px 0;border-bottom:1px solid var(--line);font-size:.67rem}.bit-card-section>div{padding-top:8px}.bit-card-section span{font-size:.58rem;color:var(--muted);font-weight:700}.bit-card-section p{margin:4px 0 0;white-space:pre-wrap;line-height:1.45}
 @media(max-width:559px){.bit-card-toolbar{position:sticky;top:0;z-index:2;background:#fff;padding:3px 0 7px}.bit-card-evidence>div{display:grid;grid-template-columns:1fr}.bit-card-evidence img{width:100%;height:auto;max-height:300px}}
+
+
+/* BIT · Seguimiento asignable · v0.2.86 */
+.bit-followup-source-filter{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.58rem;font-weight:800}
+.bit-followup-source-filter select{min-height:32px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);padding:6px 8px;font:inherit;font-size:.62rem}
+.bit-followup-head,.bit-followup-main{display:grid;grid-template-columns:105px 115px 64px 92px minmax(190px,1fr) 150px;gap:8px;align-items:center}
+.bit-followup-head{padding:7px 5px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.52rem;font-weight:850;text-transform:uppercase}
+.bit-followup-item{border-bottom:1px solid var(--line);padding:0}
+.bit-followup-main{width:100%;border:0;background:#fff;color:var(--ink);padding:9px 5px;text-align:left;cursor:pointer}
+.bit-followup-main:hover{background:#f8fafc}
+.bit-followup-state,.bit-followup-source,.bit-followup-date,.bit-followup-assignee{font-size:.58rem}
+.bit-followup-state{font-weight:850;color:#205985}.bit-followup-source{font-weight:750}.bit-followup-assignee{font-weight:700}
+.bit-followup-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;padding:0 5px 8px}
+.bit-followup-actions button{min-height:30px;border:1px solid #b9c9d8;border-radius:7px;background:#fff;color:#205985;padding:5px 9px;font:inherit;font-size:.58rem;font-weight:850;cursor:pointer}
+.bit-followup-actions button:hover{background:#f4f8fb}
+@media(max-width:700px){.bit-followup-head{display:none}.bit-followup-main{grid-template-columns:1fr 1fr;gap:5px 8px}.bit-followup-main .bitacora-item-copy{grid-column:1/-1}.bit-followup-assignee{text-align:right}.bit-followup-actions{justify-content:flex-start}.bit-followup-source-filter{align-items:flex-end;flex-direction:column;gap:3px}}
