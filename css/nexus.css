@@ -305,3 +305,18 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .bit-report-row>.bitacora-line,.bit-report-row>.bitacora-folio,.bit-report-row>.bit-state-cell{display:flex;align-items:center}
 .bit-sort-head{width:100%;min-width:0;border:0;background:transparent;color:inherit;padding:0;text-align:left;font:inherit;font-weight:850;text-transform:uppercase;cursor:pointer;white-space:nowrap}.bit-sort-head span{font-size:.65rem}.bit-sort-head.is-active{color:#205985}
 .bit-report-notes-label{grid-column:1/-1;display:grid!important;gap:4px;color:var(--muted);font-size:.56rem;font-weight:800}.bit-report-notes-label textarea{width:100%;min-height:62px;resize:vertical;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);padding:8px;font:inherit;font-size:.64rem;line-height:1.4}
+
+
+/* BIT · CONSULTAR corrección de retícula + PDF · v0.2.82 */
+.bit-report-head,.bit-report-row{grid-template-columns:34px 50px 28px repeat(var(--bit-event-cols),minmax(0,1fr));width:100%;min-width:760px}
+.bit-report-head>span,.bit-report-head>.bit-sort-head,.bit-report-row>span{grid-column:auto!important;width:auto!important;margin:0!important;transform:none!important}
+.bit-report-head{align-items:center}.bit-report-row{align-items:start}
+.bit-report-head>span,.bit-report-head>.bit-sort-head{padding:0 5px}
+.bit-report-row>.bitacora-line,.bit-report-row>.bitacora-folio,.bit-report-row>.bit-state-cell,.bit-report-row>.bit-report-value{padding:7px 5px;box-sizing:border-box}
+.bit-report-row>.bitacora-line,.bit-report-row>.bitacora-folio,.bit-report-row>.bit-state-cell{min-height:44px;align-items:flex-start;padding-top:9px}
+.bit-report-row>.bit-report-value{min-height:44px;max-height:62px}
+.bit-pdf-options{margin-top:9px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}
+.bit-pdf-options label{display:grid;gap:5px;color:var(--muted);font-size:.58rem;font-weight:800}.bit-pdf-options label>span{font-size:.53rem;font-weight:650}
+.bit-pdf-options textarea{width:100%;min-height:68px;resize:vertical;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);padding:8px;font:inherit;font-size:.64rem;line-height:1.4}
+.bit-pdf-options-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}.bit-pdf-options-actions .bitacora-primary{min-height:34px;padding:7px 12px}
+@media(max-width:700px){.bit-report-head,.bit-report-row{grid-template-columns:30px 46px 26px repeat(var(--bit-event-cols),minmax(96px,1fr));min-width:max-content}}
