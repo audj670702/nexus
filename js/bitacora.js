@@ -41,6 +41,7 @@ const BIT_EVENT_COLUMNS=[
   {id:"actividad",label:"Actividad"},{id:"seguimiento",label:"Seguimiento"},{id:"fechaRegistro",label:"Fecha registro"}
 ];
 let bitReportColumns=["fecha","hora","tipo","descripcion"];
+let bitSort={id:"fecha",dir:"DESC"};
 function eventDate(e){const raw=e?.fechaHoraEvento||e?.fechaEvento||e?.fecha||"";const d=raw?new Date(raw):null;return d&&!Number.isNaN(d.getTime())?d:null}
 function eventActivity(e){
   const direct=String(e?.actividadProgramada||e?.actividadNombre||e?.programacionNombre||e?.actividad?.titulo||e?.programacion?.titulo||"").trim();
@@ -72,11 +73,17 @@ function renderColumnSelector(){
   const box=$("#bitColumnasOpciones");if(!box)return;
   box.innerHTML=BIT_EVENT_COLUMNS.map(c=>`<label><input type="checkbox" data-bit-column="${esc(c.id)}" ${bitReportColumns.includes(c.id)?"checked":""}><span>${esc(c.label)}</span></label>`).join("");
 }
+function compareReportValues(a,b,id){
+  if(id==="fecha"||id==="hora"){const ad=eventDate(a)?.getTime()||0,bd=eventDate(b)?.getTime()||0;return ad-bd}
+  return eventColumnValue(a,id).localeCompare(eventColumnValue(b,id),"es",{numeric:true,sensitivity:"base"});
+}
+function sortReportItems(items){const id=bitSort.id,dir=bitSort.dir==="ASC"?1:-1;return items.slice().sort((a,b)=>{const c=compareReportValues(a,b,id);return c*dir||String(a?.folio||"").localeCompare(String(b?.folio||""),"es",{numeric:true,sensitivity:"base"})})}
+function sortButton(id,label){const active=bitSort.id===id,arrow=active?(bitSort.dir==="ASC"?"↑":"↓"):"↕";return `<button class="bit-sort-head ${active?"is-active":""}" type="button" data-bit-sort="${esc(id)}" title="Ordenar ${esc(label)}">${esc(label)} <span>${arrow}</span></button>`}
 function filteredEvents(){
   const rawQ=String($("#bitBuscar")?.value||"").trim(),q=rawQ.length>=3?norm(rawQ):"";
   const tipo=String($("#bitFiltroTipo")?.value||""),desde=String($("#bitFiltroDesde")?.value||""),hasta=String($("#bitFiltroHasta")?.value||"");
   const responsable=norm($("#bitFiltroResponsable")?.value),actividad=norm($("#bitFiltroActividad")?.value),estado=String($("#bitFiltroEstado")?.value||"VIGENTE"),tip=String($("#bitFiltroTip")?.value||"");
-  return bitState.eventos.filter(e=>{
+  return sortReportItems(bitState.eventos.filter(e=>{
     const eEstado=String(e?.estado||"VIGENTE").toUpperCase();
     if(estado==="VIGENTE"&&eEstado==="SUSTITUIDO")return false;if(estado==="SUSTITUIDO"&&eEstado!=="SUSTITUIDO")return false;
     if(tipo&&String(e?.tipoId||e?.tipo?.id||"")!==tipo)return false;
@@ -88,15 +95,16 @@ function filteredEvents(){
     if(!q)return true;
     const hay=norm(`${e?.folio||""} ${e?.lugar||""} ${e?.descripcion||""} ${e?.comentarios||""} ${e?.tipoEtiqueta||e?.tipo?.etiqueta||""} ${e?.registranteNombre||""} ${eventActivity(e)} ${e?.estado||""}`);
     return hay.includes(q);
-  });
+  }));
 }
 function renderEvents(){
   const items=filteredEvents();$("#bitConsultaCount").textContent=`${items.length} evento${items.length===1?"":"s"}`;
-  const head=bitReportColumns.map(id=>`<span>${esc(BIT_EVENT_COLUMNS.find(c=>c.id===id)?.label||id)}</span>`).join("");
+  const head=bitReportColumns.map(id=>sortButton(id,BIT_EVENT_COLUMNS.find(c=>c.id===id)?.label||id)).join("");
   const rows=items.map((e,i)=>`<button class="bit-report-row" style="--bit-event-cols:${bitReportColumns.length}" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-line">${i+1}</span><span class="bitacora-folio">${esc(eventRegister(e))}</span>${eventStateHtml(e)}${bitReportColumns.map(id=>`<span class="bit-report-value bit-col-${esc(id)}">${esc(eventColumnValue(e,id))}</span>`).join("")}</button>`).join("");
   $("#bitEventosList").innerHTML=items.length?`<div class="bit-report-head" style="--bit-event-cols:${bitReportColumns.length}"><span>No.</span><span>Reg.</span><span title="Estado">●</span>${head}</div>${rows}`:'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
 }
 function reportTitle(){return `BITÁCORA · ${String(bitContext?.eo?.nombreMostrar||bitContext?.eo?.nombre||bitContext?.eo?.codigoEO||"")}`}
+function reportNotes(){return String($("#bitReporteAnotaciones")?.value||"").trim()}
 function reportFiltersText(){
   const parts=[],q=String($("#bitBuscar")?.value||"").trim();if(q.length>=3)parts.push(`Búsqueda: ${q}`);
   const desde=$("#bitFiltroDesde")?.value,hasta=$("#bitFiltroHasta")?.value;if(desde||hasta)parts.push(`Fecha: ${desde||"inicio"} a ${hasta||"actual"}`);
@@ -109,18 +117,36 @@ function reportMatrix(){
   const rows=items.map((e,i)=>[String(i+1),eventRegister(e),eventStateSymbol(e),...bitReportColumns.map(id=>eventColumnValue(e,id))]);
   return {items,headers,rows};
 }
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function eoAvatarUrl(){const eo=bitContext?.eo||{},raw=eo.logoEo||eo.logoEO||eo.logo||eo.logoUrl||eo.imageUrl||"";if(!raw)return "";if(typeof raw==="object")return String(raw.url||raw.src||raw.imageUrl||raw.fileUrl||"");const s=String(raw).trim();if(s.startsWith("wix:image://v1/")){const id=s.slice("wix:image://v1/".length).split("/")[0];return id?`https://static.wixstatic.com/media/${id}`:""}return s}
 function exportExcel(){
   const {items,headers,rows}=reportMatrix();if(!items.length){window.alert("No hay registros para exportar.");return}
-  const user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario");
+  const user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario"),notes=reportNotes();
   const tr=row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`;
-  const html=`<!doctype html><html><head><meta charset="utf-8"></head><body><table><tr><th colspan="${headers.length}">${esc(reportTitle())}</th></tr><tr><td colspan="${headers.length}">${esc(reportFiltersText())}</td></tr><tr><td colspan="${headers.length}">■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${esc(user)}.</td></tr><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${rows.map(tr).join("")}</table></body></html>`;
-  const blob=new Blob(["\ufeff",html],{type:"application/vnd.ms-excel;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`BIT_reporte_${nowLocal().fecha}.xls`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const html=`<!doctype html><html><head><meta charset="utf-8"></head><body><table><tr><th colspan="${headers.length}">${esc(reportTitle())}</th></tr><tr><td colspan="${headers.length}">${esc(reportFiltersText())}</td></tr>${notes?`<tr><td colspan="${headers.length}"><strong>Anotaciones:</strong> ${esc(notes)}</td></tr>`:""}<tr><td colspan="${headers.length}">■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${esc(user)}.</td></tr><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${rows.map(tr).join("")}</table></body></html>`;
+  downloadBlob(new Blob(["\ufeff",html],{type:"application/vnd.ms-excel;charset=utf-8"}),`BIT_reporte_${nowLocal().fecha}.xls`);
 }
-function exportPdf(){
+async function loadJsPdf(){
+  if(window.jspdf?.jsPDF)return window.jspdf.jsPDF;
+  await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";s.onload=resolve;s.onerror=()=>reject(new Error("No fue posible cargar el generador PDF."));document.head.appendChild(s)});
+  await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js";s.onload=resolve;s.onerror=()=>reject(new Error("No fue posible cargar la tabla PDF."));document.head.appendChild(s)});
+  return window.jspdf?.jsPDF;
+}
+async function imageDataUrl(url){
+  if(!url)return "";try{const r=await fetch(url,{mode:"cors",cache:"force-cache"});if(!r.ok)return "";const b=await r.blob();return await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(String(fr.result||""));fr.onerror=reject;fr.readAsDataURL(b)})}catch(_){return ""}
+}
+async function exportPdf(){
   const {items,headers,rows}=reportMatrix();if(!items.length){window.alert("No hay registros para exportar.");return}
-  const user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario"),w=window.open("","_blank");if(!w){window.alert("El navegador bloqueó la ventana de exportación.");return}
-  const tableRows=rows.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("");
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Reporte BIT</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#182433;font-size:9px}h1{font-size:15px;margin:0 0 4px}.meta{margin:0 0 8px;color:#526273}.legend{margin:7px 0 10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd4de;padding:5px;text-align:left;vertical-align:top}th{background:#eef3f7}button{margin:0 0 10px;padding:7px 12px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Imprimir / Guardar PDF</button><h1>${esc(reportTitle())}</h1><p class="meta">${esc(reportFiltersText())}</p><p class="legend">■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${esc(user)}.</p><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${tableRows}</tbody></table></body></html>`);w.document.close();
+  try{
+    const JsPDF=await loadJsPdf();if(!JsPDF)throw new Error("Generador PDF no disponible.");
+    const doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"}),user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario"),notes=reportNotes();
+    const logo=await imageDataUrl(eoAvatarUrl());let titleX=14;if(logo){try{doc.addImage(logo,"JPEG",14,10,16,16);titleX=34}catch(_){}}
+    doc.setFontSize(15);doc.text(reportTitle(),titleX,16);doc.setFontSize(8);doc.setTextColor(85);doc.text(reportFiltersText(),titleX,21,{maxWidth:245});
+    let y=29;if(notes){doc.setTextColor(30);doc.setFontSize(8);doc.text("Anotaciones:",14,y);doc.setFontSize(8);const lines=doc.splitTextToSize(notes,260);doc.text(lines,34,y);y+=Math.max(8,lines.length*4)}
+    doc.setTextColor(75);doc.setFontSize(7);doc.text(`■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${user}.`,14,y);y+=5;
+    doc.autoTable({startY:y,head:[headers],body:rows,styles:{fontSize:6.5,cellPadding:1.8,overflow:"linebreak",valign:"top"},headStyles:{fontStyle:"bold"},margin:{left:14,right:14},didParseCell:data=>{if(data.section==="body"&&data.column.index===2){const v=String(data.cell.raw||"");if(v==="●")data.cell.styles.textColor=[190,35,35];else if(v==="○")data.cell.styles.textColor=[32,89,133]}}});
+    doc.save(`BIT_reporte_${nowLocal().fecha}.pdf`);
+  }catch(error){window.alert(error?.message||"No fue posible generar el PDF.")}
 }
 function renderFollowup(){
   const items=bitState.seguimientoEventos;
@@ -233,11 +259,12 @@ export function initBitacora(){
   $("#btnCloseBitacora").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",e=>{if(e.target===modal)modal.hidden=true});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)modal.hidden=true});
   $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>setTab("consulta"));
   $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
-  $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open))});
-  $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open))});
+  $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open));$("#btnBitFiltros").classList.toggle("is-selected",open)});
+  $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open));$("#btnBitColumnas").classList.toggle("is-selected",open)});
   $("#btnBitLimpiarFiltros")?.addEventListener("click",()=>{$("#bitBuscar").value="";$("#bitFiltroDesde").value="";$("#bitFiltroHasta").value="";$("#bitFiltroTipo").value="";$("#bitFiltroResponsable").value="";$("#bitFiltroActividad").value="";$("#bitFiltroEstado").value="VIGENTE";$("#bitFiltroTip").value="";renderEvents()});
   $("#bitColumnasOpciones")?.addEventListener("change",e=>{const input=e.target.closest("[data-bit-column]");if(!input)return;const id=String(input.dataset.bitColumn||"");if(input.checked){if(bitReportColumns.length>=6){input.checked=false;window.alert("Puedes mostrar hasta 6 columnas del evento.");return}if(!bitReportColumns.includes(id))bitReportColumns.push(id)}else{bitReportColumns=bitReportColumns.filter(x=>x!==id);if(!bitReportColumns.length){bitReportColumns=["descripcion"];renderColumnSelector()}}renderEvents()});
-  $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",exportPdf);
+  $("#bitEventosList")?.addEventListener("click",e=>{const sort=e.target.closest("[data-bit-sort]");if(sort){const id=String(sort.dataset.bitSort||"");bitSort=id===bitSort.id?{id,dir:bitSort.dir==="ASC"?"DESC":"ASC"}:{id,dir:"ASC"};renderEvents();return}});
+  $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",()=>exportPdf());
   $("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});
   $("#btnBitRelacionar")?.addEventListener("click",openProgramacionPicker);$("#btnBitRelacionCerrar")?.addEventListener("click",closeProgramacionPicker);$("#bitRelacionModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeProgramacionPicker()});$("#bitRelacionBuscar")?.addEventListener("input",renderProgramacionPicker);$("#bitRelacionFecha")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTipo")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTodas")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionLista")?.addEventListener("click",e=>{const row=e.target.closest("[data-programacion-id]");if(!row)return;selectedProgramacionId=String(row.dataset.programacionId||"");paintProgramacionSelection();closeProgramacionPicker()});$("#bitFecha")?.addEventListener("change",()=>{if(!selectedProgramacionId)return;const a=selectedActivity();if(a&&activityDate(a)!==String($("#bitFecha").value||"")){selectedProgramacionId="";paintProgramacionSelection()}});
   $("#bitEvidencias").addEventListener("change",e=>{selectedEvidence=[...selectedEvidence,...Array.from(e.target.files||[])].slice(0,10);e.target.value="";renderSelectedEvidence()});
