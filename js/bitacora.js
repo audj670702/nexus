@@ -152,9 +152,20 @@ async function exportPdf(){
     doc.save(`BIT_reporte_${nowLocal().fecha}.pdf`);
   }catch(error){window.alert(error?.message||"No fue posible generar el PDF.")}
 }
+function followupSource(e){return String(e?.fuente||"BIT").toUpperCase()==="CTE"?"CTE":"BIT"}
+function followupState(e){return String(e?.seguimientoEstado||"SIN_ASIGNAR").toUpperCase()}
+function followupCurrentUserIsAssignee(e){const uid=String(bitContext?.user?._id||bitContext?.user?.id||"").trim(),mid=String(bitContext?.memberId||"").trim(),a=e?.asignacionActual||{};return (!!uid&&String(a?.asignadoUsrId||"")===uid)||(!!mid&&String(a?.asignadoMemberId||"")===mid)}
 function renderFollowup(){
-  const items=bitState.seguimientoEventos;
-  $("#bitSeguimientoList").innerHTML=items.length?items.map(e=>`<button class="bitacora-item" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-folio">${esc(e.folio||"—")}</span><span class="bitacora-item-copy"><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"Evento")}</strong><span>${esc(e.descripcion||"")}</span></span><span class="bitacora-item-state">SEGUIMIENTO</span></button>`).join(""):'<div class="bitacora-empty">No hay eventos que requieran seguimiento dentro de tu alcance.</div>';
+  const source=String($("#bitSeguimientoFuente")?.value||"TODOS").toUpperCase();
+  const items=bitState.seguimientoEventos.filter(e=>source==="TODOS"||followupSource(e)===source);
+  $("#bitSeguimientoList").innerHTML=items.length?items.map(e=>{
+    const id=String(e.id||e._id||""),state=followupState(e),mine=followupCurrentUserIsAssignee(e),assigned=String(e?.asignacionActual?.asignadoNombre||"Sin asignar");
+    const actions=[];
+    if(state==="SIN_ASIGNAR")actions.push(`<button type="button" data-bit-followup-action="take" data-bit-id="${esc(id)}">Tomar seguimiento</button>`);
+    if(state!=="ATENDIDO")actions.push(`<button type="button" data-bit-followup-action="note" data-bit-id="${esc(id)}">Registrar seguimiento</button>`);
+    if(mine&&state==="EN_SEGUIMIENTO"){actions.push(`<button type="button" data-bit-followup-action="release" data-bit-id="${esc(id)}">Liberar</button>`);actions.push(`<button type="button" data-bit-followup-action="attended" data-bit-id="${esc(id)}">Marcar atendido</button>`)}
+    return `<article class="bit-followup-item"><button class="bit-followup-main" type="button" data-bit-id="${esc(id)}"><span class="bit-followup-state">${esc(state==="EN_SEGUIMIENTO"?"En seguimiento":state==="ATENDIDO"?"Atendido":"Sin asignar")}</span><span class="bit-followup-source">${esc(followupSource(e)==="CTE"?"Atención al Cliente":"Bitácora")}</span><span class="bitacora-folio">Reg. ${esc(eventRegister(e))}</span><span class="bit-followup-date">${esc(eventColumnValue(e,"fecha"))}</span><span class="bitacora-item-copy"><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"Evento")}</strong><span>${esc(e.descripcion||"")}</span></span><span class="bit-followup-assignee">${esc(assigned)}</span></button><div class="bit-followup-actions">${actions.join("")}</div></article>`
+  }).join(""):'<div class="bitacora-empty">No hay eventos que requieran seguimiento para el origen seleccionado.</div>';
 }
 function eventEvidenceList(e){const x=e?.evidencias||e?.evidence||e?.archivos||e?.adjuntos||[];return Array.isArray(x)?x:[]}
 function evidenceUrl(x){return typeof x==="string"?x:String(x?.url||x?.fileUrl||x?.downloadUrl||x?.src||"")}
@@ -342,7 +353,19 @@ export function initBitacora(){
   $("#bitColumnasOpciones")?.addEventListener("change",e=>{const input=e.target.closest("[data-bit-column]");if(!input)return;const id=String(input.dataset.bitColumn||"");if(input.checked){if(bitReportColumns.length>=6){input.checked=false;window.alert("Puedes mostrar hasta 6 columnas del evento.");return}if(!bitReportColumns.includes(id))bitReportColumns.push(id)}else{bitReportColumns=bitReportColumns.filter(x=>x!==id);if(!bitReportColumns.length){bitReportColumns=["descripcion"];renderColumnSelector()}}renderEvents()});
   $("#bitEventosList")?.addEventListener("click",e=>{const sort=e.target.closest("[data-bit-sort]");if(sort){const id=String(sort.dataset.bitSort||"");bitSort=id===bitSort.id?{id,dir:bitSort.dir==="ASC"?"DESC":"ASC"}:{id,dir:"ASC"};renderEvents();return}});
   $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=false;$("#bitReporteAnotaciones")?.focus()});$("#btnBitPdfCancelar")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=true});$("#btnBitPdfDescargar")?.addEventListener("click",async()=>{await exportPdf();$("#bitPdfOptions").hidden=true});
-  $("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});
+  $("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{
+    const action=e.target.closest("[data-bit-followup-action]");
+    if(action){
+      const eventoId=String(action.dataset.bitId||""),kind=String(action.dataset.bitFollowupAction||"");
+      if(kind==="take")document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-take",{detail:{eventoId}}));
+      if(kind==="release"&&window.confirm("¿Liberar este seguimiento para que pueda ser tomado por otro usuario autorizado?"))document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-release",{detail:{eventoId}}));
+      if(kind==="attended"&&window.confirm("¿Marcar este seguimiento como atendido?"))document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-attended",{detail:{eventoId}}));
+      if(kind==="note"){const nota=String(window.prompt("Anotación de seguimiento:")||"").trim();if(nota)document.dispatchEvent(new CustomEvent("nexus:bitacora-followup",{detail:{eventoId,nota}}))}
+      return;
+    }
+    const row=e.target.closest(".bit-followup-main[data-bit-id]");if(row)openDetail(row.dataset.bitId)
+  });
+  $("#bitSeguimientoFuente")?.addEventListener("change",renderFollowup);
   $("#btnBitRelacionar")?.addEventListener("click",openProgramacionPicker);$("#btnBitRelacionCerrar")?.addEventListener("click",closeProgramacionPicker);$("#bitRelacionModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeProgramacionPicker()});$("#bitRelacionBuscar")?.addEventListener("input",renderProgramacionPicker);$("#bitRelacionFecha")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTipo")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTodas")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionLista")?.addEventListener("click",e=>{const row=e.target.closest("[data-programacion-id]");if(!row)return;selectedProgramacionId=String(row.dataset.programacionId||"");paintProgramacionSelection();closeProgramacionPicker()});$("#bitFecha")?.addEventListener("change",()=>{if(!selectedProgramacionId)return;const a=selectedActivity();if(a&&activityDate(a)!==String($("#bitFecha").value||"")){selectedProgramacionId="";paintProgramacionSelection()}});
   $("#bitEvidencias").addEventListener("change",e=>{selectedEvidence=[...selectedEvidence,...Array.from(e.target.files||[])].slice(0,10);e.target.value="";renderSelectedEvidence()});
   $("#bitEvidenceSelected").addEventListener("click",e=>{const b=e.target.closest("[data-remove-evidence]");if(!b)return;selectedEvidence.splice(Number(b.dataset.removeEvidence),1);renderSelectedEvidence()});
