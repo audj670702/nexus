@@ -294,3 +294,14 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .bit-report-head{padding:7px 3px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.52rem;font-weight:850;text-transform:uppercase}.bit-report-row{border:0;border-bottom:1px solid var(--line);background:#fff;padding:9px 3px;text-align:left;color:var(--ink);cursor:pointer}.bit-report-row:hover{background:#f8fafc}
 .bit-state-cell{display:flex;align-items:center;justify-content:center}.bit-report-value{min-width:0;font-size:.59rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bit-col-descripcion,.bit-col-comentarios{white-space:normal;line-height:1.3}.bit-report-row .bitacora-folio{font-size:.6rem}
 @media(max-width:700px){.bit-consulta-primary{grid-template-columns:minmax(0,1fr) auto auto}.bit-export-group{grid-column:1/-1;justify-content:flex-end}.bit-consulta-filters{grid-template-columns:1fr 1fr}.bit-columns-head{align-items:flex-start;flex-direction:column;gap:3px}.bit-report-head,.bit-report-row{grid-template-columns:30px 46px 26px repeat(var(--bit-event-cols),minmax(96px,1fr));gap:6px}}
+
+
+/* BIT · CONSULTAR ajustes reporte · v0.2.81 */
+.bit-consulta-tool.is-selected{background:#205985;color:#fff;border-color:#205985;box-shadow:0 1px 3px rgba(10,35,60,.18)}
+.bit-report-head,.bit-report-row{align-items:stretch}
+.bit-report-head>*,.bit-report-row>*{min-width:0;box-sizing:border-box}
+.bit-report-row>.bit-report-value{display:flex;align-items:flex-start;min-height:34px;max-height:58px;overflow:hidden;white-space:normal;line-height:1.32;padding:2px 0}
+.bit-report-row>.bit-col-descripcion,.bit-report-row>.bit-col-comentarios{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.bit-report-row>.bitacora-line,.bit-report-row>.bitacora-folio,.bit-report-row>.bit-state-cell{display:flex;align-items:center}
+.bit-sort-head{width:100%;min-width:0;border:0;background:transparent;color:inherit;padding:0;text-align:left;font:inherit;font-weight:850;text-transform:uppercase;cursor:pointer;white-space:nowrap}.bit-sort-head span{font-size:.65rem}.bit-sort-head.is-active{color:#205985}
+.bit-report-notes-label{grid-column:1/-1;display:grid!important;gap:4px;color:var(--muted);font-size:.56rem;font-weight:800}.bit-report-notes-label textarea{width:100%;min-height:62px;resize:vertical;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);padding:8px;font:inherit;font-size:.64rem;line-height:1.4}
