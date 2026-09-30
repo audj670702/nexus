@@ -259,3 +259,20 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 
 /* BIT · Consulta columnas · v0.2.71 */
 .bitacora-list-head,.bitacora-item{display:grid;grid-template-columns:42px 88px 74px minmax(0,1fr) 62px 74px;gap:10px;align-items:center}.bitacora-list-head{padding:7px 2px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.55rem;font-weight:850;text-transform:uppercase}.bitacora-item{padding:10px 2px}.bitacora-line,.bitacora-date,.bitacora-time{font-size:.61rem;color:var(--ink)}.bitacora-line{font-weight:800;color:var(--muted)}.bitacora-folio{font-size:.62rem;font-weight:850;color:#205985}.bitacora-item-state{text-align:right}@media(max-width:700px){.bitacora-list-head,.bitacora-item{grid-template-columns:30px 72px 58px minmax(150px,1fr) 48px 62px;gap:6px}.bitacora-list-head{font-size:.5rem}.bitacora-date,.bitacora-time,.bitacora-line,.bitacora-folio{font-size:.56rem}.bitacora-item-copy strong{font-size:.64rem}.bitacora-item-copy span{font-size:.57rem}}
+
+
+/* BIT · Registro guardado + reserva visual TIP · v0.2.79 */
+.bitacora-tip-check{grid-column:1/-1;justify-self:start;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.bit-tip-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.bit-tip-dot-black{background:#202733}.bit-tip-dot-red{background:#d92f2f}.bit-tip-dot-blue{background:#205985}
+.bit-tip-pulse{box-shadow:0 0 0 0 rgba(217,47,47,.5);animation:bitTipPulse 1.45s ease-out infinite}
+@keyframes bitTipPulse{0%{box-shadow:0 0 0 0 rgba(217,47,47,.5)}70%{box-shadow:0 0 0 8px rgba(217,47,47,0)}100%{box-shadow:0 0 0 0 rgba(217,47,47,0)}}
+.bit-register-saved{display:grid;gap:0;margin-top:4px}
+.bit-saved-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0 12px;border-bottom:1px solid var(--line);font-size:.7rem}
+.bit-saved-head>div{display:flex;align-items:center;gap:8px}.bit-saved-head>span{color:var(--muted);font-size:.61rem;font-weight:800}
+.bit-saved-line{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.67rem}
+.bit-saved-line>span,.bit-saved-block>span,.bit-saved-evidence>span{color:var(--muted);font-weight:650}.bit-saved-line>strong{font-weight:750}
+.bit-saved-block{padding:10px 0;border-bottom:1px solid var(--line);font-size:.67rem}.bit-saved-block p{margin:5px 0 0;line-height:1.5;white-space:pre-wrap}
+.bit-saved-evidence{display:grid;gap:7px;padding:10px 0}.bit-saved-evidence img{display:block;width:min(100%,520px);max-height:360px;object-fit:contain;border-radius:7px}
+.bit-evidence-action{justify-self:start;border:0;background:transparent;color:#205985;font:inherit;font-weight:850;cursor:pointer;padding:0}
+@media(max-width:559px){.bit-saved-line{grid-template-columns:105px minmax(0,1fr);gap:8px}.bit-saved-head{align-items:flex-start}.bitacora-tip-check{justify-self:stretch}}
