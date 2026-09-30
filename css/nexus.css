@@ -320,3 +320,27 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .bit-pdf-options textarea{width:100%;min-height:68px;resize:vertical;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);padding:8px;font:inherit;font-size:.64rem;line-height:1.4}
 .bit-pdf-options-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}.bit-pdf-options-actions .bitacora-primary{min-height:34px;padding:7px 12px}
 @media(max-width:700px){.bit-report-head,.bit-report-row{grid-template-columns:30px 46px 26px repeat(var(--bit-event-cols),minmax(96px,1fr));min-width:max-content}}
+
+
+/* BIT · CONSULTAR anchos semánticos + color clasificación · v0.2.83 */
+.bit-report-head,.bit-report-row{
+  grid-template-columns:34px 54px 32px repeat(var(--bit-event-cols),minmax(0,1fr));
+}
+.bit-report-head [data-bit-col="fecha"],.bit-report-row [data-bit-col="fecha"]{min-width:96px}
+.bit-report-head [data-bit-col="hora"],.bit-report-row [data-bit-col="hora"]{min-width:82px}
+.bit-report-head [data-bit-col="tipo"],.bit-report-row [data-bit-col="tipo"]{min-width:130px}
+.bit-report-head [data-bit-col="descripcion"],.bit-report-row [data-bit-col="descripcion"]{min-width:260px}
+.bit-report-head [data-bit-col="lugar"],.bit-report-row [data-bit-col="lugar"]{min-width:150px}
+.bit-report-head [data-bit-col="comentarios"],.bit-report-row [data-bit-col="comentarios"]{min-width:240px}
+.bit-report-head [data-bit-col="responsable"],.bit-report-row [data-bit-col="responsable"]{min-width:160px}
+.bit-report-head [data-bit-col="actividad"],.bit-report-row [data-bit-col="actividad"]{min-width:190px}
+.bit-report-head [data-bit-col="seguimiento"],.bit-report-row [data-bit-col="seguimiento"]{min-width:115px}
+.bit-report-head [data-bit-col="fechaRegistro"],.bit-report-row [data-bit-col="fechaRegistro"]{min-width:145px}
+.bit-report-head,.bit-report-row{grid-template-columns:34px 54px 32px var(--bit-dynamic-cols,repeat(var(--bit-event-cols),minmax(0,1fr)))}
+.bit-class-filter{position:relative;display:flex;align-items:center}.bit-class-filter select{padding-left:29px!important}
+.bit-filter-state-icon{position:absolute;left:9px;z-index:1;display:block;pointer-events:none}
+.bit-filter-state-icon.none{display:none}.bit-filter-state-icon.regular{width:9px;height:9px;background:#202733;border-radius:1px}
+.bit-filter-state-icon.tip-pending{width:10px;height:10px;border-radius:50%;background:#d92f2f}
+.bit-filter-state-icon.tip-read{width:10px;height:10px;border:2px solid #205985;border-radius:50%;background:#fff}
+.bit-status-symbol.tip-pending{background:#d92f2f!important}
+@media(max-width:700px){.bit-report-head,.bit-report-row{grid-template-columns:30px 48px 28px repeat(var(--bit-event-cols),minmax(96px,1fr))}}
