@@ -145,12 +145,63 @@ async function exportPdf(){
   const {items,headers,rows}=reportMatrix();if(!items.length){window.alert("No hay registros para exportar.");return}
   try{
     const JsPDF=await loadJsPdf();if(!JsPDF)throw new Error("Generador PDF no disponible.");
-    const doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"}),user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario"),notes=reportNotes();
-    const logo=await imageDataUrl(eoAvatarUrl());let titleX=14;if(logo){try{doc.addImage(logo,"JPEG",14,10,16,16);titleX=34}catch(_){}}
-    doc.setFontSize(15);doc.text(reportTitle(),titleX,16);doc.setFontSize(8);doc.setTextColor(85);doc.text(reportFiltersText(),titleX,21,{maxWidth:245});
-    let y=29;if(notes){doc.setTextColor(30);doc.setFontSize(8);doc.text("Anotaciones:",14,y);doc.setFontSize(8);const lines=doc.splitTextToSize(notes,260);doc.text(lines,34,y);y+=Math.max(8,lines.length*4)}
-    doc.setTextColor(75);doc.setFontSize(7);doc.text(`■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${user}.`,14,y);y+=5;
-    doc.autoTable({startY:y,head:[headers],body:rows,styles:{fontSize:6.5,cellPadding:1.8,overflow:"linebreak",valign:"top"},headStyles:{fontStyle:"bold"},margin:{left:14,right:14},didParseCell:data=>{if(data.section==="body"&&data.column.index===2){const v=String(data.cell.raw||"");if(v==="●")data.cell.styles.textColor=[190,35,35];else if(v==="○")data.cell.styles.textColor=[32,89,133]}}});
+    const doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    const eo=bitContext?.eo||{},usr=bitContext?.user||{};
+    const eoName=String(eo?.nombreMostrar||eo?.nombreVisible||eo?.nombre||eo?.codigoEO||"Empresa operadora");
+    const user=String(usr?.nombreMostrar||usr?.nombreVisible||usr?.nombre||bitContext?.email||"Usuario");
+    const userAvatarRaw=usr?.avatar||usr?.avatarUrl||usr?.foto||usr?.fotoPerfil||usr?.imageUrl||usr?.profileImage||"";
+    const userAvatarUrl=(()=>{if(!userAvatarRaw)return "";if(typeof userAvatarRaw==="object")return String(userAvatarRaw.url||userAvatarRaw.src||userAvatarRaw.imageUrl||userAvatarRaw.fileUrl||"");const s=String(userAvatarRaw).trim();if(s.startsWith("wix:image://v1/")){const id=s.slice("wix:image://v1/".length).split("/")[0];return id?`https://static.wixstatic.com/media/${id}`:""}return s})();
+    const generatedAt=new Date(),reportDate=generatedAt.toLocaleString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    const notes=reportNotes(),filters=reportFiltersText(),hasFilters=filters&&filters!=="Sin filtros adicionales";
+    const eoLogo=await imageDataUrl(eoAvatarUrl());
+    const userAvatar=await imageDataUrl(userAvatarUrl);
+    const nexusLogo=await imageDataUrl(new URL("./assets/logo/logo_nexus_192.png",window.location.href).href);
+    let titleX=14;
+    if(eoLogo){try{doc.addImage(eoLogo,eoLogo.startsWith("data:image/png")?"PNG":"JPEG",14,9,17,17);titleX=35}catch(_){}}
+    doc.setTextColor(31,41,55);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(eoName,titleX,15);
+    doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(32,89,133);doc.text("Reporte de Bitácora",titleX,21);
+    let y=31;
+    if(userAvatar){try{doc.addImage(userAvatar,userAvatar.startsWith("data:image/png")?"PNG":"JPEG",14,y-4,10,10)}catch(_){}}
+    const identityX=userAvatar?27:14;
+    doc.setTextColor(95);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("Generado por",identityX,y);
+    doc.setTextColor(31,41,55);doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text(user,identityX,y+4);
+    doc.setTextColor(95);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text(`Fecha del reporte: ${reportDate}`,identityX,y+8);
+    y+=14;
+    if(hasFilters){doc.setTextColor(85);doc.setFontSize(7.5);doc.text(filters,14,y,{maxWidth:269});y+=6}
+    if(notes){doc.setTextColor(30);doc.setFontSize(8);doc.text("Anotaciones:",14,y);const lines=doc.splitTextToSize(notes,255);doc.setFont("helvetica","normal");doc.text(lines,34,y);y+=Math.max(8,lines.length*4)}
+    const drawStatus=(x,cy,state,size=1.5)=>{
+      if(state==="REGULAR"){doc.setFillColor(31,41,55);doc.rect(x-size,cy-size,size*2,size*2,"F");return}
+      if(state==="TIP_PENDIENTE"){doc.setFillColor(190,35,35);doc.circle(x,cy,size,"F");return}
+      doc.setDrawColor(32,89,133);doc.setLineWidth(.45);doc.circle(x,cy,size,"S");
+    };
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(75);
+    let lx=15;drawStatus(lx,y-1.1,"REGULAR",1.35);doc.text("Regular",lx+3.5,y);lx+=25;
+    drawStatus(lx,y-1.1,"TIP_PENDIENTE",1.35);doc.text("TIP pendiente",lx+3.5,y);lx+=35;
+    drawStatus(lx,y-1.1,"TIP_CONSULTADA",1.35);doc.text("TIP consultada",lx+3.5,y);
+    doc.setTextColor(95);doc.text(`TIP consultada respecto al usuario en sesión: ${user}.`,lx+32,y);y+=5;
+    const tableRows=items.map((e,i)=>[String(i+1),eventRegister(e),"",...bitReportColumns.map(id=>eventColumnValue(e,id))]);
+    doc.autoTable({
+      startY:y,head:[headers],body:tableRows,
+      styles:{fontSize:6.5,cellPadding:1.8,overflow:"linebreak",valign:"top"},
+      headStyles:{fontStyle:"bold"},margin:{left:14,right:14,bottom:15},
+      didDrawCell:data=>{
+        if(data.section!=="body"||data.column.index!==2)return;
+        const e=items[data.row.index];if(!e)return;
+        const state=eventClassState(e),cx=data.cell.x+data.cell.width/2,cy=data.cell.y+data.cell.height/2;
+        drawStatus(cx,cy,state,1.35);
+      }
+    });
+    const pages=doc.getNumberOfPages();
+    for(let p=1;p<=pages;p++){
+      doc.setPage(p);
+      const pageW=doc.internal.pageSize.getWidth(),pageH=doc.internal.pageSize.getHeight(),fy=pageH-7;
+      doc.setDrawColor(223,229,236);doc.setLineWidth(.25);doc.line(14,fy-4,pageW-14,fy-4);
+      doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(102,112,133);
+      doc.text("Powered by",14,fy);
+      if(nexusLogo){try{doc.addImage(nexusLogo,nexusLogo.startsWith("data:image/png")?"PNG":"JPEG",31,fy-4.2,13,7)}catch(_){}}
+      else{doc.setFont("helvetica","bold");doc.setTextColor(32,89,133);doc.text("NEXUS",31,fy)}
+      doc.setFont("helvetica","normal");doc.setTextColor(102,112,133);doc.text(`${p}/${pages}`,pageW-14,fy,{align:"right"});
+    }
     doc.save(`BIT_reporte_${nowLocal().fecha}.pdf`);
   }catch(error){window.alert(error?.message||"No fue posible generar el PDF.")}
 }
