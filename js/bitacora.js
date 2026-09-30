@@ -78,7 +78,7 @@ function compareReportValues(a,b,id){
   return eventColumnValue(a,id).localeCompare(eventColumnValue(b,id),"es",{numeric:true,sensitivity:"base"});
 }
 function sortReportItems(items){const id=bitSort.id,dir=bitSort.dir==="ASC"?1:-1;return items.slice().sort((a,b)=>{const c=compareReportValues(a,b,id);return c*dir||String(a?.folio||"").localeCompare(String(b?.folio||""),"es",{numeric:true,sensitivity:"base"})})}
-function sortButton(id,label){const active=bitSort.id===id,arrow=active?(bitSort.dir==="ASC"?"↑":"↓"):"↕";return `<button class="bit-sort-head ${active?"is-active":""}" type="button" data-bit-sort="${esc(id)}" title="Ordenar ${esc(label)}">${esc(label)} <span>${arrow}</span></button>`}
+function sortButton(id,label){const active=bitSort.id===id,arrow=active?(bitSort.dir==="ASC"?"↑":"↓"):"↕";return `<button class="bit-sort-head ${active?"is-active":""}" type="button" data-bit-sort="${esc(id)}" data-bit-col="${esc(id)}" title="Ordenar ${esc(label)}">${esc(label)} <span>${arrow}</span></button>`}
 function filteredEvents(){
   const rawQ=String($("#bitBuscar")?.value||"").trim(),q=rawQ.length>=3?norm(rawQ):"";
   const tipo=String($("#bitFiltroTipo")?.value||""),desde=String($("#bitFiltroDesde")?.value||""),hasta=String($("#bitFiltroHasta")?.value||"");
@@ -97,11 +97,14 @@ function filteredEvents(){
     return hay.includes(q);
   }));
 }
+function updateTipFilterIcon(){const el=$("#bitFiltroTipIcon"),v=String($("#bitFiltroTip")?.value||"");if(!el)return;el.className="bit-filter-state-icon";if(v==="REGULAR")el.classList.add("regular");else if(v==="TIP_PENDIENTE"||v==="TIP")el.classList.add("tip-pending");else if(v==="TIP_CONSULTADA")el.classList.add("tip-read");else el.classList.add("none")}
+function reportGridTracks(){const map={fecha:"96px",hora:"82px",tipo:"130px",descripcion:"minmax(260px,1fr)",lugar:"150px",comentarios:"minmax(240px,1fr)",responsable:"160px",actividad:"190px",seguimiento:"115px",fechaRegistro:"145px"};return bitReportColumns.map(id=>map[id]||"minmax(120px,1fr)").join(" ")}
 function renderEvents(){
+  updateTipFilterIcon();
   const items=filteredEvents();$("#bitConsultaCount").textContent=`${items.length} evento${items.length===1?"":"s"}`;
   const head=bitReportColumns.map(id=>sortButton(id,BIT_EVENT_COLUMNS.find(c=>c.id===id)?.label||id)).join("");
-  const rows=items.map((e,i)=>`<button class="bit-report-row" style="--bit-event-cols:${bitReportColumns.length}" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-line">${i+1}</span><span class="bitacora-folio">${esc(eventRegister(e))}</span>${eventStateHtml(e)}${bitReportColumns.map(id=>`<span class="bit-report-value bit-col-${esc(id)}">${esc(eventColumnValue(e,id))}</span>`).join("")}</button>`).join("");
-  $("#bitEventosList").innerHTML=items.length?`<div class="bit-report-head" style="--bit-event-cols:${bitReportColumns.length}"><span>No.</span><span>Reg.</span><span title="Estado">●</span>${head}</div>${rows}`:'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
+  const rows=items.map((e,i)=>`<button class="bit-report-row" style="--bit-event-cols:${bitReportColumns.length};--bit-dynamic-cols:${reportGridTracks()}" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-line">${i+1}</span><span class="bitacora-folio">${esc(eventRegister(e))}</span>${eventStateHtml(e)}${bitReportColumns.map(id=>`<span class="bit-report-value bit-col-${esc(id)}" data-bit-col="${esc(id)}">${esc(eventColumnValue(e,id))}</span>`).join("")}</button>`).join("");
+  $("#bitEventosList").innerHTML=items.length?`<div class="bit-report-head" style="--bit-event-cols:${bitReportColumns.length};--bit-dynamic-cols:${reportGridTracks()}"><span>No.</span><span>Reg.</span><span title="Estado">●</span>${head}</div>${rows}`:'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
 }
 function reportTitle(){return `BITÁCORA · ${String(bitContext?.eo?.nombreMostrar||bitContext?.eo?.nombre||bitContext?.eo?.codigoEO||"")}`}
 function reportNotes(){return String($("#bitReporteAnotaciones")?.value||"").trim()}
@@ -261,7 +264,7 @@ export function initBitacora(){
   $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
   $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open));$("#btnBitFiltros").classList.toggle("is-selected",open)});
   $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open));$("#btnBitColumnas").classList.toggle("is-selected",open)});
-  $("#btnBitLimpiarFiltros")?.addEventListener("click",()=>{$("#bitBuscar").value="";$("#bitFiltroDesde").value="";$("#bitFiltroHasta").value="";$("#bitFiltroTipo").value="";$("#bitFiltroResponsable").value="";$("#bitFiltroActividad").value="";$("#bitFiltroEstado").value="VIGENTE";$("#bitFiltroTip").value="";renderEvents()});
+  $("#btnBitLimpiarFiltros")?.addEventListener("click",()=>{$("#bitBuscar").value="";$("#bitFiltroDesde").value="";$("#bitFiltroHasta").value="";$("#bitFiltroTipo").value="";$("#bitFiltroResponsable").value="";$("#bitFiltroActividad").value="";$("#bitFiltroEstado").value="VIGENTE";$("#bitFiltroTip").value="";updateTipFilterIcon();renderEvents()});
   $("#bitColumnasOpciones")?.addEventListener("change",e=>{const input=e.target.closest("[data-bit-column]");if(!input)return;const id=String(input.dataset.bitColumn||"");if(input.checked){if(bitReportColumns.length>=6){input.checked=false;window.alert("Puedes mostrar hasta 6 columnas del evento.");return}if(!bitReportColumns.includes(id))bitReportColumns.push(id)}else{bitReportColumns=bitReportColumns.filter(x=>x!==id);if(!bitReportColumns.length){bitReportColumns=["descripcion"];renderColumnSelector()}}renderEvents()});
   $("#bitEventosList")?.addEventListener("click",e=>{const sort=e.target.closest("[data-bit-sort]");if(sort){const id=String(sort.dataset.bitSort||"");bitSort=id===bitSort.id?{id,dir:bitSort.dir==="ASC"?"DESC":"ASC"}:{id,dir:"ASC"};renderEvents();return}});
   $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=false;$("#bitReporteAnotaciones")?.focus()});$("#btnBitPdfCancelar")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=true});$("#btnBitPdfDescargar")?.addEventListener("click",async()=>{await exportPdf();$("#bitPdfOptions").hidden=true});
