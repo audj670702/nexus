@@ -35,12 +35,92 @@ function fillTypes(){
   $("#bitTipo").innerHTML='<option value="">Seleccionar tipo</option>'+options;
   $("#bitFiltroTipo").innerHTML='<option value="">Todos los tipos</option>'+options;
 }
+const BIT_EVENT_COLUMNS=[
+  {id:"fecha",label:"Fecha"},{id:"hora",label:"Hora"},{id:"tipo",label:"Tipo"},{id:"descripcion",label:"Descripción"},
+  {id:"lugar",label:"Lugar"},{id:"comentarios",label:"Comentarios"},{id:"responsable",label:"Responsable"},
+  {id:"actividad",label:"Actividad"},{id:"seguimiento",label:"Seguimiento"},{id:"fechaRegistro",label:"Fecha registro"}
+];
+let bitReportColumns=["fecha","hora","tipo","descripcion"];
+function eventDate(e){const raw=e?.fechaHoraEvento||e?.fechaEvento||e?.fecha||"";const d=raw?new Date(raw):null;return d&&!Number.isNaN(d.getTime())?d:null}
+function eventActivity(e){
+  const direct=String(e?.actividadProgramada||e?.actividadNombre||e?.programacionNombre||e?.actividad?.titulo||e?.programacion?.titulo||"").trim();
+  if(direct)return direct;
+  const id=String(e?.programacionId||e?.actividadId||"").trim();if(!id)return "";
+  const a=programacionItems().find(x=>String(x?.id||x?._id||"")===id);return a?activityTitle(a):"";
+}
+function eventRegister(e){const folio=String(e?.folio||e?.codigo||"").trim(),m=folio.match(/(\d+)$/);return m?m[1].padStart(4,"0").slice(-4):(folio||"—")}
+function isTipEvent(e){return e?.esTip===true||e?.tip===true||String(e?.clasificacion||e?.tipoRegistro||"").toUpperCase()==="TIP"}
+function tipReadForSession(e){return e?.tipConsultadaUsuario===true||e?.tipConsultada===true||["CONSULTADA","LEIDA","REVISADA"].includes(String(e?.tipEstadoUsuario||e?.estadoTipUsuario||"").toUpperCase())}
+function eventClassState(e){if(!isTipEvent(e))return "REGULAR";return tipReadForSession(e)?"TIP_CONSULTADA":"TIP_PENDIENTE"}
+function eventStateSymbol(e){const s=eventClassState(e);return s==="REGULAR"?"■":s==="TIP_CONSULTADA"?"○":"●"}
+function eventStateHtml(e){const s=eventClassState(e),cls=s==="REGULAR"?"regular":s==="TIP_CONSULTADA"?"tip-read":"tip-pending";return `<span class="bit-state-cell" title="${s==="REGULAR"?"Regular":s==="TIP_CONSULTADA"?"TIP consultada por el usuario en sesión":"TIP pendiente para el usuario en sesión"}"><i class="bit-status-symbol ${cls}" aria-hidden="true"></i></span>`}
+function eventColumnValue(e,id){
+  const d=eventDate(e);
+  if(id==="fecha")return d?d.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric"}):"—";
+  if(id==="hora")return d?d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}):"—";
+  if(id==="tipo")return String(e?.tipoEtiqueta||e?.tipo?.etiqueta||"—");
+  if(id==="descripcion")return String(e?.descripcion||"—");
+  if(id==="lugar")return String(e?.lugar||"—");
+  if(id==="comentarios")return String(e?.comentarios||"—");
+  if(id==="responsable")return String(e?.registranteNombre||e?.responsableRegistro||"—");
+  if(id==="actividad")return eventActivity(e)||"—";
+  if(id==="seguimiento")return e?.requiereSeguimiento===true?"Requerido":"No requerido";
+  if(id==="fechaRegistro")return fmt(e?.fechaHoraRegistro);
+  return "—";
+}
+function renderColumnSelector(){
+  const box=$("#bitColumnasOpciones");if(!box)return;
+  box.innerHTML=BIT_EVENT_COLUMNS.map(c=>`<label><input type="checkbox" data-bit-column="${esc(c.id)}" ${bitReportColumns.includes(c.id)?"checked":""}><span>${esc(c.label)}</span></label>`).join("");
+}
+function filteredEvents(){
+  const rawQ=String($("#bitBuscar")?.value||"").trim(),q=rawQ.length>=3?norm(rawQ):"";
+  const tipo=String($("#bitFiltroTipo")?.value||""),desde=String($("#bitFiltroDesde")?.value||""),hasta=String($("#bitFiltroHasta")?.value||"");
+  const responsable=norm($("#bitFiltroResponsable")?.value),actividad=norm($("#bitFiltroActividad")?.value),estado=String($("#bitFiltroEstado")?.value||"VIGENTE"),tip=String($("#bitFiltroTip")?.value||"");
+  return bitState.eventos.filter(e=>{
+    const eEstado=String(e?.estado||"VIGENTE").toUpperCase();
+    if(estado==="VIGENTE"&&eEstado==="SUSTITUIDO")return false;if(estado==="SUSTITUIDO"&&eEstado!=="SUSTITUIDO")return false;
+    if(tipo&&String(e?.tipoId||e?.tipo?.id||"")!==tipo)return false;
+    const d=eventDate(e),ymd=d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:"";
+    if(desde&&(!ymd||ymd<desde))return false;if(hasta&&(!ymd||ymd>hasta))return false;
+    const resp=norm(e?.registranteNombre||e?.responsableRegistro||"");if(responsable&&!resp.includes(responsable))return false;
+    const act=norm(eventActivity(e));if(actividad&&!act.includes(actividad))return false;
+    const cls=eventClassState(e);if(tip==="REGULAR"&&cls!=="REGULAR")return false;if(tip==="TIP"&&cls==="REGULAR")return false;if(tip==="TIP_PENDIENTE"&&cls!=="TIP_PENDIENTE")return false;if(tip==="TIP_CONSULTADA"&&cls!=="TIP_CONSULTADA")return false;
+    if(!q)return true;
+    const hay=norm(`${e?.folio||""} ${e?.lugar||""} ${e?.descripcion||""} ${e?.comentarios||""} ${e?.tipoEtiqueta||e?.tipo?.etiqueta||""} ${e?.registranteNombre||""} ${eventActivity(e)} ${e?.estado||""}`);
+    return hay.includes(q);
+  });
+}
 function renderEvents(){
-  const q=norm($("#bitBuscar")?.value),tipo=String($("#bitFiltroTipo")?.value||""),showSub=$("#bitMostrarSustituidos")?.checked===true;
-  const items=bitState.eventos.filter(e=>{if(!showSub&&String(e.estado||"VIGENTE").toUpperCase()==="SUSTITUIDO")return false;if(tipo&&String(e.tipoId||e.tipo?.id||"")!==tipo)return false;const hay=norm(`${e.folio||""} ${e.lugar||""} ${e.descripcion||""} ${e.comentarios||""} ${e.tipoEtiqueta||e.tipo?.etiqueta||""} ${e.registranteNombre||""}`);return !q||hay.includes(q)});
-  $("#bitConsultaCount").textContent=`${items.length} evento${items.length===1?"":"s"}`;
-  const rows=items.map((e,i)=>{const raw=e.fechaHoraEvento||e.fechaEvento||e.fecha||"",d=raw?new Date(raw):null,valid=d&&!Number.isNaN(d.getTime()),fecha=valid?d.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric"}):"—",hora=valid?d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}):"—",folio=String(e.folio||""),m=folio.match(/(\\d+)$/),codigo=m?m[1]:folio||"—";return `<button class="bitacora-item" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-line">${i+1}</span><span class="bitacora-date">${esc(fecha)}</span><span class="bitacora-time">${esc(hora)}</span><span class="bitacora-item-copy"><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"Evento")}</strong><span>${esc(e.descripcion||"")}</span></span><span class="bitacora-folio">${esc(codigo)}</span><span class="bitacora-item-state">${esc(e.estado||"VIGENTE")}</span></button>`}).join("");
-  $("#bitEventosList").innerHTML=items?`<div class="bitacora-list-head"><span>No.</span><span>Fecha</span><span>Hora</span><span>Tipo / Descripción</span><span>Código</span><span>Estatus</span></div>${rows}`:'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
+  const items=filteredEvents();$("#bitConsultaCount").textContent=`${items.length} evento${items.length===1?"":"s"}`;
+  const head=bitReportColumns.map(id=>`<span>${esc(BIT_EVENT_COLUMNS.find(c=>c.id===id)?.label||id)}</span>`).join("");
+  const rows=items.map((e,i)=>`<button class="bit-report-row" style="--bit-event-cols:${bitReportColumns.length}" type="button" data-bit-id="${esc(e.id||e._id||"")}"><span class="bitacora-line">${i+1}</span><span class="bitacora-folio">${esc(eventRegister(e))}</span>${eventStateHtml(e)}${bitReportColumns.map(id=>`<span class="bit-report-value bit-col-${esc(id)}">${esc(eventColumnValue(e,id))}</span>`).join("")}</button>`).join("");
+  $("#bitEventosList").innerHTML=items.length?`<div class="bit-report-head" style="--bit-event-cols:${bitReportColumns.length}"><span>No.</span><span>Reg.</span><span title="Estado">●</span>${head}</div>${rows}`:'<div class="bitacora-empty">No hay eventos disponibles dentro de tu alcance de consulta.</div>';
+}
+function reportTitle(){return `BITÁCORA · ${String(bitContext?.eo?.nombreMostrar||bitContext?.eo?.nombre||bitContext?.eo?.codigoEO||"")}`}
+function reportFiltersText(){
+  const parts=[],q=String($("#bitBuscar")?.value||"").trim();if(q.length>=3)parts.push(`Búsqueda: ${q}`);
+  const desde=$("#bitFiltroDesde")?.value,hasta=$("#bitFiltroHasta")?.value;if(desde||hasta)parts.push(`Fecha: ${desde||"inicio"} a ${hasta||"actual"}`);
+  const tipo=$("#bitFiltroTipo")?.selectedOptions?.[0]?.textContent;if($("#bitFiltroTipo")?.value)parts.push(`Tipo: ${tipo}`);
+  const r=String($("#bitFiltroResponsable")?.value||"").trim(),a=String($("#bitFiltroActividad")?.value||"").trim();if(r)parts.push(`Responsable: ${r}`);if(a)parts.push(`Actividad: ${a}`);
+  return parts.length?parts.join(" · "):"Sin filtros adicionales";
+}
+function reportMatrix(){
+  const items=filteredEvents(),headers=["No.","Reg.","Estado",...bitReportColumns.map(id=>BIT_EVENT_COLUMNS.find(c=>c.id===id)?.label||id)];
+  const rows=items.map((e,i)=>[String(i+1),eventRegister(e),eventStateSymbol(e),...bitReportColumns.map(id=>eventColumnValue(e,id))]);
+  return {items,headers,rows};
+}
+function exportExcel(){
+  const {items,headers,rows}=reportMatrix();if(!items.length){window.alert("No hay registros para exportar.");return}
+  const user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario");
+  const tr=row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`;
+  const html=`<!doctype html><html><head><meta charset="utf-8"></head><body><table><tr><th colspan="${headers.length}">${esc(reportTitle())}</th></tr><tr><td colspan="${headers.length}">${esc(reportFiltersText())}</td></tr><tr><td colspan="${headers.length}">■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${esc(user)}.</td></tr><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${rows.map(tr).join("")}</table></body></html>`;
+  const blob=new Blob(["\ufeff",html],{type:"application/vnd.ms-excel;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`BIT_reporte_${nowLocal().fecha}.xls`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportPdf(){
+  const {items,headers,rows}=reportMatrix();if(!items.length){window.alert("No hay registros para exportar.");return}
+  const user=String(bitContext?.user?.nombreVisible||bitContext?.user?.nombre||bitContext?.email||"Usuario"),w=window.open("","_blank");if(!w){window.alert("El navegador bloqueó la ventana de exportación.");return}
+  const tableRows=rows.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("");
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Reporte BIT</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#182433;font-size:9px}h1{font-size:15px;margin:0 0 4px}.meta{margin:0 0 8px;color:#526273}.legend{margin:7px 0 10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd4de;padding:5px;text-align:left;vertical-align:top}th{background:#eef3f7}button{margin:0 0 10px;padding:7px 12px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Imprimir / Guardar PDF</button><h1>${esc(reportTitle())}</h1><p class="meta">${esc(reportFiltersText())}</p><p class="legend">■ Regular · ● TIP pendiente · ○ TIP consultada. TIP consultada respecto al usuario en sesión: ${esc(user)}.</p><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${tableRows}</tbody></table></body></html>`);w.document.close();
 }
 function renderFollowup(){
   const items=bitState.seguimientoEventos;
@@ -134,7 +214,7 @@ export async function setBitacoraState(next={}){
     const cached=await getReference(cacheKey());if(cached)source={...next,...cached};
   }
   bitState={tipos:Array.isArray(source.tipos)?source.tipos:[],eventos:Array.isArray(source.eventos)?source.eventos:[],seguimientoEventos:Array.isArray(source.seguimientoEventos)?source.seguimientoEventos:[],facultades:{registro:false,consulta:false,consultaAmpliada:false,seguimiento:false,...(source.facultades||{})},evidencias:source.evidencias===true};
-  fillTypes();applyCapabilities();renderEvents();renderFollowup();await refreshLocalStatus();
+  fillTypes();renderColumnSelector();applyCapabilities();renderEvents();renderFollowup();await refreshLocalStatus();
 }
 export function openBitacora(){
   if(bitContext?.authenticated!==true)return;
@@ -152,7 +232,13 @@ export function initBitacora(){
   const modal=$("#bitacoraModal");if(!modal)return;
   $("#btnCloseBitacora").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",e=>{if(e.target===modal)modal.hidden=true});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)modal.hidden=true});
   $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>setTab("consulta"));
-  $("#bitBuscar").addEventListener("input",renderEvents);$("#bitFiltroTipo").addEventListener("change",renderEvents);$("#bitMostrarSustituidos").addEventListener("change",renderEvents);$("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});
+  $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
+  $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open))});
+  $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open))});
+  $("#btnBitLimpiarFiltros")?.addEventListener("click",()=>{$("#bitBuscar").value="";$("#bitFiltroDesde").value="";$("#bitFiltroHasta").value="";$("#bitFiltroTipo").value="";$("#bitFiltroResponsable").value="";$("#bitFiltroActividad").value="";$("#bitFiltroEstado").value="VIGENTE";$("#bitFiltroTip").value="";renderEvents()});
+  $("#bitColumnasOpciones")?.addEventListener("change",e=>{const input=e.target.closest("[data-bit-column]");if(!input)return;const id=String(input.dataset.bitColumn||"");if(input.checked){if(bitReportColumns.length>=6){input.checked=false;window.alert("Puedes mostrar hasta 6 columnas del evento.");return}if(!bitReportColumns.includes(id))bitReportColumns.push(id)}else{bitReportColumns=bitReportColumns.filter(x=>x!==id);if(!bitReportColumns.length){bitReportColumns=["descripcion"];renderColumnSelector()}}renderEvents()});
+  $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",exportPdf);
+  $("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});$("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId)});
   $("#btnBitRelacionar")?.addEventListener("click",openProgramacionPicker);$("#btnBitRelacionCerrar")?.addEventListener("click",closeProgramacionPicker);$("#bitRelacionModal")?.addEventListener("click",e=>{if(e.target===e.currentTarget)closeProgramacionPicker()});$("#bitRelacionBuscar")?.addEventListener("input",renderProgramacionPicker);$("#bitRelacionFecha")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTipo")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionTodas")?.addEventListener("change",renderProgramacionPicker);$("#bitRelacionLista")?.addEventListener("click",e=>{const row=e.target.closest("[data-programacion-id]");if(!row)return;selectedProgramacionId=String(row.dataset.programacionId||"");paintProgramacionSelection();closeProgramacionPicker()});$("#bitFecha")?.addEventListener("change",()=>{if(!selectedProgramacionId)return;const a=selectedActivity();if(a&&activityDate(a)!==String($("#bitFecha").value||"")){selectedProgramacionId="";paintProgramacionSelection()}});
   $("#bitEvidencias").addEventListener("change",e=>{selectedEvidence=[...selectedEvidence,...Array.from(e.target.files||[])].slice(0,10);e.target.value="";renderSelectedEvidence()});
   $("#bitEvidenceSelected").addEventListener("click",e=>{const b=e.target.closest("[data-remove-evidence]");if(!b)return;selectedEvidence.splice(Number(b.dataset.removeEvidence),1);renderSelectedEvidence()});
