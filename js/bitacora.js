@@ -171,14 +171,70 @@ function renderEventCard(e){
  ${seg.length?`<div class="bit-card-section"><strong>Seguimiento</strong>${seg.map(s=>`<div><span>${esc(fmt(s.fechaRegistro))} · ${esc(s.autorNombre||"Usuario")}</span><p>${esc(s.nota||"")}</p></div>`).join("")}</div>`:""}`;
 }
 async function exportCardPdf(e){
- if(!e)return;try{const JsPDF=await loadJsPdf(),doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"}),logo=await imageDataUrl(eoAvatarUrl());let x=18;if(logo){try{doc.addImage(logo,"JPEG",18,12,18,18);x=40}catch(_){}}
- doc.setFontSize(15);doc.text(isTipEvent(e)?"Tarjeta Informativa Prioritaria":"Registro de Bitácora",x,19);doc.setFontSize(9);doc.text(`${reportTitle()} · Reg. ${eventRegister(e)}`,x,25);let y=36;
- const line=(k,v)=>{if(!v)return;doc.setFontSize(8);doc.text(k,18,y);doc.setFontSize(9);const z=doc.splitTextToSize(String(v),125);doc.text(z,62,y);y+=Math.max(7,z.length*4.2)};
- line("Tipo",e?.tipoEtiqueta||e?.tipo?.etiqueta||"—");line("Fecha / hora",`${eventColumnValue(e,"fecha")} · ${eventColumnValue(e,"hora")}`);line("Actividad",eventActivity(e));line("Lugar",e?.lugar);line("Responsable",e?.registranteNombre||e?.responsableRegistro||"—");
- const block=(k,v)=>{if(!v)return;doc.setFontSize(8);doc.text(k,18,y);y+=5;doc.setFontSize(9);const z=doc.splitTextToSize(String(v),174);doc.text(z,18,y);y+=Math.max(9,z.length*4.2+4)};block("Descripción",e?.descripcion||"—");block("Comentarios",e?.comentarios);
- for(const ev of eventEvidenceList(e).filter(evidenceIsImage).slice(0,3)){const data=await imageDataUrl(evidenceUrl(ev));if(!data)continue;if(y>240){doc.addPage();y=18}try{doc.addImage(data,"JPEG",18,y,80,55);y+=61}catch(_){}}
- const seg=Array.isArray(e?.seguimientos)?e.seguimientos:[];if(seg.length){if(y>245){doc.addPage();y=18}block("Seguimiento","");for(const s of seg)block(`${fmt(s.fechaRegistro)} · ${s.autorNombre||"Usuario"}`,s.nota||"")}
- doc.save(`BIT_Tarjeta_${eventRegister(e)}.pdf`)}catch(err){window.alert(err?.message||"No fue posible generar la Tarjeta PDF.")}}
+ if(!e)return;
+ try{
+  const JsPDF=await loadJsPdf();if(!JsPDF)throw new Error("Generador PDF no disponible.");
+  const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"}),pageW=210,pageH=297,margin=16,contentW=178;
+  const eo=bitContext?.eo||{},eoName=String(eo.nombreMostrar||eo.nombreVisible||eo.nombre||eo.codigoEO||"Empresa operadora");
+  const eoLogo=await imageDataUrl(eoAvatarUrl()),nexusLogo=await imageDataUrl("./assets/logo/logo_nexus_192.png");
+  const addImg=(data,x,y,w,h)=>{if(!data)return false;try{const fmt=data.startsWith("data:image/png")?"PNG":"JPEG";doc.addImage(data,fmt,x,y,w,h);return true}catch(_){return false}};
+  const fitImg=(data,maxW,maxH)=>{try{const p=doc.getImageProperties(data),r=p.width/p.height;let w=maxW,h=w/r;if(h>maxH){h=maxH;w=h*r}return {w,h}}catch(_){return {w:maxW,h:maxH}}};
+  const footer=()=>{const y=286;doc.setDrawColor(220);doc.line(margin,y,pageW-margin,y);doc.setTextColor(115);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("Powered by",margin,y+5);if(nexusLogo){const d=fitImg(nexusLogo,24,7);addImg(nexusLogo,margin+16,y+1.2,d.w,d.h)}doc.setTextColor(140);doc.text(`NEXUS · Tarjeta BIT · Reg. ${eventRegister(e)}`,pageW-margin,y+5,{align:"right"})};
+  const newPage=()=>{doc.addPage();footer();return 18};
+  const ensure=(y,need)=>y+need>280?newPage():y;
+  doc.setFillColor(32,89,133);doc.roundedRect(margin,12,contentW,30,3,3,"F");
+  if(eoLogo){const d=fitImg(eoLogo,20,20);addImg(eoLogo,20,17+(20-d.h)/2,d.w,d.h)}
+  doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(16);doc.text(eoName,eoLogo?45:22,25,{maxWidth:142});
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("Tarjeta de Registro en Bitácora",eoLogo?45:22,32);
+  doc.setTextColor(32,89,133);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(`Reg. ${eventRegister(e)}`,pageW-margin,50,{align:"right"});
+  let y=54;
+  const fields=[
+   ["Clasificación",eventClassState(e)==="REGULAR"?"Regular":eventClassState(e)==="TIP_CONSULTADA"?"TIP consultada*":"TIP pendiente"],
+   ["Estado del registro",String(e?.estado||"VIGENTE").toUpperCase()],
+   ["Tipo de evento",String(e?.tipoEtiqueta||e?.tipo?.etiqueta||"")],
+   ["Fecha del evento",eventColumnValue(e,"fecha")==="—"?"":eventColumnValue(e,"fecha")],
+   ["Hora",eventColumnValue(e,"hora")==="—"?"":eventColumnValue(e,"hora")],
+   ["Actividad relacionada",eventActivity(e)],
+   ["Lugar",String(e?.lugar||"")],
+   ["Descripción",String(e?.descripcion||"")],
+   ["Comentarios",String(e?.comentarios||"")],
+   ["Seguimiento requerido",e?.requiereSeguimiento===true?"Sí":"No"],
+   ["Responsable del registro",String(e?.registranteNombre||e?.responsableRegistro||"")],
+   ["Fecha de registro",e?.fechaHoraRegistro?fmt(e.fechaHoraRegistro):""]
+  ];
+  const drawField=(label,value,index)=>{
+   const val=String(value||"").trim()||"Sin dato registrado",long=["Descripción","Comentarios"].includes(label),boxH=long?Math.max(20,doc.splitTextToSize(val,164).length*4.5+12):16;
+   y=ensure(y,boxH+4);doc.setFillColor(index%2?248:244,index%2?250:248,index%2?252:251);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,boxH,2,2,"FD");
+   doc.setTextColor(95);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.text(label,margin+5,y+5.5);
+   doc.setTextColor(28);doc.setFont("helvetica","bold");doc.setFontSize(9);
+   if(label==="Clasificación"){
+    const state=eventClassState(e),cx=margin+5,cy=y+10.7;if(state==="REGULAR"){doc.setFillColor(32);doc.rect(cx,cy-2.2,4.2,4.2,"F")}else if(state==="TIP_CONSULTADA"){doc.setDrawColor(32,89,133);doc.setLineWidth(.8);doc.circle(cx+2.1,cy,2.1,"S")}else{doc.setFillColor(217,47,47);doc.circle(cx+2.1,cy,2.1,"F")}
+    doc.text(val,margin+12,y+12);
+   }else doc.text(doc.splitTextToSize(val,164),margin+5,y+12);
+   y+=boxH+3;
+  };
+  fields.forEach((f,i)=>drawField(f[0],f[1],i));
+  if(eventClassState(e)==="TIP_CONSULTADA"){y=ensure(y,9);doc.setTextColor(90);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text("* TIP consultada respecto al usuario en sesión.",margin+2,y);y+=7}
+  const evs=eventEvidenceList(e);
+  y=ensure(y,24);doc.setTextColor(32,89,133);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("Evidencia",margin,y);y+=5;
+  if(!evs.length){doc.setFillColor(248,250,252);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,16,2,2,"FD");doc.setTextColor(28);doc.setFontSize(9);doc.text("Sin evidencia registrada",margin+5,y+10);y+=20}
+  else{
+   for(let i=0;i<evs.length;i++){
+    const ev=evs[i],url=evidenceUrl(ev),name=String(ev?.name||ev?.nombre||`Evidencia ${i+1}`);
+    if(evidenceIsImage(ev)&&url){
+     const data=await imageDataUrl(url);if(data){const d=fitImg(data,contentW-10,105);y=ensure(y,d.h+18);doc.setFillColor(248,250,252);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,d.h+14,2,2,"FD");doc.setTextColor(90);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text(name,margin+5,y+5);addImg(data,margin+(contentW-d.w)/2,y+8,d.w,d.h);y+=d.h+18;continue}
+    }
+    y=ensure(y,18);doc.setFillColor(248,250,252);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,14,2,2,"FD");doc.setTextColor(28);doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text(name,margin+5,y+9);y+=18;
+   }
+  }
+  const seg=Array.isArray(e?.seguimientos)?e.seguimientos:[];
+  y=ensure(y,24);doc.setTextColor(32,89,133);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("Seguimiento",margin,y);y+=5;
+  if(!seg.length){doc.setFillColor(248,250,252);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,16,2,2,"FD");doc.setTextColor(28);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Sin anotaciones de seguimiento",margin+5,y+10)}
+  else for(const s of seg){const note=String(s?.nota||"").trim()||"Sin anotación",lines=doc.splitTextToSize(note,164),h=Math.max(19,lines.length*4.2+13);y=ensure(y,h+4);doc.setFillColor(248,250,252);doc.setDrawColor(222,229,236);doc.roundedRect(margin,y,contentW,h,2,2,"FD");doc.setTextColor(95);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.text(`${fmt(s.fechaRegistro)} · ${s.autorNombre||"Usuario"}`,margin+5,y+5.5);doc.setTextColor(28);doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text(lines,margin+5,y+12);y+=h+3}
+  const pages=doc.getNumberOfPages();for(let p=1;p<=pages;p++){doc.setPage(p);footer()}
+  doc.save(`BIT_Tarjeta_${eventRegister(e)}.pdf`);
+ }catch(err){window.alert(err?.message||"No fue posible generar la Tarjeta PDF.")}
+}
 function openDetail(id){const e=[...bitState.eventos,...bitState.seguimientoEventos].find(x=>String(x.id||x._id||"")===String(id||""));if(!e)return;selectedDetailEvent=e;["#bitRegistroView","#bitConsultaView","#bitSeguimientoView"].forEach(s=>$(s).hidden=true);$("#bitDetalle").innerHTML=renderEventCard(e);$("#bitDetalleView").hidden=false}
 function applyCapabilities(){
   $("#btnBitRegistro").hidden=bitState.facultades.registro!==true;$("#btnBitConsulta").hidden=bitState.facultades.consulta!==true;$("#btnBitSeguimiento").hidden=bitState.facultades.seguimiento!==true;$("#bitEvidenciaField").hidden=bitState.evidencias!==true;
