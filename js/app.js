@@ -7,7 +7,7 @@ import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 
-const VERSION="0.2.86";
+const VERSION="0.2.87";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -131,7 +131,7 @@ async function saveBitacoraFollowup(detail={}){
   const data=await response.json().catch(()=>({}));
   if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible guardar el seguimiento.");
   await loadBitacoraState(currentContext);
-  window.alert(data.mensaje||"Seguimiento registrado.");
+  document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:data.mensaje||"Seguimiento registrado."}}));
 }
 
 async function runBitacoraFollowupAction(endpoint,detail={},fallback="No fue posible actualizar el seguimiento."){
@@ -375,10 +375,10 @@ async function boot(){
   document.addEventListener("nexus:bitacora-local-saved",()=>syncBitacoraQueue());
   document.addEventListener("nexus:bitacora-sync-request",()=>syncBitacoraQueue());
   document.addEventListener("nexus:bitacora-retry",e=>syncBitacoraQueue(String(e.detail?.localId||"")));
-  document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible guardar el seguimiento.")}});
-  document.addEventListener("nexus:bitacora-followup-take",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraTakeFollowup",e.detail,"No fue posible tomar el seguimiento.");window.alert(d.mensaje||"Seguimiento tomado.")}catch(error){console.error("NEXUS | BITACORA | TAKE_FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible tomar el seguimiento.")}});
-  document.addEventListener("nexus:bitacora-followup-release",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraReleaseFollowup",e.detail,"No fue posible liberar el seguimiento.");window.alert(d.mensaje||"Seguimiento liberado.")}catch(error){console.error("NEXUS | BITACORA | RELEASE_FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible liberar el seguimiento.")}});
-  document.addEventListener("nexus:bitacora-followup-attended",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraMarkFollowupAttended",e.detail,"No fue posible marcar el seguimiento como atendido.");window.alert(d.mensaje||"Seguimiento marcado como atendido.")}catch(error){console.error("NEXUS | BITACORA | ATTENDED_FOLLOWUP_ERROR",error);window.alert(error?.message||"No fue posible marcar el seguimiento como atendido.")}});
+  document.addEventListener("nexus:bitacora-followup",async e=>{try{await saveBitacoraFollowup(e.detail||{})}catch(error){console.error("NEXUS | BITACORA | FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible guardar el seguimiento."}}))}});
+  document.addEventListener("nexus:bitacora-followup-take",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraTakeFollowup",e.detail,"No fue posible tomar el seguimiento.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento tomado."}}))}catch(error){console.error("NEXUS | BITACORA | TAKE_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible tomar el seguimiento."}}))}});
+  document.addEventListener("nexus:bitacora-followup-release",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraReleaseFollowup",e.detail,"No fue posible liberar el seguimiento.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento liberado."}}))}catch(error){console.error("NEXUS | BITACORA | RELEASE_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible liberar el seguimiento."}}))}});
+  document.addEventListener("nexus:bitacora-followup-attended",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraMarkFollowupAttended",e.detail,"No fue posible marcar el seguimiento como atendido.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento marcado como atendido."}}))}catch(error){console.error("NEXUS | BITACORA | ATTENDED_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible marcar el seguimiento como atendido."}}))}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
   document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://www.scad.mx/nexus-panel")});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
