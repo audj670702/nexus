@@ -223,7 +223,7 @@
             <label>Responsable<input id="bitFiltroResponsable" type="search" placeholder="Todos" autocomplete="off"></label>
             <label>Actividad<input id="bitFiltroActividad" type="search" placeholder="Todas" autocomplete="off"></label>
             <label>Registro<select id="bitFiltroEstado"><option value="VIGENTE">Vigentes</option><option value="TODOS">Vigentes y sustituidos</option><option value="SUSTITUIDO">Sólo sustituidos</option></select></label>
-            <label>Clasificación<select id="bitFiltroTip"><option value="">Todos</option><option value="REGULAR">■ Regular</option><option value="TIP">●/○ TIP</option><option value="TIP_PENDIENTE">● TIP pendiente</option><option value="TIP_CONSULTADA">○ TIP consultada</option></select></label>
+            <label>Clasificación<div class="bit-class-filter"><span id="bitFiltroTipIcon" class="bit-filter-state-icon" aria-hidden="true"></span><select id="bitFiltroTip"><option value="">Todos</option><option value="REGULAR">■ Regular</option><option value="TIP">●/○ TIP</option><option value="TIP_PENDIENTE">● TIP pendiente</option><option value="TIP_CONSULTADA">○ TIP consultada</option></select></div></label>
             <button id="btnBitLimpiarFiltros" class="bit-consulta-clear" type="button">Limpiar filtros</button>
           </div>
           <div id="bitPdfOptions" class="bit-pdf-options" hidden>
@@ -304,7 +304,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.82</span>
+      <span id="versionLabel">NEXUS · v0.2.83</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
