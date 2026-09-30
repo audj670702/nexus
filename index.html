@@ -163,6 +163,7 @@
               <label>Fecha del evento<input id="bitFecha" type="date"></label>
               <label>Hora<input id="bitHora" type="time"></label>
               <label class="bitacora-check bitacora-followup-check"><input id="bitRequiereSeguimiento" type="checkbox"><span>Seguimiento requerido</span></label>
+              <label class="bitacora-check bitacora-tip-check"><input id="bitEsTip" type="checkbox"><span class="bit-tip-dot bit-tip-dot-red" aria-hidden="true"></span><span>Tarjeta Informativa Prioritaria</span></label>
             </div>
             <div class="bit-relation-field">
               <span class="bit-relation-label">Relacionar actividad</span>
@@ -195,11 +196,13 @@
               <div id="bitRelacionLista" class="bit-relation-list"></div>
             </section>
           </div>
-          <div id="bitRegistroLock" class="bit-register-lock" hidden>🔒 Evento asegurado · No puede modificarse</div>
+          <div id="bitRegistroLock" class="bit-register-lock" hidden>🔒 Registro guardado · Fuera de edición</div>
+          <div id="bitRegistroSaved" class="bit-register-saved" hidden></div>
           <div id="bitRegistroResult" class="bit-register-result" hidden></div>
           <div id="bitPendingPanel" class="bit-pending-panel" hidden></div>
           <div class="bitacora-actions">
             <button id="btnBitGuardar" class="bitacora-primary" type="button">Guardar</button>
+            <button id="btnBitNuevo" class="bitacora-primary" type="button" hidden>+ Nuevo registro</button>
           </div>
         </div>
 
@@ -278,7 +281,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.77</span>
+      <span id="versionLabel">NEXUS · v0.2.79</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
