@@ -6,8 +6,9 @@ import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
+import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.2.87";
+const VERSION="0.2.88";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -59,6 +60,50 @@ function getMemberAreaUrl(member,pageSlug){
   const url=new URL(`https://www.scad.mx/members-area/${encodeURIComponent(memberSlug)}/${pageSlug}`);
   url.searchParams.set("disableScrollToTop","true");
   return withWixReturnUrl(url.toString());
+}
+
+
+async function loadCteState(context){
+  if(context?.authenticated!==true||!context?.memberId||!context?.eo?.codigoEO){setCteState({tickets:[]});return}
+  const roles=(context.roles||[]).map(r=>String(r||"").trim().toUpperCase());
+  if(!roles.includes("CLIENTE")&&!roles.includes("ADM")){setCteState({tickets:[]});return}
+  try{
+    const url=new URL(`${API_BASE}/nexusCteState`);
+    url.searchParams.set("memberId",context.memberId);url.searchParams.set("codigoEO",context.eo.codigoEO);
+    const response=await fetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Atención al Cliente.");
+    setCteState(data);
+  }catch(error){console.error("NEXUS | CTE | STATE_ERROR",error);setCteState({tickets:[]})}
+}
+async function syncCteEvidence(queueItem,evidence){
+  const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+  evidence={...evidence,syncStatus:"SUBIENDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(evidence.syncAttempts||0)+1,syncError:""};await updateCteEvidence(evidence);
+  try{
+    const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
+    const prepared=await prep.json().catch(()=>({}));if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
+    const upload=await fetch(prepared.uploadUrl,{method:"PUT",headers:{"Content-Type":evidence.type||"application/octet-stream"},body:evidence.file});const uploaded=await upload.json().catch(()=>null);if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
+    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
+    const finalized=await fin.json().catch(()=>({}));if(!fin.ok||finalized?.ok!==true)throw new Error(finalized?.mensaje||"No fue posible vincular la evidencia.");
+    evidence={...evidence,syncStatus:"SINCRONIZADA",syncError:"",serverEvidence:finalized.evidencia||null};
+  }catch(error){evidence={...evidence,syncStatus:"ERROR",syncError:error?.message||"Error de sincronización de evidencia."}}
+  await updateCteEvidence(evidence);
+}
+async function syncCteItem(item){
+  const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();if(!memberId||!codigoEO||!navigator.onLine)return;
+  item={...item,syncStatus:"SINCRONIZANDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(item.syncAttempts||0)+1,syncError:""};await updateCteQueue(item);
+  try{
+    const response=await fetch(`${API_BASE}/nexusCteEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
+    const data=await response.json().catch(()=>({}));if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible sincronizar el ticket.");
+    item={...item,syncStatus:"SINCRONIZADO",serverId:String(data?.evento?.id||""),serverFolio:String(data?.evento?.folio||""),syncError:""};await updateCteQueue(item);
+    for(const evidence of await getCteEvidence(item.localId)){if(evidence.syncStatus!=="SINCRONIZADA")await syncCteEvidence(item,evidence)}
+    await loadCteState(currentContext);
+  }catch(error){item={...item,syncStatus:"ERROR",syncError:error?.message||"Error de sincronización."};await updateCteQueue(item)}
+}
+let cteSyncRunning=false;
+async function syncCteQueue(localId=""){
+  if(cteSyncRunning||!navigator.onLine)return;cteSyncRunning=true;
+  try{for(const item of await getPendingCteEvents()){if(!localId||item.localId===localId)await syncCteItem(item)}}finally{cteSyncRunning=false;await notifyCteSynced()}
 }
 
 async function loadBitacoraState(context){
@@ -337,7 +382,7 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();
+  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -346,9 +391,9 @@ async function boot(){
   }
   currentContext=c;
   setTvContext(c);
-  setBitacoraContext(c);
-  await loadBitacoraState(c);
-  syncBitacoraQueue();
+  setBitacoraContext(c);setCteContext(c);
+  await loadBitacoraState(c);await loadCteState(c);
+  syncBitacoraQueue();syncCteQueue();
   paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
     const card=e.target.closest("[data-module]");
@@ -356,6 +401,7 @@ async function boot(){
     if(card.dataset.module==="docs"){openDocuments();return}
     if(card.dataset.module==="schedule"){openSchedule();return}
     if(card.dataset.module==="bitacora"){openBitacora();return}
+    if(card.dataset.module==="cte"){openCte();return}
     if(card.dataset.module==="training"){
       const cursosUrl=getMemberAreaUrl(currentContext?.user,"challenges");
       window.location.assign(cursosUrl!=="#"?cursosUrl:withWixReturnUrl("https://www.scad.mx/members-area/challenges"));return
@@ -372,6 +418,9 @@ async function boot(){
       window.location.assign("https://www.scad.mx/nexus-panel");return
     }
   });
+  document.addEventListener("nexus:cte-local-saved",()=>syncCteQueue());
+  document.addEventListener("nexus:cte-sync-request",()=>syncCteQueue());
+  document.addEventListener("nexus:cte-retry",e=>syncCteQueue(String(e.detail?.localId||"")));
   document.addEventListener("nexus:bitacora-local-saved",()=>syncBitacoraQueue());
   document.addEventListener("nexus:bitacora-sync-request",()=>syncBitacoraQueue());
   document.addEventListener("nexus:bitacora-retry",e=>syncBitacoraQueue(String(e.detail?.localId||"")));
