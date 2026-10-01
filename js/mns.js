@@ -1,4 +1,5 @@
 import { getContext } from './context.js';
+import {showNotice} from './ui.js';
 
 // NEXUS · Integración MNS SYS · v1.1.0
 // MNS consume la autenticación/contexto ya resuelto por NEXUS; no mantiene autenticación propia.
@@ -46,7 +47,7 @@ async function openMns(ctx=null){
     overlay.innerHTML=`<div class="nexus-mns-panel" role="dialog" aria-modal="true" aria-label="Mensajería"><iframe class="nexus-mns-frame" src="${FRAME_URL}" title="Mensajería SCaD MNS"></iframe></div>`;
     overlay.addEventListener('click',e=>{if(e.target===overlay)closeMns()});
     document.body.appendChild(overlay);document.body.classList.add('nexus-mns-open');
-  }catch(error){console.error('[NEXUS MNS]',error);window.alert(error?.message||'No fue posible abrir Mensajería.')}
+  }catch(error){console.error('[NEXUS MNS]',error);showNotice(error?.message||'No fue posible abrir Mensajería.')}
 }
 window.openScadMns=openMns;
 
