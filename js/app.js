@@ -1,4 +1,5 @@
 import {resolveAccessContext,startLogin,logoutLocal} from "./auth.js";
+import {initNotices,showNotice} from "./ui.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv,setTvContext} from "./tv.js";
@@ -240,7 +241,7 @@ function initInstallFlow(){
     if(installedApp())return;
     if(isIosDevice()){openIosTutorial();return}
     deferredInstallPrompt=deferredInstallPrompt||window.__nexusInstallPrompt||null;
-    if(!deferredInstallPrompt){window.alert("La instalación todavía no está disponible. Abre el menú del navegador y selecciona Instalar app o Instalar NEXUS.");return}
+    if(!deferredInstallPrompt){showNotice("La instalación todavía no está disponible. Abre el menú del navegador y selecciona Instalar app o Instalar NEXUS.");return}
     const button=document.querySelector("#installButton");
     button.disabled=true;button.textContent="Instalando...";
     deferredInstallPrompt.prompt();
@@ -382,7 +383,8 @@ function paintContext(c){
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 async function boot(){
-  initAccountMenu();initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
+  initAccountMenu();initNotices();
+  initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -408,7 +410,7 @@ async function boot(){
     }
     if(card.dataset.module==="reports"){
       const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
-      if(!codigoEO){window.alert("No fue posible resolver la Empresa Operadora activa.");return}
+      if(!codigoEO){showNotice("No fue posible resolver la Empresa Operadora activa.");return}
       const url=new URL("https://www.scad.mx/sys-informes");
       url.searchParams.set("app","NEXUS");
       url.searchParams.set("eo",codigoEO);
