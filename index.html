@@ -273,6 +273,42 @@
       </section>
     </div>
 
+
+    <div id="cteModal" class="modal-backdrop" hidden>
+      <section class="cte-modal" role="dialog" aria-modal="true" aria-labelledby="cteModalTitle">
+        <header class="cte-bar">
+          <div class="cte-bar-title"><span aria-hidden="true">☏</span><h2 id="cteModalTitle">Atención al Cliente</h2></div>
+          <button id="btnCloseCte" class="cte-close" type="button" aria-label="Cerrar">×</button>
+        </header>
+        <div class="cte-tabs" role="tablist" aria-label="Atención al Cliente">
+          <button id="btnCteNueva" class="is-active" type="button" role="tab">Nueva atención</button>
+          <button id="btnCteTickets" type="button" role="tab">Mis tickets</button>
+        </div>
+        <div id="cteNuevaView" class="cte-view">
+          <div class="cte-identity">
+            <span id="cteAvatar" class="account-avatar cte-avatar">N</span>
+            <div><strong id="cteUserName">Usuario</strong><span id="cteMeta">Folio: — · Fecha / hora: —</span></div>
+          </div>
+          <div class="cte-form">
+            <label>Clasificación<select id="cteClasificacion"><option value="">Seleccionar</option><option value="QUEJA">Queja</option><option value="INFORMACION">Información</option><option value="SUGERENCIA">Sugerencia</option><option value="SOLICITUD">Solicitud</option></select></label>
+            <label>Servicio<input id="cteServicio" type="text" maxlength="200" placeholder="Servicio relacionado"></label>
+            <label>Descripción<textarea id="cteDescripcion" rows="5" maxlength="4000" placeholder="Describe tu comunicación y los detalles necesarios para atenderla."></textarea></label>
+            <label class="cte-evidence">Evidencias <span class="cte-file-picker"><span class="cte-file-button">Elegir archivo</span><span>Adjuntar evidencia</span><input id="cteEvidencias" type="file" multiple></span><div id="cteEvidenceSelected" class="cte-evidence-selected" hidden></div></label>
+          </div>
+          <div id="cteResult" class="cte-result" hidden></div>
+          <div class="cte-actions"><button id="btnCteGuardar" class="cte-primary" type="button">Guardar</button><button id="btnCteNuevo" class="cte-primary" type="button" hidden>+ Nueva atención</button></div>
+        </div>
+        <div id="cteTicketsView" class="cte-view" hidden>
+          <div class="cte-tickets-head"><strong>Mis tickets</strong><span id="cteTicketsCount"></span></div>
+          <div id="cteTicketsList" class="cte-ticket-list"></div>
+        </div>
+        <div id="cteTicketDetailView" class="cte-view" hidden>
+          <button id="btnCteTicketBack" class="cte-back" type="button">‹ Mis tickets</button>
+          <div id="cteTicketDetail" class="cte-ticket-detail"></div>
+        </div>
+      </section>
+    </div>
+
     <div id="scheduleModal" class="modal-backdrop" hidden>
       <section class="schedule-modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
         <header class="schedule-bar">
@@ -322,7 +358,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.2.87</span>
+      <span id="versionLabel">NEXUS · v0.2.88</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
