@@ -3,9 +3,85 @@ import {getContext,setContext,clearContext} from "./context.js";
 const SYS_AUTH_URL="https://www.scad.mx/sys-autenticacion";
 const SYS_CONTEXT_URL="https://www.scad.mx/_functions/nexusPwaContext";
 const SESSION_KEY="nexus.sys.context";
+const TOKEN_KEY="nexus.sys.token";
+const AUTH_REDIRECT_KEY="nexus.sys.authRedirectAt";
+const AUTH_REDIRECT_COOLDOWN_MS=2*60*1000;
 
 function trace(stage,detail={}){
   console.info(`NEXUS | SYS AUT | ${stage}`,detail);
+}
+
+// =====================================================
+// TOKEN FIRMADO SYS (paso 3b)
+// sys-autenticacion entrega el token en el fragmento: #t=<token>
+// Se guarda en sessionStorage y se envía como Authorization: Bearer.
+// =====================================================
+function decodeTokenExp(token){
+  try{
+    const part=String(token||"").split(".")[1]||"";
+    const json=atob(part.replace(/-/g,"+").replace(/_/g,"/"));
+    return Number(JSON.parse(json)?.exp)||0;
+  }catch(_){return 0}
+}
+
+function captureTokenFromHash(){
+  const hash=String(window.location.hash||"");
+  const match=/(?:^#|&)t=([^&]+)/.exec(hash);
+  if(!match)return;
+  const token=decodeURIComponent(match[1]);
+  try{
+    sessionStorage.setItem(TOKEN_KEY,token);
+    sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+  }catch(error){
+    console.warn("NEXUS | SYS AUT | TOKEN_SAVE_ERROR",error);
+  }
+  const url=new URL(window.location.href);
+  url.hash="";
+  window.history.replaceState({},"",url.toString());
+  trace("TOKEN_RECEIVED",{exp:decodeTokenExp(token)||null});
+}
+
+function clearToken(){
+  try{sessionStorage.removeItem(TOKEN_KEY)}catch(_){}
+}
+
+export function getAuthToken(){
+  let token="";
+  try{token=String(sessionStorage.getItem(TOKEN_KEY)||"")}catch(_){token=""}
+  if(!token)return "";
+  const exp=decodeTokenExp(token);
+  if(exp&&Date.now()/1000>exp){
+    trace("TOKEN_EXPIRED",{exp});
+    clearToken();
+    return "";
+  }
+  return token;
+}
+
+// Agrega Authorization: Bearer <token> a los headers de una petición al backend SYS.
+export function authHeaders(headers={}){
+  const token=getAuthToken();
+  return token?{...headers,Authorization:`Bearer ${token}`}:{...headers};
+}
+
+// El backend respondió 401 (token ausente, inválido o vencido): volver a iniciar sesión.
+// Con freno para no entrar en un ciclo de redirecciones.
+export function handleAuthRequired(){
+  let last=0;
+  try{last=Number(sessionStorage.getItem(AUTH_REDIRECT_KEY)||0)}catch(_){}
+  if(last&&Date.now()-last<AUTH_REDIRECT_COOLDOWN_MS){
+    trace("AUTH_REQUIRED_SKIPPED",{reason:"COOLDOWN"});
+    return false;
+  }
+  try{
+    sessionStorage.setItem(AUTH_REDIRECT_KEY,String(Date.now()));
+    sessionStorage.removeItem(SESSION_KEY);
+  }catch(_){}
+  clearToken();
+  clearContext();
+  trace("AUTH_REQUIRED_REDIRECT");
+  startLogin();
+  return true;
 }
 
 function normalizeSysContext(result={}){
@@ -77,8 +153,12 @@ async function resolveMemberContext(memberId,enteOperador=""){
     mode:"cors",
     cache:"no-store",
     credentials:"omit",
-    headers:{"Accept":"application/json"}
+    headers:authHeaders({"Accept":"application/json"})
   });
+
+  if(response.status===401){
+    handleAuthRequired();
+  }
 
   let result=null;
   try{result=await response.json()}catch(error){
@@ -107,6 +187,7 @@ async function resolveMemberContext(memberId,enteOperador=""){
 }
 
 export async function resolveAccessContext(){
+  captureTokenFromHash();
   const url=new URL(window.location.href);
   const memberId=String(url.searchParams.get("memberId")||"").trim();
   const enteOperador=String(url.searchParams.get("enteOperador")||"").trim();
@@ -150,6 +231,7 @@ export function startLogin(){
 
 export function logoutLocal(){
   try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}
+  clearToken();
   clearContext();
 
   const u=new URL(SYS_AUTH_URL);
