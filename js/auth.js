@@ -27,7 +27,7 @@ function decodeTokenExp(token){
 function captureTokenFromHash(){
   const hash=String(window.location.hash||"");
   const match=/(?:^#|&)t=([^&]+)/.exec(hash);
-  if(!match)return;
+  if(!match)return false;
   const token=decodeURIComponent(match[1]);
   try{
     sessionStorage.setItem(TOKEN_KEY,token);
@@ -39,6 +39,7 @@ function captureTokenFromHash(){
   url.hash="";
   window.history.replaceState({},"",url.toString());
   trace("TOKEN_RECEIVED",{exp:decodeTokenExp(token)||null});
+  return true;
 }
 
 function clearToken(){
@@ -140,12 +141,13 @@ function removeAuthContextFromUrl(){
 async function resolveMemberContext(memberId,enteOperador=""){
   trace("NEXUS_CONTEXT_REQUEST",{
     endpoint:SYS_CONTEXT_URL,
-    memberIdPresent:true,
+    memberIdPresent:Boolean(memberId),
     enteOperadorPresent:Boolean(enteOperador)
   });
 
+  // La identidad la da el token; memberId/enteOperador sólo se envían por compatibilidad.
   const url=new URL(SYS_CONTEXT_URL);
-  url.searchParams.set("memberId",memberId);
+  if(memberId)url.searchParams.set("memberId",memberId);
   if(enteOperador)url.searchParams.set("enteOperador",enteOperador);
 
   const response=await fetch(url.toString(),{
@@ -187,14 +189,16 @@ async function resolveMemberContext(memberId,enteOperador=""){
 }
 
 export async function resolveAccessContext(){
-  captureTokenFromHash();
+  const tokenRecibido=captureTokenFromHash();
   const url=new URL(window.location.href);
   const memberId=String(url.searchParams.get("memberId")||"").trim();
   const enteOperador=String(url.searchParams.get("enteOperador")||"").trim();
 
-  if(memberId){
+  // Regreso del login: basta con el token (#t=); memberId en la URL ya no es necesario.
+  if(tokenRecibido||memberId){
     trace("MEMBER_RETURN_RECEIVED",{
-      memberIdPresent:true,
+      tokenPresent:tokenRecibido,
+      memberIdPresent:Boolean(memberId),
       enteOperadorPresent:Boolean(enteOperador)
     });
     return resolveMemberContext(memberId,enteOperador);
