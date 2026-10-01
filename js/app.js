@@ -1,4 +1,4 @@
-import {resolveAccessContext,startLogin,logoutLocal} from "./auth.js";
+import {resolveAccessContext,startLogin,logoutLocal,authHeaders,handleAuthRequired} from "./auth.js";
 import {initNotices,showNotice} from "./ui.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
@@ -42,6 +42,12 @@ function setAvatar(el,obj,name){
   el.style.backgroundPosition="center";
 }
 const API_BASE="https://www.scad.mx/_functions";
+// Toda petición al backend SYS lleva el token (Authorization: Bearer).
+async function apiFetch(url,options={}){
+  const response=await fetch(url,{...options,headers:authHeaders(options.headers||{})});
+  if(response.status===401)handleAuthRequired();
+  return response;
+}
 function fileToDataUrl(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -71,7 +77,7 @@ async function loadCteState(context){
   try{
     const url=new URL(`${API_BASE}/nexusCteState`);
     url.searchParams.set("memberId",context.memberId);url.searchParams.set("codigoEO",context.eo.codigoEO);
-    const response=await fetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
+    const response=await apiFetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Atención al Cliente.");
     setCteState(data);
@@ -81,10 +87,10 @@ async function syncCteEvidence(queueItem,evidence){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
   evidence={...evidence,syncStatus:"SUBIENDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(evidence.syncAttempts||0)+1,syncError:""};await updateCteEvidence(evidence);
   try{
-    const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
+    const prep=await apiFetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
     const prepared=await prep.json().catch(()=>({}));if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
     const upload=await fetch(prepared.uploadUrl,{method:"PUT",headers:{"Content-Type":evidence.type||"application/octet-stream"},body:evidence.file});const uploaded=await upload.json().catch(()=>null);if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
-    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
+    const fin=await apiFetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
     const finalized=await fin.json().catch(()=>({}));if(!fin.ok||finalized?.ok!==true)throw new Error(finalized?.mensaje||"No fue posible vincular la evidencia.");
     evidence={...evidence,syncStatus:"SINCRONIZADA",syncError:"",serverEvidence:finalized.evidencia||null};
   }catch(error){evidence={...evidence,syncStatus:"ERROR",syncError:error?.message||"Error de sincronización de evidencia."}}
@@ -94,7 +100,7 @@ async function syncCteItem(item){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();if(!memberId||!codigoEO||!navigator.onLine)return;
   item={...item,syncStatus:"SINCRONIZANDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(item.syncAttempts||0)+1,syncError:""};await updateCteQueue(item);
   try{
-    const response=await fetch(`${API_BASE}/nexusCteEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
+    const response=await apiFetch(`${API_BASE}/nexusCteEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
     const data=await response.json().catch(()=>({}));if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible sincronizar el ticket.");
     item={...item,syncStatus:"SINCRONIZADO",serverId:String(data?.evento?.id||""),serverFolio:String(data?.evento?.folio||""),syncError:""};await updateCteQueue(item);
     for(const evidence of await getCteEvidence(item.localId)){if(evidence.syncStatus!=="SINCRONIZADA")await syncCteEvidence(item,evidence)}
@@ -117,7 +123,7 @@ async function loadBitacoraState(context){
     const url=new URL(`${API_BASE}/nexusBitacoraState`);
     url.searchParams.set("memberId",context.memberId);
     url.searchParams.set("codigoEO",context.eo.codigoEO);
-    const response=await fetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
+    const response=await apiFetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Bitácora.");
     context.bitacora={activo:data.activo===true,facultades:data.facultades||{}};
@@ -133,13 +139,13 @@ async function syncBitacoraEvidence(queueItem,evidence){
   evidence={...evidence,syncStatus:"SUBIENDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(evidence.syncAttempts||0)+1,syncError:""};
   await updateBitEvidence(evidence);
   try{
-    const prep=await fetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
+    const prep=await apiFetch(`${API_BASE}/nexusBitacoraEvidencePrepare`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size})});
     const prepared=await prep.json().catch(()=>({}));
     if(!prep.ok||prepared?.ok!==true||!prepared.uploadUrl)throw new Error(prepared?.mensaje||"No fue posible preparar la evidencia.");
     const upload=await fetch(prepared.uploadUrl,{method:"PUT",headers:{"Content-Type":evidence.type||"application/octet-stream"},body:evidence.file});
     const uploaded=await upload.json().catch(()=>null);
     if(!upload.ok)throw new Error("No fue posible subir la evidencia.");
-    const fin=await fetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
+    const fin=await apiFetch(`${API_BASE}/nexusBitacoraEvidenceFinalize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:queueItem.serverId,localId:queueItem.localId,evidenceId:evidence.evidenceId,fileName:evidence.name,mimeType:evidence.type,size:evidence.size,upload:uploaded})});
     const finalized=await fin.json().catch(()=>({}));
     if(!fin.ok||finalized?.ok!==true)throw new Error(finalized?.mensaje||"No fue posible vincular la evidencia.");
     evidence={...evidence,syncStatus:"SINCRONIZADA",syncError:"",serverEvidence:finalized.evidencia||null};
@@ -152,7 +158,7 @@ async function syncBitacoraItem(item){
   item={...item,syncStatus:"SINCRONIZANDO",lastSyncAttempt:new Date().toISOString(),syncAttempts:Number(item.syncAttempts||0)+1,syncError:""};
   await updateBitQueue(item);
   try{
-    const response=await fetch(`${API_BASE}/nexusBitacoraEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
+    const response=await apiFetch(`${API_BASE}/nexusBitacoraEvent`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,evento:{...item.payload,localId:item.localId}})});
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible sincronizar el evento.");
     item={...item,syncStatus:"SINCRONIZADO",serverId:String(data?.evento?.id||""),serverFolio:String(data?.evento?.folio||""),syncError:""};
@@ -173,7 +179,7 @@ async function syncBitacoraQueue(localId=""){
 async function saveBitacoraFollowup(detail={}){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
   if(!memberId||!codigoEO||!detail.eventoId||!detail.nota)return;
-  const response=await fetch(`${API_BASE}/nexusBitacoraFollowup`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:detail.eventoId,nota:detail.nota})});
+  const response=await apiFetch(`${API_BASE}/nexusBitacoraFollowup`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId:detail.eventoId,nota:detail.nota})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible guardar el seguimiento.");
   await loadBitacoraState(currentContext);
@@ -183,7 +189,7 @@ async function saveBitacoraFollowup(detail={}){
 async function runBitacoraFollowupAction(endpoint,detail={},fallback="No fue posible actualizar el seguimiento."){
   const memberId=String(currentContext?.memberId||"").trim(),codigoEO=String(currentContext?.eo?.codigoEO||"").trim(),eventoId=String(detail?.eventoId||"").trim();
   if(!memberId||!codigoEO||!eventoId)throw new Error("No fue posible resolver el contexto del seguimiento.");
-  const response=await fetch(`${API_BASE}/${endpoint}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId})});
+  const response=await apiFetch(`${API_BASE}/${endpoint}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({memberId,codigoEO,eventoId})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||fallback);
   await loadBitacoraState(currentContext);
@@ -335,7 +341,7 @@ function initProfileModal(){
       if(file){
         payload.foto={base64:await fileToDataUrl(file),mimeType:file.type,fileName:file.name};
       }
-      const response=await fetch(`${API_BASE}/sysPwaProfile`,{
+      const response=await apiFetch(`${API_BASE}/sysPwaProfile`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify(payload)
