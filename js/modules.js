@@ -4,6 +4,7 @@ export const BASIC_MODULES=Object.freeze([
 {id:"docs",name:"Documentos",description:"Documentos disponibles"},
 {id:"schedule",name:"Programación",description:"Actividades y agenda"},
 {id:"bitacora",name:"Bitácora",description:"Eventos y seguimiento",capability:"bitacora"},
+{id:"cte",name:"Atención al Cliente",description:"Atención y seguimiento de tickets",roles:["CLIENTE","ADM"]},
 {id:"reports",name:"Informes",description:"Consultas e informes disponibles",capability:"informes"},
 {id:"admin",name:"Administración",description:"Gestión NEXUS",role:"ADM"}
 ]);
@@ -34,10 +35,16 @@ export function renderModules(container,modules=BASIC_MODULES,context={}){
   const authenticated=context?.authenticated===true;
   const roles=(Array.isArray(context?.roles)?context.roles:[]).map(r=>String(r||"").trim().toUpperCase());
   const isAdm=roles.includes("ADM");
-  const visible=authenticated?modules.filter(m=>m.id==="admin"?isAdm:hasCapability(context,m.capability)):modules.filter(m=>m.id!=="admin");
+  const visible=authenticated?modules.filter(m=>{
+    if(m.id==="admin")return isAdm;
+    if(Array.isArray(m.roles)&&m.roles.length)return m.roles.some(role=>roles.includes(String(role).toUpperCase()));
+    return hasCapability(context,m.capability);
+  }):modules.filter(m=>m.id!=="admin"&&!Array.isArray(m.roles));
   container.replaceChildren(...visible.map(m=>{
     const b=document.createElement("button");b.type="button";b.className="module-card";b.dataset.module=m.id;
-    const allowed=authenticated&&(!m.role||roles.includes(m.role))&&hasCapability(context,m.capability);
+    const roleAllowed=!m.role||roles.includes(String(m.role).toUpperCase());
+    const rolesAllowed=!Array.isArray(m.roles)||m.roles.some(role=>roles.includes(String(role).toUpperCase()));
+    const allowed=authenticated&&roleAllowed&&rolesAllowed&&hasCapability(context,m.capability);
     if(!allowed)b.classList.add("is-locked");
     const s=document.createElement("strong");s.textContent=m.name;
     const d=document.createElement("span");d.textContent=allowed?m.description:"Inicia sesión para acceder";
