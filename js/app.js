@@ -9,11 +9,11 @@ import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {getBitacoraSnapshot} from "./bitacora.js";
-import {getCteSnapshot,openCteTickets} from "./cte.js";
-import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
+import {getCteSnapshot,openCteTickets,openCteTicket} from "./cte.js";
+import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,openBitacoraAt,hasBitacoraEvent,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.3.1";
+const VERSION="0.3.2";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -417,7 +417,7 @@ function hideSplash(){
 }
 async function boot(){
   initAccountMenu();initNotices();initBackNavigation();
-  initModes({closeAllModals,openBitacora:()=>openBitacora(),openSchedule,openDocuments,openTraining,openMns:()=>window.openScadMns?.(),openReports,openCte,openCteTickets,canReports,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
+  initModes({closeAllModals,openBitacora:()=>openBitacora(),openBitacoraAt,hasBitacoraEvent,openCteTicket,openSchedule,openDocuments,openTraining,openMns:()=>window.openScadMns?.(),openReports,openCte,openCteTickets,canReports,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
   initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}

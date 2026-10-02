@@ -241,7 +241,7 @@
             <label>Responsable<input id="bitFiltroResponsable" type="search" placeholder="Todos" autocomplete="off"></label>
             <label>Actividad<input id="bitFiltroActividad" type="search" placeholder="Todas" autocomplete="off"></label>
             <label>Registro<select id="bitFiltroEstado"><option value="VIGENTE">Vigentes</option><option value="TODOS">Vigentes y sustituidos</option><option value="SUSTITUIDO">Sólo sustituidos</option></select></label>
-            <label>Clasificación<div class="bit-class-filter"><span id="bitFiltroTipIcon" class="bit-filter-state-icon" aria-hidden="true"></span><select id="bitFiltroTip"><option value="">Todos</option><option value="REGULAR">■ Regular</option><option value="TIP">●/○ TIP</option><option value="TIP_PENDIENTE">● TIP pendiente</option><option value="TIP_CONSULTADA">○ TIP consultada</option></select></div></label>
+            <label>Clasificación<div class="bit-class-filter"><span id="bitFiltroTipIcon" class="bit-filter-state-icon" aria-hidden="true"></span><select id="bitFiltroTip"><option value="">Todos</option><option value="REGULAR">■ Regular</option><option value="TIP">●/○ Informativa Prioritaria</option><option value="TIP_PENDIENTE">● Prioritaria pendiente</option><option value="TIP_CONSULTADA">○ Prioritaria consultada</option></select></div></label>
             <button id="btnBitLimpiarFiltros" class="bit-consulta-clear" type="button">Limpiar filtros</button>
           </div>
           <div id="bitPdfOptions" class="bit-pdf-options" hidden>
@@ -253,7 +253,7 @@
             <div id="bitColumnasOpciones" class="bit-columns-options"></div>
           </div>
           <div class="bitacora-filter-row">
-            <div class="bit-status-legend" aria-label="Leyenda de estado"><span><i class="bit-status-symbol regular" aria-hidden="true"></i> Regular</span><span><i class="bit-status-symbol tip-pending" aria-hidden="true"></i> TIP pendiente</span><span><i class="bit-status-symbol tip-read" aria-hidden="true"></i> TIP consultada*</span><small>*Respecto al usuario en sesión.</small></div>
+            <div class="bit-status-legend" aria-label="Leyenda de estado"><span><i class="bit-status-symbol regular" aria-hidden="true"></i> Regular</span><span><i class="bit-status-symbol tip-pending" aria-hidden="true"></i> Prioritaria pendiente</span><span><i class="bit-status-symbol tip-read" aria-hidden="true"></i> Prioritaria consultada*</span><small>*Respecto al usuario en sesión.</small></div>
             <span id="bitConsultaCount">0 eventos</span>
           </div>
           <div id="bitEventosList" class="bitacora-list bit-report-list"></div>
@@ -262,7 +262,7 @@
         <div id="bitSeguimientoView" class="bitacora-view" hidden>
           <div class="bitacora-section-head">
             <div><span class="bitacora-kicker">SEGUIMIENTO</span><h3>Eventos que requieren atención</h3></div>
-            <label class="bit-followup-source-filter">Origen<select id="bitSeguimientoFuente"><option value="TODOS">Todos</option><option value="BIT">BIT</option><option value="CTE">CTE</option></select></label>
+            <div class="bit-followup-filters"><label class="bit-followup-source-filter">Estado<select id="bitSeguimientoEstado"><option value="TODOS">Todos</option><option value="ABIERTOS">Abiertos</option><option value="SIN_ASIGNAR">Sin asignar</option><option value="EN_SEGUIMIENTO">En proceso</option><option value="MIOS">Asignados a mí</option><option value="ATENDIDO">Atendidos</option></select></label><label class="bit-followup-source-filter">Origen<select id="bitSeguimientoFuente"><option value="TODOS">Todos</option><option value="BIT">BIT</option><option value="CTE">CTE</option></select></label></div>
           </div>
           <label class="bitacora-search bit-followup-search"><span aria-hidden="true">⌕</span><input id="bitSeguimientoBuscar" type="search" placeholder="Buscar en Seguimiento (mín. 3 caracteres)" autocomplete="off"></label>
           <div id="bitSeguimientoHead" class="bit-followup-head"></div>
@@ -384,7 +384,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.1</span>
+      <span id="versionLabel">NEXUS · v0.3.2</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>

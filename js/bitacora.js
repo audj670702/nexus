@@ -218,8 +218,12 @@ function followupSortValue(e,id){
 function followupSortButton(id,label){const active=bitFollowupSort.id===id,arrow=active?(bitFollowupSort.dir==="ASC"?"↑":"↓"):"↕";return `<button type="button" data-bit-followup-sort="${esc(id)}" class="${active?"is-active":""}" title="Ordenar ${esc(label)}">${esc(label)} <span>${arrow}</span></button>`}
 function filteredFollowups(){
   const source=String($("#bitSeguimientoFuente")?.value||"TODOS").toUpperCase(),raw=String($("#bitSeguimientoBuscar")?.value||"").trim(),q=raw.length>=3?norm(raw):"";
+  const estado=String($("#bitSeguimientoEstado")?.value||"TODOS").toUpperCase();
   const items=bitState.seguimientoEventos.filter(e=>{
     if(source!=="TODOS"&&followupSource(e)!==source)return false;
+    const st=followupState(e);
+    if(estado==="ABIERTOS"&&st==="ATENDIDO")return false;if(estado==="SIN_ASIGNAR"&&st!=="SIN_ASIGNAR")return false;if(estado==="EN_SEGUIMIENTO"&&st!=="EN_SEGUIMIENTO")return false;if(estado==="ATENDIDO"&&st!=="ATENDIDO")return false;
+    if(estado==="MIOS"&&!(st==="EN_SEGUIMIENTO"&&followupCurrentUserIsAssignee(e)))return false;
     if(!q)return true;
     return norm(`${followupStateLabel(e)} ${followupSource(e)} ${eventRegister(e)} ${eventColumnValue(e,"fecha")} ${e?.tipoEtiqueta||e?.tipo?.etiqueta||""} ${e?.descripcion||""} ${e?.asignacionActual?.asignadoNombre||"Sin asignar"}`).includes(q);
   });
@@ -431,6 +435,46 @@ export function openBitacora(){
   const n=nowLocal();if(!$("#bitFecha").value)$("#bitFecha").value=n.fecha;if(!$("#bitHora").value)$("#bitHora").value=n.hora;
   $("#bitacoraModal").hidden=false;const first=bitState.facultades.registro===true?"registro":bitState.facultades.consulta===true?"consulta":"seguimiento";setTab(first);refreshLocalStatus();
 }
+// v0.3.2 · Abre Bitácora directamente en una pestaña con filtros preestablecidos
+// o en la tarjeta de un evento. El usuario puede cambiar los filtros después.
+function todayYmd(){const d=new Date(),pad=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function resetConsultaFilters(){const set=(id,v)=>{const el=$(id);if(el)el.value=v};set("#bitBuscar","");set("#bitFiltroDesde","");set("#bitFiltroHasta","");set("#bitFiltroTipo","");set("#bitFiltroResponsable","");set("#bitFiltroActividad","");set("#bitFiltroEstado","VIGENTE");set("#bitFiltroTip","");updateTipFilterIcon()}
+function resetFollowupFilters(){const set=(id,v)=>{const el=$(id);if(el)el.value=v};set("#bitSeguimientoFuente","TODOS");set("#bitSeguimientoEstado","TODOS");set("#bitSeguimientoBuscar","")}
+export function openBitacoraAt(opts={}){
+  if(bitContext?.authenticated!==true)return false;
+  const f=bitState.facultades||{};
+  let tab=String(opts.tab||"");
+  if(tab==="consulta"&&f.consulta!==true)tab="";
+  if(tab==="seguimiento"&&f.seguimiento!==true)tab="";
+  if(tab==="registro"&&f.registro!==true)tab="";
+  openBitacora();
+  if(tab==="consulta"){
+    resetConsultaFilters();const c=opts.consulta||{};
+    const day=c.hoy===true?todayYmd():"";
+    if(c.desde||day)$("#bitFiltroDesde").value=c.desde||day;
+    if(c.hasta||day)$("#bitFiltroHasta").value=c.hasta||day;
+    if(c.tip&&$("#bitFiltroTip")){$("#bitFiltroTip").value=c.tip;updateTipFilterIcon()}
+    if(c.estado&&$("#bitFiltroEstado"))$("#bitFiltroEstado").value=c.estado;
+    setTab("consulta");renderEvents();
+  }else if(tab==="seguimiento"){
+    resetFollowupFilters();const g=opts.seguimiento||{};
+    if(g.fuente&&$("#bitSeguimientoFuente"))$("#bitSeguimientoFuente").value=g.fuente;
+    if(g.estado&&$("#bitSeguimientoEstado"))$("#bitSeguimientoEstado").value=g.estado;
+    setTab("seguimiento");renderFollowup();
+  }else if(tab==="registro")setTab("registro");
+  if(opts.eventId){
+    const id=String(opts.eventId);
+    const inFollow=bitState.seguimientoEventos.some(x=>String(x.id||x._id||"")===id);
+    const inEvents=bitState.eventos.some(x=>String(x.id||x._id||"")===id);
+    let origin=opts.origin||(inFollow&&f.seguimiento===true?"seguimiento":"consulta");
+    if(origin==="seguimiento"&&f.seguimiento!==true)origin="consulta";
+    if(!inFollow&&!inEvents)return true;
+    if(origin==="seguimiento")renderFollowup();else renderEvents();
+    openDetail(id,origin);
+  }
+  return true;
+}
+export function hasBitacoraEvent(id){const k=String(id||"");return !!k&&[...bitState.eventos,...bitState.seguimientoEventos].some(x=>String(x.id||x._id||"")===k)}
 export async function getPendingBitEvents(){return (await listQueueItems("BIT")).filter(x=>x.syncStatus!=="SINCRONIZADO")}
 export async function getBitEvidence(localId){return listEvidence(localId)}
 export async function updateBitQueue(item){await putQueueItem(item);if(lockedLocalId&&item?.localId===lockedLocalId&&item?.serverFolio)setRegisterLocked(true,String(item.serverFolio));await refreshLocalStatus()}
@@ -441,7 +485,7 @@ export function initBitacora(){
   const modal=$("#bitacoraModal");if(!modal)return;
   $("#btnCloseBitacora").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",e=>{if(e.target===modal)modal.hidden=true});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)modal.hidden=true});
   $("#btnBitRegistro").addEventListener("click",()=>setTab("registro"));$("#btnBitConsulta").addEventListener("click",()=>{setTab("consulta");renderEvents()});$("#btnBitSeguimiento").addEventListener("click",()=>{setTab("seguimiento");renderFollowup()});$("#btnBitBack").addEventListener("click",()=>{const back=selectedDetailOrigin;selectedDetailEvent=null;setTab(back==="seguimiento"?"seguimiento":"consulta")});$("#btnBitTarjetaPdf")?.addEventListener("click",()=>exportCardPdf(selectedDetailEvent));
-  $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
+  $("#bitBuscar").addEventListener("input",renderEvents);["#bitFiltroTipo","#bitFiltroDesde","#bitFiltroHasta","#bitFiltroEstado","#bitFiltroTip"].forEach(id=>$(id)?.addEventListener("change",renderEvents));$("#bitSeguimientoEstado")?.addEventListener("change",renderFollowup);["#bitFiltroResponsable","#bitFiltroActividad"].forEach(id=>$(id)?.addEventListener("input",renderEvents));
   $("#btnBitFiltros")?.addEventListener("click",()=>{const p=$("#bitConsultaFiltros"),open=p.hidden;p.hidden=!open;$("#btnBitFiltros").setAttribute("aria-expanded",String(open));$("#btnBitFiltros").classList.toggle("is-selected",open)});
   $("#btnBitColumnas")?.addEventListener("click",()=>{const p=$("#bitConsultaColumnas"),open=p.hidden;p.hidden=!open;$("#btnBitColumnas").setAttribute("aria-expanded",String(open));$("#btnBitColumnas").classList.toggle("is-selected",open)});
   $("#btnBitLimpiarFiltros")?.addEventListener("click",()=>{$("#bitBuscar").value="";$("#bitFiltroDesde").value="";$("#bitFiltroHasta").value="";$("#bitFiltroTipo").value="";$("#bitFiltroResponsable").value="";$("#bitFiltroActividad").value="";$("#bitFiltroEstado").value="VIGENTE";$("#bitFiltroTip").value="";updateTipFilterIcon();renderEvents()});
