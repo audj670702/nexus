@@ -27,6 +27,7 @@ export function setCteContext(context){cteContext=context||null}
 export function getCteSnapshot(){return cteState}
 export function openCteTickets(){if(cteContext?.authenticated!==true)return;setTab("tickets");$("#cteModal").hidden=false}
 export function setCteState(next={}){cteState={tickets:Array.isArray(next.tickets)?next.tickets:[]};renderTickets()}
+export function openCteTicket(id){if(cteContext?.authenticated!==true)return false;const ok=(cteState.tickets||[]).some(x=>String(x.id||x._id||"")===String(id));setTab("tickets");$("#cteModal").hidden=false;if(ok)openTicket(id);return ok}
 export function openCte(){if(cteContext?.authenticated!==true)return;clearForm();setTab("nueva");$("#cteModal").hidden=false}
 export async function getPendingCteEvents(){return (await listQueueItems("CTE")).filter(x=>x.syncStatus!=="SINCRONIZADO")}
 export async function getCteEvidence(localId){return listEvidence(localId)}

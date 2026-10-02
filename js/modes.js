@@ -1,4 +1,4 @@
-// NEXUS · Modos de vista · v0.3.0
+// NEXUS · Modos de vista · v0.3.2
 // Regla rol → modo (definida con Jorge, 1 oct 2026):
 //   CLIENTE    → sólo Modo Cliente
 //   EJECUTIVO  → sólo Modo Ejecutivo
@@ -74,6 +74,17 @@ const ICON = {
   cte: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v10H8l-4 4z"/></svg>'
 };
 
+// ---------- piezas de interfaz ----------
+const CHEV = '<svg class="mv-chev-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+function stat(val, label, mv, tone) {
+  return `<button type="button" class="mv-stat ${tone ? `mv-tone-${tone}` : ""}" data-mv="${mv}"><strong>${val}</strong><span>${label}</span>${CHEV}</button>`;
+}
+function kpi(val, label, mv, tone, enabled = true) {
+  return `<button type="button" class="mv-kpi mv-tone-${tone || "base"}" data-mv="${mv}" ${enabled ? "" : "disabled"}><span class="mv-kpi-top"><strong>${val}</strong>${CHEV}</span><span class="mv-kpi-label">${label}</span></button>`;
+}
+function isCte(e) { return String(e?.fuente || "").toUpperCase() === "CTE"; }
+function idOf(e) { return String(e?.id || e?._id || ""); }
+
 // ---------- vistas ----------
 async function viewOperacion(c) {
   const bit = api.getBit?.() || {};
@@ -86,8 +97,8 @@ async function viewOperacion(c) {
     const assigned = (bit.seguimientoEventos || []).filter(e => String(e?.asignacionActual?.asignadoUsrId || "") === me && followState(e) === "EN_SEGUIMIENTO").length;
     const tipsToday = (bit.eventos || []).filter(e => isTip(e) && isToday(evDate(e))).length;
     const stats = [];
-    if (f.seguimiento === true) stats.push(`<button type="button" class="mv-stat" data-mv="bit-open"><strong>${assigned}</strong><span>Seguimientos asignados a mí</span></button>`);
-    if (f.consulta === true || f.consultaAmpliada === true) stats.push(`<button type="button" class="mv-stat mv-stat-alert" data-mv="bit-open"><strong>${tipsToday}</strong><span>TIP de hoy</span></button>`);
+    if (f.seguimiento === true) stats.push(stat(assigned, "Seguimientos asignados a mí", "bit-seg-mine", assigned ? "amber" : ""));
+    if (f.consulta === true || f.consultaAmpliada === true) stats.push(stat(tipsToday, "Tarjetas Informativas Prioritarias hoy", "bit-tip-today", tipsToday ? "red" : ""));
     html += `<section class="mv-card" aria-labelledby="mvBitTitle">
       <div class="mv-card-head"><div class="mv-card-title">${ICON.bit}<h2 id="mvBitTitle">Bitácora</h2></div>
       <span class="mv-pill ${pending ? "mv-pill-warn" : ""}">${pending ? `${pending} por sincronizar` : "Sincronizada"}</span></div>
@@ -106,32 +117,38 @@ async function viewOperacion(c) {
 function viewEjecutivo(c) {
   const bit = api.getBit?.() || {};
   const cte = api.getCte?.() || {};
-  const hasBit = c?.bitacora?.activo === true || !!(bit.facultades && Object.values(bit.facultades).some(v => v === true));
+  const f = bit.facultades || {};
+  const hasBit = c?.bitacora?.activo === true || !!(Object.values(f).some(v => v === true));
   const roles = rolesOf(c);
-  const hasCte = roles.includes("ADM") || roles.includes("CLIENTE");
-  const eventos = bit.eventos || [], segs = bit.seguimientoEventos || [], tickets = cte.tickets || [];
+  const eventos = bit.eventos || [], segs = bit.seguimientoEventos || [];
+  // Tickets de clientes: los de Atención al Cliente más los que llegan a Seguimiento con origen CTE.
+  const ticketMap = new Map();
+  [...(cte.tickets || []), ...segs.filter(isCte)].forEach(e => { const k = idOf(e); if (k && !ticketMap.has(k)) ticketMap.set(k, e); });
+  const tickets = [...ticketMap.values()];
+  const hasCte = roles.includes("ADM") || roles.includes("CLIENTE") || f.seguimiento === true || tickets.length > 0;
   const today = eventos.filter(e => isToday(evDate(e)));
   const tips = today.filter(isTip);
   const open = segs.filter(e => followState(e) !== "ATENDIDO");
-  const unassigned = segs.filter(e => followState(e) === "SIN_ASIGNAR");
-  const openTickets = tickets.filter(e => followState(e) !== "ATENDIDO");
+  const unassigned = segs.filter(e => followState(e) === "SIN_ASIGNAR" && !isCte(e));
+  const openTickets = tickets.filter(e => followState(e) !== "ATENDIDO")
+    .sort((x, y) => (ts(evDate(y)) || 0) - (ts(evDate(x)) || 0));
   const n = (ok, v) => ok ? String(v) : "—";
-  const kpi = (val, label, mv, alert) => `<button type="button" class="mv-kpi ${alert ? "mv-kpi-alert" : ""}" data-mv="${mv}"><strong>${val}</strong><span>${label}</span></button>`;
+  const clsCte = e => ({ QUEJA: "Queja", INFORMACION: "Información", SUGERENCIA: "Sugerencia", SOLICITUD: "Solicitud" })[String(e?.clasificacionCte || "").toUpperCase()] || "Atención";
   const attention = [
-    ...tips.slice(0, 3).map(e => ({ dot: "red", t: `TIP · ${e?.tipoEtiqueta || "Evento"}`, s: `${hhmm(evDate(e))} · ${e?.registranteNombre || ""}`, mv: "bit-open" })),
-    ...unassigned.slice(0, 3).map(e => ({ dot: "amber", t: "Seguimiento sin responsable", s: `${e?.folio || ""} · ${e?.tipoEtiqueta || ""}`, mv: "bit-open" })),
-    ...openTickets.filter(e => String(e?.clasificacionCte || "").toUpperCase() === "QUEJA").slice(0, 2).map(e => ({ dot: "blue", t: "Ticket · Queja", s: `${e?.lugar || ""} · ${e?.registranteNombre || ""}`, mv: "cte-tickets" }))
+    ...openTickets.slice(0, 3).map(e => ({ dot: "red", t: `Ticket de cliente · ${clsCte(e)}`, s: [e?.folio, e?.lugar, e?.registranteNombre].filter(Boolean).join(" · "), mv: "ticket", id: idOf(e), tag: followState(e) === "SIN_ASIGNAR" ? "Sin atender" : "En atención" })),
+    ...tips.slice(0, 3).map(e => ({ dot: "red", t: `Tarjeta Informativa Prioritaria · ${e?.tipoEtiqueta || "Evento"}`, s: `${hhmm(evDate(e))} · ${e?.registranteNombre || ""}`, mv: "bit-tip-event", id: idOf(e) })),
+    ...unassigned.slice(0, 3).map(e => ({ dot: "amber", t: "Seguimiento sin responsable", s: [e?.folio, e?.tipoEtiqueta].filter(Boolean).join(" · "), mv: "bit-seg-event", id: idOf(e) }))
   ];
   const reportsLink = api.canReports?.(c) ? `<button type="button" class="mv-link" data-mv="reports">Informes ›</button>` : "";
   return `<section class="mv-intro"><h1>Hoy en la operación</h1><div class="mv-intro-row"><span>Resumen al momento</span>${reportsLink}</div></section>
   <section class="mv-kpis" aria-label="Indicadores del día">
-    ${kpi(n(hasBit, today.length), "Eventos registrados hoy", "bit-open")}
-    ${kpi(n(hasBit, tips.length), "TIP de hoy", "bit-open", true)}
-    ${kpi(n(hasBit, open.length), "Seguimientos abiertos", "bit-open")}
-    ${kpi(n(hasCte, openTickets.length), "Tickets de clientes abiertos", "cte-tickets")}
+    ${kpi(n(hasCte, openTickets.length), "Tickets de clientes abiertos", "tickets-open", "red", hasCte)}
+    ${kpi(n(hasBit, tips.length), "Tarjetas Informativas Prioritarias hoy", "bit-tip-today", "red", hasBit)}
+    ${kpi(n(hasBit, open.length), "Seguimientos abiertos", "bit-seg-open", "amber", hasBit && f.seguimiento === true)}
+    ${kpi(n(hasBit, today.length), "Eventos registrados hoy", "bit-today", "base", hasBit)}
   </section>
   <section class="mv-block" aria-labelledby="mvAttTitle"><div class="mv-block-head"><h2 id="mvAttTitle">Requieren atención</h2></div>
-    <div class="mv-list">${attention.length ? attention.map(a => `<button type="button" class="mv-row" data-mv="${a.mv}"><span class="mv-dot mv-dot-${a.dot}" aria-hidden="true"></span><span class="mv-row-copy"><strong>${esc(a.t)}</strong><span>${esc(a.s)}</span></span><span class="mv-chev" aria-hidden="true">›</span></button>`).join("") : `<p class="mv-empty">${hasBit ? "Nada pendiente por ahora." : "Sin acceso a Bitácora para este usuario."}</p>`}</div>
+    <div class="mv-list">${attention.length ? attention.map(a => `<button type="button" class="mv-row" data-mv="${a.mv}" data-id="${esc(a.id)}"><span class="mv-dot mv-dot-${a.dot}" aria-hidden="true"></span><span class="mv-row-copy"><strong>${esc(a.t)}</strong><span>${esc(a.s)}</span></span>${a.tag ? `<span class="mv-badge mv-badge-red">${esc(a.tag)}</span>` : ""}<span class="mv-chev" aria-hidden="true">›</span></button>`).join("") : `<p class="mv-empty">${hasBit ? "Nada pendiente por ahora." : "Sin acceso a Bitácora para este usuario."}</p>`}</div>
   </section>`;
 }
 
@@ -151,16 +168,14 @@ function viewVisitante() {
   return `<section class="mv-card mv-welcome"><h1>Bienvenido a NEXUS</h1><p>Inicia sesión para ver tu día de trabajo.</p><button type="button" class="mv-primary" data-mv="login">Iniciar sesión</button></section>`;
 }
 
-// ---------- franja y menú ----------
-function paintBand(c) {
-  const band = $("#modeBand"); if (!band) return;
-  const modes = availableModes(c);
-  if (!currentMode) { band.hidden = true; return; }
+// ---------- indicador de modo y menú ----------
+function paintModeLabel() {
+  const el = $("#modeLabel"); if (!el) return;
+  if (!currentMode) { el.hidden = true; return; }
   const m = MODES[currentMode];
-  band.hidden = false;
-  band.dataset.tone = m.tone;
-  $("#modeLabel").textContent = m.band;
-  const sw = $("#btnModeSwitch"); if (sw) sw.hidden = modes.length < 2;
+  el.hidden = false;
+  el.dataset.tone = m.tone;
+  el.textContent = m.band;
   document.body.dataset.mode = currentMode;
 }
 
@@ -175,17 +190,106 @@ function paintMenuModes(c) {
   }).join("");
 }
 
+// ---------- barra de navegación flotante ----------
+const NAV_ICON = {
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
+  mns: '<path d="M4 6h16v10H8l-4 4z"/>',
+  docs: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  schedule: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  training: '<path d="M3 9l9-4 9 4-9 4z"/><path d="M7 11v5c3 2 7 2 10 0v-5"/>',
+  bitacora: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>'
+};
+const NAV_LABEL = { home: "Inicio", mns: "Mensajería", docs: "Documentos", schedule: "Programación", training: "Cursos", bitacora: "Bitácora" };
+// Ventana abierta → sección activa en la barra
+const NAV_MODAL = { docs: "#documentsModal", schedule: "#scheduleModal", bitacora: "#bitacoraModal", mns: "#nexusMnsOverlay" };
+
+function navItems(c) {
+  if (currentMode === "OPERACION") return ["home", "mns", "docs", "schedule", "training"];
+  if (currentMode === "EJECUTIVO") {
+    const bit = api.getBit?.() || {};
+    const hasBit = c?.bitacora?.activo === true || !!(bit.facultades && Object.values(bit.facultades).some(v => v === true));
+    return ["home", ...(hasBit ? ["bitacora"] : []), "mns", "docs", "schedule"];
+  }
+  return []; // Cliente y visitante: sin barra
+}
+
+function activeNav() {
+  for (const [id, sel] of Object.entries(NAV_MODAL)) {
+    const el = document.querySelector(sel);
+    if (el && el.isConnected && !el.hidden) return id;
+  }
+  return "home";
+}
+
+function paintNavActive() {
+  const nav = $("#bottomNav"); if (!nav || nav.hidden) return;
+  const active = activeNav();
+  nav.querySelectorAll("[data-nav]").forEach(b => {
+    const on = b.dataset.nav === active;
+    b.classList.toggle("is-active", on);
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+}
+
+function renderNav(c) {
+  const nav = $("#bottomNav"); if (!nav) return;
+  const items = c?.authenticated === true ? navItems(c) : [];
+  nav.hidden = items.length === 0;
+  document.body.dataset.nav = items.length ? "on" : "off";
+  nav.style.setProperty("--nav-count", String(items.length || 1));
+  nav.innerHTML = items.map(id => `<button type="button" class="bottom-nav-item" data-nav="${id}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[id]}</svg><span>${NAV_LABEL[id]}</span></button>`).join("");
+  paintNavActive();
+}
+
+function goNav(id) {
+  const hadOpen = activeNav() !== "home";
+  if (id === activeNav() && id !== "home") return;
+  api.closeAllModals?.();
+  if (id === "home") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  // Se espera a que el historial termine de cerrar la ventana anterior.
+  setTimeout(() => openNav(id), hadOpen ? 180 : 0);
+}
+
+function openNav(id) {
+  if (id === "mns") api.openMns?.();
+  else if (id === "docs") api.openDocuments?.();
+  else if (id === "schedule") api.openSchedule?.();
+  else if (id === "training") api.openTraining?.();
+  else if (id === "bitacora") api.openBitacora?.();
+}
+
+// ---------- opciones del monitor ----------
+function initTvOptions() {
+  const trigger = $("#btnTvOptions"), panel = $("#tvOptions");
+  if (!trigger || !panel) return;
+  const setOpen = open => { panel.hidden = !open; trigger.setAttribute("aria-expanded", String(open)); };
+  trigger.addEventListener("click", e => { e.stopPropagation(); setOpen(panel.hidden); });
+  $("#btnTvOptionsClose")?.addEventListener("click", () => setOpen(false));
+  panel.addEventListener("click", e => { if (e.target.closest("[data-channel]")) setTimeout(() => setOpen(false), 150); });
+  document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !trigger.contains(e.target)) setOpen(false); });
+}
+
+// Tickets: quien da seguimiento los ve en Bitácora › Seguimiento (origen CTE);
+// si no tiene esa facultad, se abren en Atención al Cliente.
+function openTickets(id = "") {
+  const f = (api.getBit?.() || {}).facultades || {};
+  const viaBit = f.seguimiento === true && (!id || api.hasBitacoraEvent?.(id));
+  if (viaBit) api.openBitacoraAt?.({ tab: "seguimiento", seguimiento: { fuente: "CTE", estado: "ABIERTOS" }, eventId: id || undefined, origin: "seguimiento" });
+  else if (id) api.openCteTicket?.(id);
+  else api.openCteTickets?.();
+}
+
 export async function renderModeView(c) {
   lastContext = c;
   const view = $("#modeView"); if (!view) return;
   if (!currentMode) currentMode = resolveMode(c);
-  paintBand(c); paintMenuModes(c);
+  paintModeLabel(); paintMenuModes(c);
   let html = viewVisitante();
   if (currentMode === "OPERACION") html = await viewOperacion(c);
   else if (currentMode === "EJECUTIVO") html = viewEjecutivo(c);
   else if (currentMode === "CLIENTE") html = viewCliente(c);
   view.innerHTML = html;
-  api.renderResources?.(currentMode);
+  renderNav(c);
 }
 
 export function setMode(mode) {
@@ -198,20 +302,30 @@ export function setMode(mode) {
 
 export function initModes(handlers = {}) {
   api = handlers;
-  // Controles del monitor sobre el video (silencio y ampliar).
-  const monitor = $("#tvMonitor"), mute = $("#btnTvMute"), expand = $("#btnTvExpand");
-  if (monitor && mute && expand) { mute.classList.add("tv-overlay-btn", "tv-overlay-left"); expand.classList.add("tv-overlay-btn", "tv-overlay-right"); monitor.append(mute, expand); }
+  initTvOptions();
   $("#modeView")?.addEventListener("click", e => {
-    const a = e.target.closest("[data-mv]")?.dataset.mv; if (!a) return;
+    const el = e.target.closest("[data-mv]"); if (!el || el.disabled) return;
+    const a = el.dataset.mv, id = el.dataset.id || "";
     if (a === "bit-register") api.openBitacora?.("registro");
     else if (a === "bit-open") api.openBitacora?.();
+    else if (a === "bit-today") api.openBitacoraAt?.({ tab: "consulta", consulta: { hoy: true } });
+    else if (a === "bit-tip-today") api.openBitacoraAt?.({ tab: "consulta", consulta: { hoy: true, tip: "TIP" } });
+    else if (a === "bit-seg-open") api.openBitacoraAt?.({ tab: "seguimiento", seguimiento: { estado: "ABIERTOS" } });
+    else if (a === "bit-seg-mine") api.openBitacoraAt?.({ tab: "seguimiento", seguimiento: { estado: "MIOS" } });
+    else if (a === "tickets-open") openTickets();
+    else if (a === "bit-tip-event") api.openBitacoraAt?.({ tab: "consulta", consulta: { hoy: true, tip: "TIP" }, eventId: id, origin: "consulta" });
+    else if (a === "bit-seg-event") api.openBitacoraAt?.({ tab: "seguimiento", seguimiento: { estado: "SIN_ASIGNAR" }, eventId: id, origin: "seguimiento" });
+    else if (a === "ticket") openTickets(id);
     else if (a === "schedule") api.openSchedule?.();
     else if (a === "reports") api.openReports?.();
     else if (a === "cte-new") api.openCte?.();
     else if (a === "cte-tickets") api.openCteTickets?.();
     else if (a === "login") document.querySelector("#btnLogin")?.click();
   });
-  $("#btnModeSwitch")?.addEventListener("click", e => { e.stopPropagation(); document.querySelector("#btnAccount")?.click(); });
+  $("#bottomNav")?.addEventListener("click", e => {
+    const id = e.target.closest("[data-nav]")?.dataset.nav; if (id) goNav(id);
+  });
+  new MutationObserver(paintNavActive).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
   document.addEventListener("nexus:navigation", e => {
     const action = String(e.detail?.action || "");
     if (action.startsWith("mode:")) setMode(action.slice(5));

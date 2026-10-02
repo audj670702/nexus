@@ -9,7 +9,8 @@ const MODAL_SELECTOR = [
   "#bitRelacionModal",
   "#bitSeguimientoAccionModal",
   "#bitSeguimientoMensajeModal",
-  "#nexusMnsOverlay"
+  "#nexusMnsOverlay",
+  "#tvOptions"
 ].join(",");
 
 const CLOSE_SELECTOR = [
@@ -19,7 +20,8 @@ const CLOSE_SELECTOR = [
   "#btnBitSeguimientoAccionCerrar",
   "#btnBitSeguimientoMensajeCerrar",
   "#iosTutorialClose",
-  "[id^='btnClose']"
+  "[id^='btnClose']",
+  "#btnTvOptionsClose"
 ].join(",");
 
 const stack = [];            // ventanas abiertas, la última es la superior
@@ -64,6 +66,11 @@ function scan() {
     if (isOpen(el)) onOpened(el);
   });
   [...stack].forEach(el => { if (!isOpen(el)) onClosed(el); });
+}
+
+// Cierra todas las ventanas abiertas (la barra de navegación lo usa al cambiar de sección).
+export function closeAllModals() {
+  [...stack].reverse().forEach(el => { if (isOpen(el)) closeModal(el); });
 }
 
 export function initBackNavigation() {
