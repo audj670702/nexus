@@ -388,3 +388,8 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 @media(max-width:560px){.cte-modal{max-height:94vh}.cte-ticket{grid-template-columns:58px 1fr 82px}.cte-ticket-date{display:none}}
 
 .nexus-notice-backdrop{z-index:3000}.nexus-notice-modal{width:min(420px,calc(100% - 28px));background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 48px rgba(18,43,77,.24);overflow:hidden}.nexus-notice-bar{min-height:46px;padding:10px 14px;background:#205985;color:#fff;display:flex;align-items:center}.nexus-notice-bar h2{margin:0;font-size:.82rem}.nexus-notice-body{padding:18px 16px 12px}.nexus-notice-body p{margin:0;color:var(--ink);font-size:.72rem;line-height:1.5;white-space:pre-wrap}.nexus-notice-actions{display:flex;justify-content:flex-end;padding:0 16px 14px}.nexus-notice-actions button{min-width:92px;border:0;border-radius:7px;background:#205985;color:#fff;padding:9px 14px;font-size:.68rem;font-weight:850;cursor:pointer}
+
+/* v0.2.93 · el nombre largo de la EO ya no desborda la pantalla en móvil */
+.tv-channels{max-width:100%;min-width:0}
+.channel{flex:0 1 auto;min-width:0;max-width:100%}
+.channel>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
