@@ -9,7 +9,7 @@ import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.2.90";
+const VERSION="0.2.91";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -423,7 +423,12 @@ async function boot(){
       window.location.assign(url.toString());return
     }
     if(card.dataset.module==="admin"){
-      window.location.assign("https://www.scad.mx/nexus-panel");return
+      // La Operadora activa evita la ambigüedad cuando el usuario es ADM en varias EO.
+      // scadEO no concede acceso: el backend valida que sea ADM de esa EO.
+      const url=new URL("https://www.scad.mx/nexus-panel");
+      const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+      if(codigoEO)url.searchParams.set("scadEO",codigoEO);
+      window.location.assign(url.toString());return
     }
   });
   document.addEventListener("nexus:cte-local-saved",()=>syncCteQueue());
