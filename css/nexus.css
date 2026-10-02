@@ -498,3 +498,63 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 .top-band .eo-identity{flex-direction:row;align-items:center;gap:10px}
 .top-band .channel{font-size:.52rem;letter-spacing:-.01em}
 .modules-section .module-card strong{font-size:.64rem;line-height:1.2;overflow-wrap:anywhere}
+
+/* =====================================================
+   v0.3.1 · ajustes de modos: indicador simple, monitor
+   con menú de opciones y barra de navegación flotante
+   ===================================================== */
+/* Indicador de modo: texto simple bajo la identidad de la EO */
+.top-band .context-block{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.mode-label{font-size:.66rem;font-weight:800;letter-spacing:.14em;color:#0b7f88;padding-left:2px}
+.mode-label[data-tone="eje"]{color:#123f6d}
+.mode-label[data-tone="cte"]{color:#1667b8}
+.mode-label[hidden]{display:none}
+
+/* Monitor: un solo botón de opciones bajo la pantalla */
+.top-band .tv-console{position:relative}
+.tv-bar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 2px 1px 4px}
+.tv-now{min-width:0;font-size:.62rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-options-trigger{width:28px;height:28px;flex:0 0 auto;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--primary);display:grid;place-items:center;cursor:pointer;padding:0}
+.tv-options-trigger[aria-expanded="true"]{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tv-options{position:absolute;top:calc(100% + 6px);right:0;width:230px;z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(18,43,77,.18);padding:12px;display:flex;flex-direction:column;gap:8px}
+.tv-options[hidden]{display:none}
+.tv-options-head{display:flex;align-items:center;justify-content:space-between}
+.tv-options-head strong{font-size:.82rem}
+.tv-options-close{width:28px;height:28px;border:0;border-radius:8px;background:#f1f5fb;color:var(--muted);font-size:1rem;cursor:pointer}
+.tv-options-label{font-size:.6rem;font-weight:800;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.top-band .tv-options .tv-channels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#eef3fa;border-radius:9px;padding:3px;width:100%}
+.top-band .tv-options .channel{min-height:34px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:.72rem;font-weight:700;padding:0 6px}
+.top-band .tv-options .channel.is-active{background:var(--primary);color:#fff}
+.top-band .tv-options .channel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv-options-actions{display:flex;flex-direction:column;gap:2px;border-top:1px solid #edf2f9;padding-top:6px}
+.tv-opt-btn{height:40px;border:0;border-radius:9px;background:transparent;color:var(--ink);display:flex;align-items:center;gap:10px;padding:0 6px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left}
+.tv-opt-btn:hover{background:#f3f7fc}
+.tv-opt-btn svg,#tvMuteIcon svg{color:var(--primary);display:block}
+#tvMuteIcon{display:inline-grid;place-items:center}
+
+/* Barra de navegación flotante */
+.bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:min(calc(100% - 24px),520px);z-index:150;background:#123f6d;border-radius:20px;padding:6px;display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));gap:4px;box-shadow:0 14px 34px rgba(10,30,55,.28)}
+.bottom-nav[hidden]{display:none}
+.bottom-nav-item{height:54px;border:0;border-radius:14px;background:transparent;color:rgba(255,255,255,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.58rem;font-weight:700;cursor:pointer;padding:0 2px;transition:background .18s,color .18s}
+.bottom-nav-item span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bottom-nav-item.is-active{background:#fff;color:#123f6d}
+.bottom-nav-item.is-active[data-nav="home"] svg{color:#1674d1}
+.bottom-nav-item.is-active[data-nav="mns"] svg{color:#0f9da1}
+.bottom-nav-item.is-active[data-nav="docs"] svg{color:#c98a0c}
+.bottom-nav-item.is-active[data-nav="schedule"] svg{color:#1a9a62}
+.bottom-nav-item.is-active[data-nav="training"] svg{color:#6a46d6}
+.bottom-nav-item.is-active[data-nav="bitacora"] svg{color:#123f6d}
+body[data-nav="on"] .app-shell{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+body[data-nav="on"] .modal-backdrop:not(.nexus-notice-backdrop){bottom:calc(78px + env(safe-area-inset-bottom))}
+body[data-nav="on"] .modal-backdrop:not(.nexus-notice-backdrop)>section{max-height:100%!important}
+.modules-section{display:none!important}
+/* los botones de sonido/pantalla completa ya no van sobre el video */
+.tv-options .tv-opt-btn{position:static!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;width:100%;font-size:.78rem}
+.mode-label{white-space:nowrap}
+.bottom-nav-item{font-size:.54rem;letter-spacing:-.01em}
+.top-band .tv-options{align-items:stretch;padding:12px}
+.tv-options-head{width:100%}
+.tv-options .tv-opt-btn{justify-content:flex-start;height:40px;padding:0 8px}
+.tv-options .tv-opt-btn span{font-size:.78rem!important;font-weight:600!important;display:inline!important}
+.tv-options .tv-opt-btn #tvMuteIcon{display:inline-grid!important}
+#tvOptions #btnTvMute,#tvOptions #btnTvExpand{justify-content:flex-start!important;margin:0!important;width:100%!important;background:transparent!important;color:var(--ink)!important;border-radius:9px!important;height:40px!important;box-shadow:none!important}

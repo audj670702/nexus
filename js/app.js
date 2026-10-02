@@ -1,6 +1,6 @@
 import {resolveAccessContext,startLogin,logoutLocal,authHeaders,handleAuthRequired} from "./auth.js";
 import {initNotices,showNotice} from "./ui.js";
-import {initBackNavigation} from "./back-nav.js";
+import {initBackNavigation,closeAllModals} from "./back-nav.js";
 import {initModes,renderModeView,getCurrentMode} from "./modes.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
@@ -13,7 +13,7 @@ import {getCteSnapshot,openCteTickets} from "./cte.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.3.0";
+const VERSION="0.3.1";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -48,8 +48,10 @@ function setAvatar(el,obj,name){
 const API_BASE="https://www.scad.mx/_functions";
 // Toda petición al backend SYS lleva el token (Authorization: Bearer).
 async function apiFetch(url,options={}){
-  const response=await fetch(url,{...options,headers:authHeaders(options.headers||{})});
-  if(response.status===401)handleAuthRequired();
+  let response=await fetch(url,{...options,headers:authHeaders(options.headers||{})});
+  if(response.status===401&&await handleAuthRequired()==="refreshed"){
+    response=await fetch(url,{...options,headers:authHeaders(options.headers||{})});
+  }
   return response;
 }
 function fileToDataUrl(file){
@@ -357,7 +359,7 @@ function initProfileModal(){
       currentContext.user.nombreVisible=String(data.nombreApp||nombreApp||currentContext.user.nombreVisible||currentContext.user.nombre||"").trim();
       currentContext.user.telefono=String(data.telefono??telefono);
       if(data.avatar)currentContext.user.avatar=data.avatar;
-      try{sessionStorage.setItem("nexus.sys.context",JSON.stringify(currentContext))}catch(_){}
+      try{localStorage.setItem("nexus.sys.context",JSON.stringify(currentContext))}catch(_){}
       paintContext(currentContext);
       close();
     }catch(error){
@@ -389,13 +391,13 @@ function paintContext(c){
   }
   const name=c?.user?.nombreVisible||c?.user?.nombre||"Usuario",email=c?.email||c?.user?.email||"",eo=c?.eo?.nombreMostrar||c?.eo?.nombre||"EO";
   document.querySelector("#eoChannelName").textContent=eo;
+  if(document.querySelector("#tvMonitor")?.dataset.channel==="eo"){const nl=document.querySelector("#tvNowLabel");if(nl)nl.textContent=eo}
   for(const id of ["#topUserName","#menuUserName"])document.querySelector(id).textContent=name;
   document.querySelector("#menuUserEmail").textContent=email;
   for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),c?.user,name);
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
 // ---------- accesos usados por los modos de vista (v0.3.0) ----------
-const RESOURCE_IDS={OPERACION:["mns","docs","schedule","training"],EJECUTIVO:["bitacora","mns","docs","schedule"],CLIENTE:[]};
 function adminPanelUrl(){const url=new URL("https://www.scad.mx/nexus-panel");const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();if(codigoEO)url.searchParams.set("scadEO",codigoEO);return url.toString()}
 function openReports(){
   const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
@@ -404,14 +406,9 @@ function openReports(){
   window.location.assign(url.toString());
 }
 function canReports(c){const roles=(c?.roles||[]).map(r=>String(r||"").toUpperCase());return roles.includes("ADM")||roles.includes("EJECUTIVO")}
-function renderResources(mode){
-  const grid=document.querySelector("#modulesGrid"),section=document.querySelector(".modules-section");
-  const ids=RESOURCE_IDS[mode]||[];
-  if(!grid||!section)return;
-  if(!currentContext?.authenticated||!ids.length){section.hidden=true;grid.replaceChildren();return}
-  section.hidden=false;
-  renderModules(grid,BASIC_MODULES.filter(m=>ids.includes(m.id)),currentContext);
-  grid.querySelectorAll(".module-card.is-locked").forEach(el=>el.remove());
+function openTraining(){
+  const cursosUrl=getMemberAreaUrl(currentContext?.user,"challenges");
+  window.location.assign(cursosUrl!=="#"?cursosUrl:withWixReturnUrl("https://www.scad.mx/members-area/challenges"));
 }
 function hideSplash(){
   const el=document.querySelector("#splash");if(!el||el.dataset.done)return;
@@ -420,7 +417,7 @@ function hideSplash(){
 }
 async function boot(){
   initAccountMenu();initNotices();initBackNavigation();
-  initModes({openBitacora:()=>openBitacora(),openSchedule,openReports,openCte,openCteTickets,canReports,renderResources,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
+  initModes({closeAllModals,openBitacora:()=>openBitacora(),openSchedule,openDocuments,openTraining,openMns:()=>window.openScadMns?.(),openReports,openCte,openCteTickets,canReports,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
   initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}

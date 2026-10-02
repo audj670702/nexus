@@ -1,4 +1,4 @@
-// NEXUS · Modos de vista · v0.3.0
+// NEXUS · Modos de vista · v0.3.1
 // Regla rol → modo (definida con Jorge, 1 oct 2026):
 //   CLIENTE    → sólo Modo Cliente
 //   EJECUTIVO  → sólo Modo Ejecutivo
@@ -151,16 +151,14 @@ function viewVisitante() {
   return `<section class="mv-card mv-welcome"><h1>Bienvenido a NEXUS</h1><p>Inicia sesión para ver tu día de trabajo.</p><button type="button" class="mv-primary" data-mv="login">Iniciar sesión</button></section>`;
 }
 
-// ---------- franja y menú ----------
-function paintBand(c) {
-  const band = $("#modeBand"); if (!band) return;
-  const modes = availableModes(c);
-  if (!currentMode) { band.hidden = true; return; }
+// ---------- indicador de modo y menú ----------
+function paintModeLabel() {
+  const el = $("#modeLabel"); if (!el) return;
+  if (!currentMode) { el.hidden = true; return; }
   const m = MODES[currentMode];
-  band.hidden = false;
-  band.dataset.tone = m.tone;
-  $("#modeLabel").textContent = m.band;
-  const sw = $("#btnModeSwitch"); if (sw) sw.hidden = modes.length < 2;
+  el.hidden = false;
+  el.dataset.tone = m.tone;
+  el.textContent = m.band;
   document.body.dataset.mode = currentMode;
 }
 
@@ -175,17 +173,96 @@ function paintMenuModes(c) {
   }).join("");
 }
 
+// ---------- barra de navegación flotante ----------
+const NAV_ICON = {
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
+  mns: '<path d="M4 6h16v10H8l-4 4z"/>',
+  docs: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  schedule: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  training: '<path d="M3 9l9-4 9 4-9 4z"/><path d="M7 11v5c3 2 7 2 10 0v-5"/>',
+  bitacora: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>'
+};
+const NAV_LABEL = { home: "Inicio", mns: "Mensajería", docs: "Documentos", schedule: "Programación", training: "Cursos", bitacora: "Bitácora" };
+// Ventana abierta → sección activa en la barra
+const NAV_MODAL = { docs: "#documentsModal", schedule: "#scheduleModal", bitacora: "#bitacoraModal", mns: "#nexusMnsOverlay" };
+
+function navItems(c) {
+  if (currentMode === "OPERACION") return ["home", "mns", "docs", "schedule", "training"];
+  if (currentMode === "EJECUTIVO") {
+    const bit = api.getBit?.() || {};
+    const hasBit = c?.bitacora?.activo === true || !!(bit.facultades && Object.values(bit.facultades).some(v => v === true));
+    return ["home", ...(hasBit ? ["bitacora"] : []), "mns", "docs", "schedule"];
+  }
+  return []; // Cliente y visitante: sin barra
+}
+
+function activeNav() {
+  for (const [id, sel] of Object.entries(NAV_MODAL)) {
+    const el = document.querySelector(sel);
+    if (el && el.isConnected && !el.hidden) return id;
+  }
+  return "home";
+}
+
+function paintNavActive() {
+  const nav = $("#bottomNav"); if (!nav || nav.hidden) return;
+  const active = activeNav();
+  nav.querySelectorAll("[data-nav]").forEach(b => {
+    const on = b.dataset.nav === active;
+    b.classList.toggle("is-active", on);
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+}
+
+function renderNav(c) {
+  const nav = $("#bottomNav"); if (!nav) return;
+  const items = c?.authenticated === true ? navItems(c) : [];
+  nav.hidden = items.length === 0;
+  document.body.dataset.nav = items.length ? "on" : "off";
+  nav.style.setProperty("--nav-count", String(items.length || 1));
+  nav.innerHTML = items.map(id => `<button type="button" class="bottom-nav-item" data-nav="${id}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[id]}</svg><span>${NAV_LABEL[id]}</span></button>`).join("");
+  paintNavActive();
+}
+
+function goNav(id) {
+  const hadOpen = activeNav() !== "home";
+  if (id === activeNav() && id !== "home") return;
+  api.closeAllModals?.();
+  if (id === "home") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  // Se espera a que el historial termine de cerrar la ventana anterior.
+  setTimeout(() => openNav(id), hadOpen ? 180 : 0);
+}
+
+function openNav(id) {
+  if (id === "mns") api.openMns?.();
+  else if (id === "docs") api.openDocuments?.();
+  else if (id === "schedule") api.openSchedule?.();
+  else if (id === "training") api.openTraining?.();
+  else if (id === "bitacora") api.openBitacora?.();
+}
+
+// ---------- opciones del monitor ----------
+function initTvOptions() {
+  const trigger = $("#btnTvOptions"), panel = $("#tvOptions");
+  if (!trigger || !panel) return;
+  const setOpen = open => { panel.hidden = !open; trigger.setAttribute("aria-expanded", String(open)); };
+  trigger.addEventListener("click", e => { e.stopPropagation(); setOpen(panel.hidden); });
+  $("#btnTvOptionsClose")?.addEventListener("click", () => setOpen(false));
+  panel.addEventListener("click", e => { if (e.target.closest("[data-channel]")) setTimeout(() => setOpen(false), 150); });
+  document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !trigger.contains(e.target)) setOpen(false); });
+}
+
 export async function renderModeView(c) {
   lastContext = c;
   const view = $("#modeView"); if (!view) return;
   if (!currentMode) currentMode = resolveMode(c);
-  paintBand(c); paintMenuModes(c);
+  paintModeLabel(); paintMenuModes(c);
   let html = viewVisitante();
   if (currentMode === "OPERACION") html = await viewOperacion(c);
   else if (currentMode === "EJECUTIVO") html = viewEjecutivo(c);
   else if (currentMode === "CLIENTE") html = viewCliente(c);
   view.innerHTML = html;
-  api.renderResources?.(currentMode);
+  renderNav(c);
 }
 
 export function setMode(mode) {
@@ -198,9 +275,7 @@ export function setMode(mode) {
 
 export function initModes(handlers = {}) {
   api = handlers;
-  // Controles del monitor sobre el video (silencio y ampliar).
-  const monitor = $("#tvMonitor"), mute = $("#btnTvMute"), expand = $("#btnTvExpand");
-  if (monitor && mute && expand) { mute.classList.add("tv-overlay-btn", "tv-overlay-left"); expand.classList.add("tv-overlay-btn", "tv-overlay-right"); monitor.append(mute, expand); }
+  initTvOptions();
   $("#modeView")?.addEventListener("click", e => {
     const a = e.target.closest("[data-mv]")?.dataset.mv; if (!a) return;
     if (a === "bit-register") api.openBitacora?.("registro");
@@ -211,7 +286,10 @@ export function initModes(handlers = {}) {
     else if (a === "cte-tickets") api.openCteTickets?.();
     else if (a === "login") document.querySelector("#btnLogin")?.click();
   });
-  $("#btnModeSwitch")?.addEventListener("click", e => { e.stopPropagation(); document.querySelector("#btnAccount")?.click(); });
+  $("#bottomNav")?.addEventListener("click", e => {
+    const id = e.target.closest("[data-nav]")?.dataset.nav; if (id) goNav(id);
+  });
+  new MutationObserver(paintNavActive).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
   document.addEventListener("nexus:navigation", e => {
     const action = String(e.detail?.action || "");
     if (action.startsWith("mode:")) setMode(action.slice(5));
