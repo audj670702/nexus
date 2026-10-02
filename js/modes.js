@@ -1,0 +1,220 @@
+// NEXUS · Modos de vista · v0.3.0
+// Regla rol → modo (definida con Jorge, 1 oct 2026):
+//   CLIENTE    → sólo Modo Cliente
+//   EJECUTIVO  → sólo Modo Ejecutivo
+//   Operativo  → sólo Modo Operación (USU, A, B, C…)
+//   ADM        → todos; entra a Ejecutivo la primera vez y después al último que usó.
+// Administración no es una tarjeta: vive en el menú de la cuenta, sólo para ADM.
+
+export const MODES = Object.freeze({
+  OPERACION: { id: "OPERACION", label: "Operación", band: "MODO OPERACIÓN", tone: "op" },
+  EJECUTIVO: { id: "EJECUTIVO", label: "Ejecutivo", band: "MODO EJECUTIVO", tone: "eje" },
+  CLIENTE: { id: "CLIENTE", label: "Cliente", band: "MODO CLIENTE", tone: "cte" }
+});
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let api = {};
+let currentMode = null;
+let lastContext = null;
+
+function rolesOf(c) {
+  return (Array.isArray(c?.roles) ? c.roles : []).map(r => String(r || "").trim().toUpperCase());
+}
+
+export function availableModes(c) {
+  if (c?.authenticated !== true) return [];
+  const roles = rolesOf(c);
+  if (roles.includes("ADM")) return ["EJECUTIVO", "OPERACION", "CLIENTE"];
+  if (roles.includes("CLIENTE")) return ["CLIENTE"];
+  if (roles.includes("EJECUTIVO")) return ["EJECUTIVO"];
+  return ["OPERACION"];
+}
+
+function storageKey(c) { return `nexus.mode.${String(c?.memberId || "anon")}`; }
+function readStoredMode(c) { try { return localStorage.getItem(storageKey(c)) || ""; } catch (_) { return ""; } }
+function storeMode(c, mode) { try { localStorage.setItem(storageKey(c), mode); } catch (_) {} }
+
+function resolveMode(c) {
+  const modes = availableModes(c);
+  if (!modes.length) return null;
+  const stored = readStoredMode(c);
+  return modes.includes(stored) ? stored : modes[0];
+}
+
+export function getCurrentMode() { return currentMode; }
+
+// ---------- utilidades de datos ----------
+function dayBounds(d = new Date()) {
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return { start, end: start + 86400000 };
+}
+function ts(v) { const t = v ? new Date(v).getTime() : NaN; return Number.isNaN(t) ? null : t; }
+function isToday(v) { const t = ts(v); if (t === null) return false; const { start, end } = dayBounds(); return t >= start && t < end; }
+function hhmm(v) { const t = ts(v); return t === null ? "—" : new Date(t).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }); }
+function myUsrId(c) { const u = c?.user || {}; return String(u.usrId || u._id || u.id || "").trim(); }
+function evDate(e) { return e?.fechaHoraEvento || e?.fechaEvento || e?.fecha || ""; }
+function isTip(e) { return e?.esTip === true || e?.tip === true || String(e?.clasificacion || e?.tipoRegistro || "").toUpperCase() === "TIP"; }
+function followState(e) { return String(e?.seguimientoEstado || "SIN_ASIGNAR").toUpperCase(); }
+function actStart(a) { return a?.inicio || a?.fechaInicio || a?.fecha || a?.start || ""; }
+function actEnd(a) { return a?.fin || a?.fechaFin || a?.end || actStart(a); }
+function actTitle(a) { return String(a?.titulo || a?.nombre || a?.title || a?.actividad || "Actividad"); }
+function actType(a) { return String(a?.tipoActividad || a?.tipoEtiqueta || a?.tipo?.etiqueta || (typeof a?.tipo === "string" ? a.tipo : "") || ""); }
+
+function todayActivities(c) {
+  const { start, end } = dayBounds();
+  return (Array.isArray(c?.actividades) ? c.actividades : [])
+    .filter(a => { const s = ts(actStart(a)), f = ts(actEnd(a)); if (s === null) return false; return s < end && (f ?? s) >= start; })
+    .sort((a, b) => (ts(actStart(a)) || 0) - (ts(actStart(b)) || 0));
+}
+
+const ICON = {
+  bit: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>',
+  plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  cte: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v10H8l-4 4z"/></svg>'
+};
+
+// ---------- vistas ----------
+async function viewOperacion(c) {
+  const bit = api.getBit?.() || {};
+  const f = bit.facultades || {};
+  const hasBit = c?.bitacora?.activo === true || f.registro === true || f.consulta === true || f.seguimiento === true;
+  const me = myUsrId(c);
+  let html = "";
+  if (hasBit) {
+    const pending = await (api.getPendingBitCount ? api.getPendingBitCount().catch(() => 0) : 0) || 0;
+    const assigned = (bit.seguimientoEventos || []).filter(e => String(e?.asignacionActual?.asignadoUsrId || "") === me && followState(e) === "EN_SEGUIMIENTO").length;
+    const tipsToday = (bit.eventos || []).filter(e => isTip(e) && isToday(evDate(e))).length;
+    const stats = [];
+    if (f.seguimiento === true) stats.push(`<button type="button" class="mv-stat" data-mv="bit-open"><strong>${assigned}</strong><span>Seguimientos asignados a mí</span></button>`);
+    if (f.consulta === true || f.consultaAmpliada === true) stats.push(`<button type="button" class="mv-stat mv-stat-alert" data-mv="bit-open"><strong>${tipsToday}</strong><span>TIP de hoy</span></button>`);
+    html += `<section class="mv-card" aria-labelledby="mvBitTitle">
+      <div class="mv-card-head"><div class="mv-card-title">${ICON.bit}<h2 id="mvBitTitle">Bitácora</h2></div>
+      <span class="mv-pill ${pending ? "mv-pill-warn" : ""}">${pending ? `${pending} por sincronizar` : "Sincronizada"}</span></div>
+      ${f.registro === true ? `<button type="button" class="mv-primary" data-mv="bit-register">${ICON.plus}Registrar evento</button>` : `<button type="button" class="mv-secondary" data-mv="bit-open">Abrir Bitácora</button>`}
+      ${stats.length ? `<div class="mv-stats">${stats.join("")}</div>` : ""}
+    </section>`;
+  }
+  const acts = todayActivities(c);
+  html += `<section class="mv-block" aria-labelledby="mvActTitle">
+    <div class="mv-block-head"><h2 id="mvActTitle">Actividades de hoy</h2><button type="button" class="mv-link" data-mv="schedule">Ver programación</button></div>
+    <div class="mv-list">${acts.length ? acts.slice(0, 5).map(a => `<button type="button" class="mv-row" data-mv="schedule"><span class="mv-time">${esc(hhmm(actStart(a)))}</span><span class="mv-row-copy"><strong>${esc(actTitle(a))}</strong>${actType(a) ? `<span>${esc(actType(a))}</span>` : ""}</span></button>`).join("") : `<p class="mv-empty">Sin actividades programadas para hoy.</p>`}</div>
+  </section>`;
+  return html;
+}
+
+function viewEjecutivo(c) {
+  const bit = api.getBit?.() || {};
+  const cte = api.getCte?.() || {};
+  const hasBit = c?.bitacora?.activo === true || !!(bit.facultades && Object.values(bit.facultades).some(v => v === true));
+  const roles = rolesOf(c);
+  const hasCte = roles.includes("ADM") || roles.includes("CLIENTE");
+  const eventos = bit.eventos || [], segs = bit.seguimientoEventos || [], tickets = cte.tickets || [];
+  const today = eventos.filter(e => isToday(evDate(e)));
+  const tips = today.filter(isTip);
+  const open = segs.filter(e => followState(e) !== "ATENDIDO");
+  const unassigned = segs.filter(e => followState(e) === "SIN_ASIGNAR");
+  const openTickets = tickets.filter(e => followState(e) !== "ATENDIDO");
+  const n = (ok, v) => ok ? String(v) : "—";
+  const kpi = (val, label, mv, alert) => `<button type="button" class="mv-kpi ${alert ? "mv-kpi-alert" : ""}" data-mv="${mv}"><strong>${val}</strong><span>${label}</span></button>`;
+  const attention = [
+    ...tips.slice(0, 3).map(e => ({ dot: "red", t: `TIP · ${e?.tipoEtiqueta || "Evento"}`, s: `${hhmm(evDate(e))} · ${e?.registranteNombre || ""}`, mv: "bit-open" })),
+    ...unassigned.slice(0, 3).map(e => ({ dot: "amber", t: "Seguimiento sin responsable", s: `${e?.folio || ""} · ${e?.tipoEtiqueta || ""}`, mv: "bit-open" })),
+    ...openTickets.filter(e => String(e?.clasificacionCte || "").toUpperCase() === "QUEJA").slice(0, 2).map(e => ({ dot: "blue", t: "Ticket · Queja", s: `${e?.lugar || ""} · ${e?.registranteNombre || ""}`, mv: "cte-tickets" }))
+  ];
+  const reportsLink = api.canReports?.(c) ? `<button type="button" class="mv-link" data-mv="reports">Informes ›</button>` : "";
+  return `<section class="mv-intro"><h1>Hoy en la operación</h1><div class="mv-intro-row"><span>Resumen al momento</span>${reportsLink}</div></section>
+  <section class="mv-kpis" aria-label="Indicadores del día">
+    ${kpi(n(hasBit, today.length), "Eventos registrados hoy", "bit-open")}
+    ${kpi(n(hasBit, tips.length), "TIP de hoy", "bit-open", true)}
+    ${kpi(n(hasBit, open.length), "Seguimientos abiertos", "bit-open")}
+    ${kpi(n(hasCte, openTickets.length), "Tickets de clientes abiertos", "cte-tickets")}
+  </section>
+  <section class="mv-block" aria-labelledby="mvAttTitle"><div class="mv-block-head"><h2 id="mvAttTitle">Requieren atención</h2></div>
+    <div class="mv-list">${attention.length ? attention.map(a => `<button type="button" class="mv-row" data-mv="${a.mv}"><span class="mv-dot mv-dot-${a.dot}" aria-hidden="true"></span><span class="mv-row-copy"><strong>${esc(a.t)}</strong><span>${esc(a.s)}</span></span><span class="mv-chev" aria-hidden="true">›</span></button>`).join("") : `<p class="mv-empty">${hasBit ? "Nada pendiente por ahora." : "Sin acceso a Bitácora para este usuario."}</p>`}</div>
+  </section>`;
+}
+
+function viewCliente() {
+  const cte = api.getCte?.() || {};
+  const tickets = (cte.tickets || []).slice(0, 5);
+  const cls = e => ({ QUEJA: "Queja", INFORMACION: "Información", SUGERENCIA: "Sugerencia", SOLICITUD: "Solicitud" })[String(e?.clasificacionCte || "").toUpperCase()] || "Atención";
+  const st = e => { const s = followState(e); return s === "ATENDIDO" ? ["Atendido", "ok"] : s === "EN_SEGUIMIENTO" ? ["En seguimiento", "warn"] : ["Recibido", "info"]; };
+  return `<section class="mv-intro"><h1>Atención al Cliente</h1><div class="mv-intro-row"><span>Reporta y da seguimiento a tus solicitudes</span></div></section>
+  <button type="button" class="mv-primary" data-mv="cte-new">${ICON.plus}Nuevo reporte</button>
+  <section class="mv-block" aria-labelledby="mvTkTitle"><div class="mv-block-head"><h2 id="mvTkTitle">Mis reportes</h2>${tickets.length ? `<button type="button" class="mv-link" data-mv="cte-tickets">Ver todos</button>` : ""}</div>
+    <div class="mv-list">${tickets.length ? tickets.map(e => { const [label, tone] = st(e); return `<button type="button" class="mv-row" data-mv="cte-tickets"><span class="mv-row-copy"><strong>${esc(cls(e))} · ${esc(e?.lugar || "")}</strong><span>${esc(e?.folio || "")} · ${esc(e?.fechaHoraEvento ? new Date(e.fechaHoraEvento).toLocaleDateString("es-MX") : "")}</span></span><span class="mv-badge mv-badge-${tone}">${label}</span></button>`; }).join("") : `<p class="mv-empty">Aún no tienes reportes.</p>`}</div>
+  </section>`;
+}
+
+function viewVisitante() {
+  return `<section class="mv-card mv-welcome"><h1>Bienvenido a NEXUS</h1><p>Inicia sesión para ver tu día de trabajo.</p><button type="button" class="mv-primary" data-mv="login">Iniciar sesión</button></section>`;
+}
+
+// ---------- franja y menú ----------
+function paintBand(c) {
+  const band = $("#modeBand"); if (!band) return;
+  const modes = availableModes(c);
+  if (!currentMode) { band.hidden = true; return; }
+  const m = MODES[currentMode];
+  band.hidden = false;
+  band.dataset.tone = m.tone;
+  $("#modeLabel").textContent = m.band;
+  const sw = $("#btnModeSwitch"); if (sw) sw.hidden = modes.length < 2;
+  document.body.dataset.mode = currentMode;
+}
+
+function paintMenuModes(c) {
+  const box = $("#menuModes"); if (!box) return;
+  const modes = availableModes(c);
+  if (modes.length < 2) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = `<span class="account-menu-section">MODO</span>` + modes.map(id => {
+    const m = MODES[id];
+    return `<button type="button" class="menu-mode menu-mode-${m.tone} ${id === currentMode ? "is-current" : ""}" data-action="mode:${id}"><span class="menu-mode-dot" aria-hidden="true"></span><span>${m.label}</span>${id === currentMode ? '<span aria-hidden="true">✓</span>' : ""}</button>`;
+  }).join("");
+}
+
+export async function renderModeView(c) {
+  lastContext = c;
+  const view = $("#modeView"); if (!view) return;
+  if (!currentMode) currentMode = resolveMode(c);
+  paintBand(c); paintMenuModes(c);
+  let html = viewVisitante();
+  if (currentMode === "OPERACION") html = await viewOperacion(c);
+  else if (currentMode === "EJECUTIVO") html = viewEjecutivo(c);
+  else if (currentMode === "CLIENTE") html = viewCliente(c);
+  view.innerHTML = html;
+  api.renderResources?.(currentMode);
+}
+
+export function setMode(mode) {
+  if (!lastContext || !availableModes(lastContext).includes(mode)) return;
+  currentMode = mode;
+  storeMode(lastContext, mode);
+  renderModeView(lastContext);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+export function initModes(handlers = {}) {
+  api = handlers;
+  // Controles del monitor sobre el video (silencio y ampliar).
+  const monitor = $("#tvMonitor"), mute = $("#btnTvMute"), expand = $("#btnTvExpand");
+  if (monitor && mute && expand) { mute.classList.add("tv-overlay-btn", "tv-overlay-left"); expand.classList.add("tv-overlay-btn", "tv-overlay-right"); monitor.append(mute, expand); }
+  $("#modeView")?.addEventListener("click", e => {
+    const a = e.target.closest("[data-mv]")?.dataset.mv; if (!a) return;
+    if (a === "bit-register") api.openBitacora?.("registro");
+    else if (a === "bit-open") api.openBitacora?.();
+    else if (a === "schedule") api.openSchedule?.();
+    else if (a === "reports") api.openReports?.();
+    else if (a === "cte-new") api.openCte?.();
+    else if (a === "cte-tickets") api.openCteTickets?.();
+    else if (a === "login") document.querySelector("#btnLogin")?.click();
+  });
+  $("#btnModeSwitch")?.addEventListener("click", e => { e.stopPropagation(); document.querySelector("#btnAccount")?.click(); });
+  document.addEventListener("nexus:navigation", e => {
+    const action = String(e.detail?.action || "");
+    if (action.startsWith("mode:")) setMode(action.slice(5));
+  });
+  document.addEventListener("nexus:data-changed", () => { if (lastContext) renderModeView(lastContext); });
+}

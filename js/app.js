@@ -1,16 +1,19 @@
 import {resolveAccessContext,startLogin,logoutLocal,authHeaders,handleAuthRequired} from "./auth.js";
 import {initNotices,showNotice} from "./ui.js";
 import {initBackNavigation} from "./back-nav.js";
+import {initModes,renderModeView,getCurrentMode} from "./modes.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
 import {initTv,setTvContext} from "./tv.js";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
+import {getBitacoraSnapshot} from "./bitacora.js";
+import {getCteSnapshot,openCteTickets} from "./cte.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.2.93";
+const VERSION="0.3.0";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -82,6 +85,7 @@ async function loadCteState(context){
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Atención al Cliente.");
     setCteState(data);
+    document.dispatchEvent(new CustomEvent("nexus:data-changed"));
   }catch(error){console.error("NEXUS | CTE | STATE_ERROR",error);setCteState({tickets:[]})}
 }
 async function syncCteEvidence(queueItem,evidence){
@@ -128,7 +132,8 @@ async function loadBitacoraState(context){
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Bitácora.");
     context.bitacora={activo:data.activo===true,facultades:data.facultades||{}};
-    setBitacoraState(data);
+    await setBitacoraState(data);
+    document.dispatchEvent(new CustomEvent("nexus:data-changed"));
   }catch(error){
     console.error("NEXUS | BITACORA | STATE_ERROR",error);
     const cached=await getCachedBitacoraAccess().catch(()=>null);
@@ -389,8 +394,33 @@ function paintContext(c){
   for(const id of ["#topAvatar","#menuAvatar"])setAvatar(document.querySelector(id),c?.user,name);
   document.querySelector("#btnAdminPanel").hidden=!(c?.roles||[]).includes("ADM");
 }
+// ---------- accesos usados por los modos de vista (v0.3.0) ----------
+const RESOURCE_IDS={OPERACION:["mns","docs","schedule","training"],EJECUTIVO:["bitacora","mns","docs","schedule"],CLIENTE:[]};
+function adminPanelUrl(){const url=new URL("https://www.scad.mx/nexus-panel");const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();if(codigoEO)url.searchParams.set("scadEO",codigoEO);return url.toString()}
+function openReports(){
+  const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
+  if(!codigoEO){showNotice("No fue posible resolver la Empresa Operadora activa.");return}
+  const url=new URL("https://www.scad.mx/sys-informes");url.searchParams.set("app","NEXUS");url.searchParams.set("eo",codigoEO);
+  window.location.assign(url.toString());
+}
+function canReports(c){const roles=(c?.roles||[]).map(r=>String(r||"").toUpperCase());return roles.includes("ADM")||roles.includes("EJECUTIVO")}
+function renderResources(mode){
+  const grid=document.querySelector("#modulesGrid"),section=document.querySelector(".modules-section");
+  const ids=RESOURCE_IDS[mode]||[];
+  if(!grid||!section)return;
+  if(!currentContext?.authenticated||!ids.length){section.hidden=true;grid.replaceChildren();return}
+  section.hidden=false;
+  renderModules(grid,BASIC_MODULES.filter(m=>ids.includes(m.id)),currentContext);
+  grid.querySelectorAll(".module-card.is-locked").forEach(el=>el.remove());
+}
+function hideSplash(){
+  const el=document.querySelector("#splash");if(!el||el.dataset.done)return;
+  const wait=Math.max(0,1200-(Date.now()-(window.__nexusSplashStart||Date.now())));
+  setTimeout(()=>{el.dataset.done="1";el.classList.add("is-leaving");setTimeout(()=>el.remove(),450)},wait);
+}
 async function boot(){
   initAccountMenu();initNotices();initBackNavigation();
+  initModes({openBitacora:()=>openBitacora(),openSchedule,openReports,openCte,openCteTickets,canReports,renderResources,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
   initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}
@@ -405,9 +435,11 @@ async function boot(){
   // y cargar Bitácora y Atención al Cliente en paralelo, sin bloquear la pantalla.
   const cachedBit=c?.authenticated===true?await getCachedBitacoraAccess().catch(()=>null):null;
   if(cachedBit&&!c.bitacora){const f=cachedBit.facultades||{};c.bitacora={activo:f.registro===true||f.consulta===true||f.seguimiento===true,facultades:f}}
-  paintContext(c);renderInstallOption();renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);setDocumentsContext(c);setScheduleContext(c);
+  paintContext(c);renderInstallOption();setDocumentsContext(c);setScheduleContext(c);
+  await renderModeView(c);
+  hideSplash();
   Promise.allSettled([loadBitacoraState(c),loadCteState(c)]).then(()=>{
-    renderModules(document.querySelector("#modulesGrid"),BASIC_MODULES,c);
+    renderModeView(c);
     syncBitacoraQueue();syncCteQueue();
   });
   document.querySelector("#modulesGrid").addEventListener("click",e=>{
@@ -432,10 +464,7 @@ async function boot(){
     if(card.dataset.module==="admin"){
       // La Operadora activa evita la ambigüedad cuando el usuario es ADM en varias EO.
       // scadEO no concede acceso: el backend valida que sea ADM de esa EO.
-      const url=new URL("https://www.scad.mx/nexus-panel");
-      const codigoEO=String(currentContext?.eo?.codigoEO||"").trim();
-      if(codigoEO)url.searchParams.set("scadEO",codigoEO);
-      window.location.assign(url.toString());return
+      window.location.assign(adminPanelUrl());return
     }
   });
   document.addEventListener("nexus:cte-local-saved",()=>syncCteQueue());
@@ -449,7 +478,7 @@ async function boot(){
   document.addEventListener("nexus:bitacora-followup-release",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraReleaseFollowup",e.detail,"No fue posible liberar el seguimiento.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento liberado."}}))}catch(error){console.error("NEXUS | BITACORA | RELEASE_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible liberar el seguimiento."}}))}});
   document.addEventListener("nexus:bitacora-followup-attended",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraMarkFollowupAttended",e.detail,"No fue posible marcar el seguimiento como atendido.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento marcado como atendido."}}))}catch(error){console.error("NEXUS | BITACORA | ATTENDED_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible marcar el seguimiento como atendido."}}))}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
-  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign("https://www.scad.mx/nexus-panel")});
+  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign(adminPanelUrl())});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
 }
