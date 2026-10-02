@@ -399,6 +399,9 @@ async function renderPending(items=null){
 async function saveLocalEvent(){
   const detail={tipoId:String($("#bitTipo").value||""),programacionId:selectedProgramacionId,fecha:String($("#bitFecha").value||""),hora:String($("#bitHora").value||""),lugar:String($("#bitLugar").value||"").trim(),descripcion:String($("#bitDescripcion").value||"").trim(),comentarios:String($("#bitComentarios").value||"").trim(),requiereSeguimiento:$("#bitRequiereSeguimiento").checked===true,esTip:$("#bitEsTip").checked===true};
   if(!detail.tipoId||!detail.fecha||!detail.hora||!detail.descripcion){showNotice("Completa Tipo de evento, fecha, hora y descripción.");return}
+  // Zona horaria del dispositivo para la fecha/hora capturada (el servidor trabaja en UTC).
+  const localDate=new Date(`${detail.fecha}T${detail.hora}:00`);
+  detail.tzOffsetMin=Number.isNaN(localDate.getTime())?new Date().getTimezoneOffset():localDate.getTimezoneOffset();
   const localId=createLocalId("bit"),createdLocalAt=new Date().toISOString();
   const queueItem={localId,module:"BIT",operation:"REGISTER_EVENT",payload:detail,syncStatus:"PENDIENTE",createdLocalAt,lastSyncAttempt:null,syncError:"",syncAttempts:0,serverId:"",serverFolio:""};
   await putQueueItem(queueItem);
