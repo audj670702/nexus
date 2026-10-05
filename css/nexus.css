@@ -741,3 +741,7 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
 #bitConsultaView .bit-lbl-long{display:inline!important}#bitConsultaView .bit-lbl-short{display:none!important}
 @container bitcons (max-width:312px){#bitConsultaView .bit-lbl-long{display:none!important}#bitConsultaView .bit-lbl-short{display:inline!important}}
 #bitConsultaView .bit-export-menu button{margin:0!important}
+
+/* v0.3.11 · aviso de carga fallida en Consultar */
+#bitConsultaView .bit-load-error{display:grid;justify-items:center;gap:8px;color:#a3271a}
+#bitConsultaView .bit-load-error span{font-size:.6rem;color:var(--muted);word-break:break-word}
