@@ -18,11 +18,11 @@
   <link rel="stylesheet" href="./css/nexus.css">
 </head>
 <body>
-<div id="splash" class="splash" aria-hidden="true"><img class="splash-logo" src="./assets/logo/logo_nexus_192.png" alt=""><span class="splash-line"></span></div>
+<div id="splash" class="splash" aria-hidden="true"><img class="splash-logo" src="./assets/logo/logo_nexus_720.png" alt=""><span class="splash-line"></span></div>
 <script>window.__nexusSplashStart=Date.now();setTimeout(function(){var s=document.getElementById("splash");if(s&&!s.dataset.done){s.dataset.done="1";s.classList.add("is-leaving");setTimeout(function(){s.remove()},450)}},3000);</script>
 <div id="app" class="app-shell">
   <header class="topbar">
-    <img class="brand-logo" src="./assets/logo/logo_nexus_192.png" alt="NEXUS · Conexión operativa">
+    <img class="brand-logo" src="./assets/logo/logo_nexus_720.png" alt="NEXUS · Conexión operativa">
 
     <div class="topbar-actions">
       <button id="installButton" class="install-button" type="button" data-installed="false">Instalar app</button>
@@ -86,6 +86,7 @@
           <span id="tvNowLabel" class="tv-now">EO</span>
           <button id="btnTvOptions" class="tv-options-trigger" type="button" aria-label="Opciones del monitor" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
         </div>
+        <div id="tvFsLayer" class="tv-fs-layer" hidden><button id="btnCloseTvFs" class="tv-fs-close" type="button" aria-label="Salir de pantalla completa"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
         <div id="tvOptions" class="tv-controls tv-options" role="dialog" aria-label="Opciones del monitor" hidden>
           <div class="tv-options-head"><strong>Monitor</strong><button id="btnTvOptionsClose" class="tv-options-close" type="button" aria-label="Cerrar">×</button></div>
           <span class="tv-options-label">Canal</span>
@@ -384,10 +385,10 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.2</span>
+      <span id="versionLabel">NEXUS · v0.3.5</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
-    <span class="powered">Powered by <img src="./assets/logo/logo_hub_192x107.png" alt="SCaD HUB"></span>
+    <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>
   </footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>

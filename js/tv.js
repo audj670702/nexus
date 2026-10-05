@@ -12,4 +12,25 @@ function renderEoTransmission(force=false){const tv=context?.tv,id=String(tv?.yo
 function playEo(){renderEoTransmission(true)}
 function setChannel(ch){const m=$("#tvMonitor");if(m)m.dataset.channel=ch;document.querySelectorAll(".channel[data-channel]").forEach(b=>b.classList.toggle("is-active",b.dataset.channel===ch));const nl=$("#tvNowLabel");if(nl)nl.textContent=ch==="eo"?($("#eoChannelName")?.textContent||"EO"):"TV Digital";if(ch==="eo")playEo();else playUrl(TVDI_HLS)}
 export function setTvContext(next){context=next||null;if($("#tvMonitor")?.dataset.channel==="eo")playEo()}
-export function initTv(){const m=$("#tvMonitor"),x=$("#btnTvExpand"),c=$(".tv-controls");if(!m||!c)return;m.dataset.channel="eo";c.addEventListener("click",e=>{const b=e.target.closest("[data-channel]");if(b)setChannel(b.dataset.channel)});x?.addEventListener("click",async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(m.requestFullscreen)await m.requestFullscreen()}catch{}});$("#btnTvMute")?.addEventListener("click",()=>{tvMuted=!tvMuted;const v=$("#tvVideo"),i=$("#tvMuteIcon");if(v)v.muted=tvMuted;if(i)i.innerHTML=tvMuted?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';const tt=$("#tvMuteText");if(tt)tt.textContent=tvMuted?"Activar sonido":"Silenciar";if(m.dataset.channel==="eo")sendYoutubeCommand(tvMuted?"mute":"unMute");else if(!tvMuted)v?.play().catch(()=>{})});setChannel("eo")}
+// v0.3.3 · Pantalla completa del monitor.
+// 1) API nativa (Android, escritorio, iPad). 2) iPhone con canal de video: reproductor nativo.
+// 3) Si nada de lo anterior existe (iPhone con YouTube): el monitor ocupa toda la pantalla
+//    dentro de la app, con botón para salir; el botón Atrás también lo cierra.
+function closeTvOptions(){const o=$("#tvOptions"),t=$("#btnTvOptions");if(o&&!o.hidden){o.hidden=true;t?.setAttribute("aria-expanded","false")}}
+function nativeFsElement(){return document.fullscreenElement||document.webkitFullscreenElement||null}
+function enterTvPseudoFullscreen(){const layer=$("#tvFsLayer");document.body.classList.add("tv-fs");if(layer)layer.hidden=false;try{screen.orientation?.lock?.("landscape").catch(()=>{})}catch{}}
+function exitTvPseudoFullscreen(){const layer=$("#tvFsLayer");document.body.classList.remove("tv-fs");if(layer&&!layer.hidden)layer.hidden=true;try{screen.orientation?.unlock?.()}catch{}}
+function toggleTvFullscreen(){
+  const m=$("#tvMonitor");if(!m)return;
+  if(nativeFsElement()){const ex=document.exitFullscreen||document.webkitExitFullscreen;try{ex?.call(document)?.catch?.(()=>{})}catch{}return}
+  if(document.body.classList.contains("tv-fs")){exitTvPseudoFullscreen();return}
+  const req=m.requestFullscreen||m.webkitRequestFullscreen;
+  if(req){
+    closeTvOptions();
+    try{const r=req.call(m);if(r&&typeof r.then==="function"){r.then(()=>{try{screen.orientation?.lock?.("landscape").catch(()=>{})}catch{}}).catch(()=>setTimeout(enterTvPseudoFullscreen,200))}return}catch{}
+  }
+  const v=$("#tvVideo");
+  if(m.dataset.channel!=="eo"&&v&&!v.hidden&&typeof v.webkitEnterFullscreen==="function"){try{v.webkitEnterFullscreen();closeTvOptions();return}catch{}}
+  closeTvOptions();setTimeout(enterTvPseudoFullscreen,200);
+}
+export function initTv(){const m=$("#tvMonitor"),x=$("#btnTvExpand"),c=$(".tv-controls");if(!m||!c)return;m.dataset.channel="eo";c.addEventListener("click",e=>{const b=e.target.closest("[data-channel]");if(b)setChannel(b.dataset.channel)});x?.addEventListener("click",()=>toggleTvFullscreen());$("#btnCloseTvFs")?.addEventListener("click",exitTvPseudoFullscreen);document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("tv-fs"))exitTvPseudoFullscreen()});$("#btnTvMute")?.addEventListener("click",()=>{tvMuted=!tvMuted;const v=$("#tvVideo"),i=$("#tvMuteIcon");if(v)v.muted=tvMuted;if(i)i.innerHTML=tvMuted?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';const tt=$("#tvMuteText");if(tt)tt.textContent=tvMuted?"Activar sonido":"Silenciar";if(m.dataset.channel==="eo")sendYoutubeCommand(tvMuted?"mute":"unMute");else if(!tvMuted)v?.play().catch(()=>{})});setChannel("eo")}
