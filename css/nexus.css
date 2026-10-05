@@ -656,3 +656,67 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
   .bit-relation-modal>*:not(.bit-relation-head){background:#fff}
   .bit-relation-list{flex:1 1 auto;min-height:0}
 }
+
+/* ===== v0.3.9 · Bitácora › Consultar: barra, filtros, leyenda-filtro y tabla ===== */
+#bitConsultaView{--fld-h:36px;--fld-fs:.72rem}
+#bitConsultaView .bit-consulta-primary{display:block}
+#bitConsultaView .bitacora-search{width:100%;min-height:var(--fld-h)}
+#bitConsultaView .bitacora-search input{font-size:var(--fld-fs);font-weight:500;background:transparent;min-width:0;flex:1 1 auto}
+#bitConsultaView .bit-consulta-actions{display:flex;align-items:center;gap:5px;margin-top:8px;flex-wrap:nowrap}
+#bitConsultaView .bit-consulta-tool{min-height:30px;height:30px;padding:0 9px;font-size:.62rem;font-weight:800;white-space:nowrap;border-radius:7px;flex:0 0 auto}
+#bitConsultaView .bit-export-label{margin-left:auto;font-size:.6rem;font-weight:700;color:var(--muted);white-space:nowrap}
+#bitConsultaView .bit-lbl-short{display:none}
+@media(max-width:400px){#bitConsultaView .bit-lbl-long{display:none}#bitConsultaView .bit-lbl-short{display:inline}#bitConsultaView .bit-consulta-tool{padding:0 8px}}
+@media(max-width:370px){#bitConsultaView .bit-export-label{display:none}#bitConsultaView #btnBitExcel{margin-left:auto}}
+/* Panel de filtros */
+#bitConsultaView .bit-consulta-filters{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}
+#bitConsultaView .bit-f-label,#bitConsultaView .bit-filter-grid label{font-size:.64rem;font-weight:700;color:var(--ink)}
+#bitConsultaView .bit-period{display:grid;gap:5px}
+#bitConsultaView .bit-period-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+#bitConsultaView .bit-date-field{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px;font-size:.62rem;font-weight:600;color:var(--muted);min-width:0}
+#bitConsultaView .bit-filter-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px 10px}
+#bitConsultaView .bit-filter-grid label{display:grid;gap:4px;min-width:0}
+#bitConsultaView .bit-consulta-filters select,#bitConsultaView .bit-consulta-filters input[type="date"]{width:100%;min-width:0;max-width:100%;height:var(--fld-h);min-height:var(--fld-h);margin:0;border:1px solid var(--line);border-radius:7px;background-color:#fff;color:var(--ink);font-family:inherit;font-size:var(--fld-fs);font-weight:600}
+#bitConsultaView .bit-consulta-filters select{-webkit-appearance:none;appearance:none;padding:0 28px 0 10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6f8f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;text-overflow:ellipsis}
+#bitConsultaView .bit-consulta-filters input[type="date"]{-webkit-appearance:none;appearance:none;position:relative;display:block;text-align:left;padding:0 6px 0 28px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23205985' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M4 10h16M9 3v4M15 3v4'/%3E%3C/svg%3E") no-repeat 9px center}
+#bitConsultaView .bit-consulta-filters input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0;line-height:calc(var(--fld-h) - 2px)}
+#bitConsultaView .bit-consulta-filters input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
+/* Leyenda que también filtra */
+#bitConsultaView .bit-legend-filter{display:flex;align-items:center;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#bitConsultaView .bit-legend-filter::-webkit-scrollbar{display:none}
+#bitConsultaView .bit-legend-filter button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#3d5272;font:inherit;font-size:.6rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
+#bitConsultaView .bit-legend-filter.has-filter button:not(.is-on){opacity:.55}
+#bitConsultaView .bit-legend-filter button.is-on{background:#eaf2fa;border-color:#205985;color:#123f6d;opacity:1}
+#bitConsultaView .bit-legend-filter .bit-status-symbol.regular{width:8px;height:8px}
+#bitConsultaView .bit-legend-filter .bit-status-symbol.tip-pending,#bitConsultaView .bit-legend-filter .bit-status-symbol.tip-read{width:9px;height:9px}
+/* Encabezado de la tabla */
+#bitConsultaView .bit-tbl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:0 2px 6px;border-bottom:1px solid var(--line)}
+#bitConsultaView #bitConsultaCount{font-size:.62rem;font-weight:700;color:var(--muted)}
+#bitConsultaView .bit-tbl-more{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border:0;border-radius:999px;background:#e8f1fa;color:#205985;font:inherit;font-size:.6rem;font-weight:800;cursor:pointer;animation:bitMorePulse 1.8s ease-in-out infinite}
+#bitConsultaView .bit-tbl-more[hidden]{display:none}
+#bitConsultaView .bit-tbl-more svg{animation:bitMoreNudge 1.8s ease-in-out infinite}
+@keyframes bitMorePulse{0%,100%{box-shadow:0 0 0 0 rgba(32,89,133,.28)}50%{box-shadow:0 0 0 5px rgba(32,89,133,0)}}
+@keyframes bitMoreNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@media(prefers-reduced-motion:reduce){#bitConsultaView .bit-tbl-more,#bitConsultaView .bit-tbl-more svg{animation:none}}
+/* Tabla */
+#bitConsultaView .bit-tbl-scroll{position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#bitConsultaView .bit-tbl-scroll.has-more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+#bitConsultaView .bit-tbl{border-collapse:collapse;width:100%;font-size:.64rem;color:var(--ink)}
+#bitConsultaView .bit-tbl th{position:sticky;top:0;background:#fff;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:.56rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+#bitConsultaView .bit-tbl th .bit-sort-head{border:0;background:transparent;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;white-space:nowrap}
+#bitConsultaView .bit-tbl th .bit-sort-head.is-active{color:#205985}
+#bitConsultaView .bit-tbl td{padding:8px;border-bottom:1px solid #edf2f9;vertical-align:top;line-height:1.35}
+#bitConsultaView .bit-tbl tbody tr{cursor:pointer}
+#bitConsultaView .bit-tbl tbody tr:hover,#bitConsultaView .bit-tbl tbody tr:focus-visible{background:#f5f9fd;outline:none}
+#bitConsultaView .bit-tbl .c-num{width:1%;white-space:nowrap;color:var(--muted);padding-right:4px}
+#bitConsultaView .bit-tbl .c-reg{width:1%;white-space:nowrap;font-weight:800;color:#205985;padding-right:4px}
+#bitConsultaView .bit-tbl .c-state{width:1%;padding-left:2px;padding-right:2px;text-align:center}
+#bitConsultaView .bit-tbl td.c-state .bit-state-cell{height:16px}
+#bitConsultaView .bit-tbl .c-nowrap{white-space:nowrap;width:1%}
+#bitConsultaView .bit-tbl td.c-short span{display:block;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bitConsultaView .bit-tbl td.c-mid span{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bitConsultaView .bit-tbl td.c-text span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-width:170px;max-width:280px}
+#bitConsultaView .bit-legend-filter button.bit-legend-group{border:0;background:transparent;padding:0 0 0 4px;color:var(--muted);font-weight:800}
+#bitConsultaView .bit-legend-filter button.bit-legend-group.is-on{background:transparent;color:#205985;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:400px){#bitConsultaView .bit-legend-filter{gap:5px}#bitConsultaView .bit-legend-filter button{padding:0 8px;font-size:.58rem}}
+@media(max-width:370px){#bitConsultaView .bit-legend-filter{gap:4px}#bitConsultaView .bit-legend-filter button{padding:0 7px;gap:5px}}

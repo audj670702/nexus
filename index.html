@@ -229,22 +229,30 @@
         <div id="bitConsultaView" class="bitacora-view" hidden>
           <div class="bit-consulta-primary">
             <label class="bitacora-search"><span aria-hidden="true">⌕</span><input id="bitBuscar" type="search" placeholder="Buscar en Bitácora (mín. 3 caracteres)" autocomplete="off"></label>
+          </div>
+          <div class="bit-consulta-actions">
             <button id="btnBitFiltros" class="bit-consulta-tool" type="button" aria-expanded="false">Filtros</button>
+            <button id="btnBitLimpiarFiltros" class="bit-consulta-tool" type="button" title="Limpiar filtros"><span class="bit-lbl-long">Limpiar filtros</span><span class="bit-lbl-short">Limpiar</span></button>
             <button id="btnBitColumnas" class="bit-consulta-tool" type="button" aria-expanded="false">Columnas</button>
-            <div class="bit-export-group">
-              <button id="btnBitExcel" class="bit-consulta-tool" type="button">Excel</button>
-              <button id="btnBitPdf" class="bit-consulta-tool" type="button">PDF</button>
-            </div>
+            <span class="bit-export-label">Exportar:</span>
+            <button id="btnBitExcel" class="bit-consulta-tool bit-export-btn" type="button">Excel</button>
+            <button id="btnBitPdf" class="bit-consulta-tool bit-export-btn" type="button">PDF</button>
           </div>
           <div id="bitConsultaFiltros" class="bit-consulta-filters" hidden>
-            <label>Desde<input id="bitFiltroDesde" type="date"></label>
-            <label>Hasta<input id="bitFiltroHasta" type="date"></label>
-            <label>Tipo<select id="bitFiltroTipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select></label>
-            <label>Responsable<input id="bitFiltroResponsable" type="search" placeholder="Todos" autocomplete="off"></label>
-            <label>Actividad<input id="bitFiltroActividad" type="search" placeholder="Todas" autocomplete="off"></label>
-            <label>Registro<select id="bitFiltroEstado"><option value="VIGENTE">Vigentes</option><option value="TODOS">Vigentes y sustituidos</option><option value="SUSTITUIDO">Sólo sustituidos</option></select></label>
-            <label>Clasificación<div class="bit-class-filter"><span id="bitFiltroTipIcon" class="bit-filter-state-icon" aria-hidden="true"></span><select id="bitFiltroTip"><option value="">Todos</option><option value="REGULAR">■ Regular</option><option value="TIP">●/○ Informativa Prioritaria</option><option value="TIP_PENDIENTE">● Prioritaria pendiente</option><option value="TIP_CONSULTADA">○ Prioritaria consultada</option></select></div></label>
-            <button id="btnBitLimpiarFiltros" class="bit-consulta-clear" type="button">Limpiar filtros</button>
+            <div class="bit-period">
+              <span class="bit-f-label">Período</span>
+              <div class="bit-period-row">
+                <label class="bit-date-field"><span>Desde</span><input id="bitFiltroDesde" type="date" aria-label="Desde"></label>
+                <label class="bit-date-field"><span>Hasta</span><input id="bitFiltroHasta" type="date" aria-label="Hasta"></label>
+              </div>
+            </div>
+            <div class="bit-filter-grid">
+              <label>Tipo<select id="bitFiltroTipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select></label>
+              <label>Registro<select id="bitFiltroEstado"><option value="VIGENTE">Sin sustituir</option><option value="SUSTITUIDO">Sustituidos</option><option value="TODOS">Todos</option></select></label>
+              <label>Responsable<select id="bitFiltroResponsable"><option value="">Todos</option></select></label>
+              <label>Actividad<select id="bitFiltroActividad"><option value="">Todas</option></select></label>
+            </div>
+            <span hidden><select id="bitFiltroTip" aria-hidden="true" tabindex="-1"><option value="">Todos</option><option value="REGULAR">Regular</option><option value="TIP">Prioritaria</option><option value="TIP_PENDIENTE">Prioritaria pendiente</option><option value="TIP_CONSULTADA">Prioritaria consultada</option></select></span>
           </div>
           <div id="bitPdfOptions" class="bit-pdf-options" hidden>
             <label>Anotaciones para PDF <span>Opcional</span><textarea id="bitReporteAnotaciones" rows="3" maxlength="3000" placeholder="Aclaración que se incorporará únicamente al PDF. No se guarda en Bitácora."></textarea></label>
@@ -254,10 +262,13 @@
             <div class="bit-columns-head"><strong>Columnas del evento</strong><span>Máximo 6 · No., Reg. y Estado son fijas</span></div>
             <div id="bitColumnasOpciones" class="bit-columns-options"></div>
           </div>
-          <div class="bitacora-filter-row">
-            <div class="bit-status-legend" aria-label="Leyenda de estado"><span><i class="bit-status-symbol regular" aria-hidden="true"></i> Regular</span><span><i class="bit-status-symbol tip-pending" aria-hidden="true"></i> Prioritaria pendiente</span><span><i class="bit-status-symbol tip-read" aria-hidden="true"></i> Prioritaria consultada*</span><small>*Respecto al usuario en sesión.</small></div>
-            <span id="bitConsultaCount">0 eventos</span>
+          <div class="bit-legend-filter" role="group" aria-label="Clasificación (toca para filtrar)">
+            <button type="button" data-bit-class="REGULAR" aria-pressed="false"><i class="bit-status-symbol regular" aria-hidden="true"></i>Regular</button>
+            <button type="button" class="bit-legend-group" data-bit-class="TIP" aria-pressed="false" title="Todas las Tarjetas Informativas Prioritarias">Prioritaria:</button>
+            <button type="button" data-bit-class="TIP_PENDIENTE" aria-pressed="false" title="Prioritaria pendiente de consultar por ti"><i class="bit-status-symbol tip-pending" aria-hidden="true"></i>Pendiente</button>
+            <button type="button" data-bit-class="TIP_CONSULTADA" aria-pressed="false" title="Prioritaria ya consultada por ti"><i class="bit-status-symbol tip-read" aria-hidden="true"></i>Consultada</button>
           </div>
+          <div class="bit-tbl-top"><span id="bitConsultaCount">0 eventos</span><button id="bitTblMore" class="bit-tbl-more" type="button" hidden></button></div>
           <div id="bitEventosList" class="bitacora-list bit-report-list"></div>
         </div>
 
@@ -386,7 +397,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.8</span>
+      <span id="versionLabel">NEXUS · v0.3.9</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>
