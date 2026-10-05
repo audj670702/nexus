@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <script>/* v0.3.6 · iPhone/iPad: evita el zoom automático al tocar un campo sin bloquear el zoom con los dedos (iOS lo sigue permitiendo). */(function(){var ua=navigator.userAgent||"",ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);if(!ios)return;var m=document.querySelector('meta[name="viewport"]');if(m)m.setAttribute("content","width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover")})();</script>
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="NEXUS · Conexión operativa">
   <title>NEXUS · Conexión operativa</title>
@@ -181,19 +182,21 @@
             <div class="bitacora-date-row">
               <label>Fecha del evento<input id="bitFecha" type="date"></label>
               <label>Hora<input id="bitHora" type="time"></label>
-              <label class="bitacora-check bitacora-followup-check"><input id="bitRequiereSeguimiento" type="checkbox"><span>Seguimiento requerido</span></label>
-              <label class="bitacora-check bitacora-tip-check"><input id="bitEsTip" type="checkbox"><span class="bit-tip-dot bit-tip-dot-red" aria-hidden="true"></span><span>Tarjeta Informativa Prioritaria</span></label>
+            </div>
+            <div class="bit-flags">
+              <label class="bit-flag"><input id="bitRequiereSeguimiento" type="checkbox"><span>Seguimiento requerido</span></label>
+              <label class="bit-flag"><input id="bitEsTip" type="checkbox"><span class="bit-tip-dot bit-tip-dot-red" aria-hidden="true"></span><span>Tarjeta Informativa Prioritaria</span></label>
             </div>
             <div class="bit-relation-field">
               <span class="bit-relation-label">Relacionar actividad</span>
               <button id="btnBitRelacionar" class="bit-relation-trigger" type="button"><span id="bitRelacionResumen">Seleccionar actividad</span><span aria-hidden="true">›</span></button>
             </div>
-            <label>Lugar <span class="bitacora-optional">Opcional</span><input id="bitLugar" type="text" maxlength="200" placeholder="Lugar donde ocurrió el evento"></label>
+            <label>Lugar<input id="bitLugar" type="text" maxlength="200" placeholder="Lugar del evento"></label>
             <label>Descripción
-              <textarea id="bitDescripcion" rows="5" maxlength="4000" placeholder="Describe qué ocurrió y los detalles necesarios para comprender el evento."></textarea>
+              <textarea id="bitDescripcion" rows="4" maxlength="4000" placeholder="¿Qué ocurrió?"></textarea>
             </label>
             <label>Comentarios
-              <textarea id="bitComentarios" rows="3" maxlength="2000" placeholder="Consideraciones adicionales del registro."></textarea>
+              <textarea id="bitComentarios" rows="2" maxlength="2000" placeholder="Notas adicionales"></textarea>
             </label>
             <label id="bitEvidenciaField" class="bitacora-evidence" hidden>Evidencias
               <span class="bit-file-picker"><span class="bit-file-button">Elegir archivo</span><span class="bit-file-help">Adjuntar evidencia</span><input id="bitEvidencias" type="file" multiple></span>
@@ -385,7 +388,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.5</span>
+      <span id="versionLabel">NEXUS · v0.3.6</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>
