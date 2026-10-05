@@ -646,3 +646,13 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
 #bitRegistroView .bitacora-current-folio{display:flex;flex-direction:column;gap:5px;padding:0;align-self:end}
 #bitRegistroView .bitacora-current-folio small{font-size:.66rem;font-weight:700;color:var(--ink)}
 #bitRegistroView .bitacora-current-folio strong{display:flex;align-items:center;height:38px;padding:0 2px;font-size:.74rem;font-weight:700;color:#205985;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== v0.3.8 · Relacionar actividad: ícono y ventana anclada arriba ===== */
+.bit-relation-head h4{display:flex;align-items:center;gap:9px}
+.bit-relation-head h4 svg{flex:0 0 auto;opacity:.95}
+@media(max-width:559px){
+  .bit-relation-backdrop{align-items:start;padding:0}
+  .bit-relation-modal{border-radius:0 0 14px 14px;max-height:calc(100dvh - 118px - env(safe-area-inset-bottom,0px));padding-top:env(safe-area-inset-top,0px);background:#205985}
+  .bit-relation-modal>*:not(.bit-relation-head){background:#fff}
+  .bit-relation-list{flex:1 1 auto;min-height:0}
+}
