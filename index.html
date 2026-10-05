@@ -228,15 +228,19 @@
 
         <div id="bitConsultaView" class="bitacora-view" hidden>
           <div class="bit-consulta-primary">
-            <label class="bitacora-search"><span aria-hidden="true">⌕</span><input id="bitBuscar" type="search" placeholder="Buscar en Bitácora (mín. 3 caracteres)" autocomplete="off"></label>
+            <label class="bitacora-search"><svg class="bit-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="bitBuscar" type="search" placeholder="Buscar en Bitácora (mín. 3 caracteres)" autocomplete="off"></label>
           </div>
           <div class="bit-consulta-actions">
             <button id="btnBitFiltros" class="bit-consulta-tool" type="button" aria-expanded="false">Filtros</button>
             <button id="btnBitLimpiarFiltros" class="bit-consulta-tool" type="button" title="Limpiar filtros"><span class="bit-lbl-long">Limpiar filtros</span><span class="bit-lbl-short">Limpiar</span></button>
             <button id="btnBitColumnas" class="bit-consulta-tool" type="button" aria-expanded="false">Columnas</button>
-            <span class="bit-export-label">Exportar:</span>
-            <button id="btnBitExcel" class="bit-consulta-tool bit-export-btn" type="button">Excel</button>
-            <button id="btnBitPdf" class="bit-consulta-tool bit-export-btn" type="button">PDF</button>
+            <div class="bit-export-wrap">
+              <button id="btnBitExportar" class="bit-consulta-tool" type="button" aria-haspopup="menu" aria-expanded="false">Exportar<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              <div id="bitExportMenu" class="bit-export-menu" role="menu" hidden>
+                <button id="btnBitExcel" type="button" role="menuitem"><span class="bit-export-ico xls" aria-hidden="true">XLS</span>Excel</button>
+                <button id="btnBitPdf" type="button" role="menuitem"><span class="bit-export-ico pdf" aria-hidden="true">PDF</span>PDF</button>
+              </div>
+            </div>
           </div>
           <div id="bitConsultaFiltros" class="bit-consulta-filters" hidden>
             <div class="bit-period">
@@ -397,7 +401,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.9</span>
+      <span id="versionLabel">NEXUS · v0.3.10</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>
