@@ -400,10 +400,10 @@ main{padding-top:12px;position:relative}.eyebrow{font-size:.64rem;font-weight:90
 /* Pantalla de entrada */
 .splash{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .45s ease}
 .splash.is-leaving{opacity:0;pointer-events:none}
-.splash-logo{width:min(56vw,220px);height:auto;animation:nexusSplashIn 1.1s cubic-bezier(.22,.61,.36,1) both}
+.splash-logo{width:min(56vw,220px);height:auto;animation:nexusSplashIn 1.1s cubic-bezier(.22,.61,.36,1) backwards}
 .splash-line{width:110px;height:2px;border-radius:2px;background:var(--cyan);transform-origin:center;animation:nexusSplashLine 1.2s .35s cubic-bezier(.22,.61,.36,1) both}
 .splash.is-leaving .splash-logo{animation:nexusSplashOut .45s ease both}
-@keyframes nexusSplashIn{from{opacity:0;transform:scale(.86);filter:blur(6px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes nexusSplashIn{from{opacity:0;transform:scale(.86);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
 @keyframes nexusSplashLine{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
 @keyframes nexusSplashOut{to{opacity:0;transform:scale(1.08);filter:blur(3px)}}
 @media (prefers-reduced-motion:reduce){.splash-logo,.splash-line,.splash.is-leaving .splash-logo{animation:none}}
