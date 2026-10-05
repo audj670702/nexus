@@ -174,7 +174,7 @@
           </div>
           <div class="bitacora-form">
             <div class="bitacora-type-row">
-              <span id="bitFolio" class="bitacora-current-folio">Folio: —</span>
+              <span id="bitFolio" class="bitacora-current-folio"><small>Folio</small><strong>—</strong></span>
               <label>Tipo de evento
                 <select id="bitTipo"><option value="">Seleccionar tipo</option></select>
               </label>
@@ -191,17 +191,14 @@
               <span class="bit-relation-label">Relacionar actividad</span>
               <button id="btnBitRelacionar" class="bit-relation-trigger" type="button"><span id="bitRelacionResumen">Seleccionar actividad</span><span aria-hidden="true">›</span></button>
             </div>
-            <label>Lugar<input id="bitLugar" type="text" maxlength="200" placeholder="Lugar del evento"></label>
+            <label class="bit-inline-field">Lugar<input id="bitLugar" type="text" maxlength="200" placeholder="Lugar del evento"></label>
             <label>Descripción
               <textarea id="bitDescripcion" rows="4" maxlength="4000" placeholder="¿Qué ocurrió?"></textarea>
             </label>
             <label>Comentarios
               <textarea id="bitComentarios" rows="2" maxlength="2000" placeholder="Notas adicionales"></textarea>
             </label>
-            <label id="bitEvidenciaField" class="bitacora-evidence" hidden>Evidencias
-              <span class="bit-file-picker"><span class="bit-file-button">Elegir archivo</span><span class="bit-file-help">Adjuntar evidencia</span><input id="bitEvidencias" type="file" multiple></span>
-              <div id="bitEvidenceSelected" class="bit-evidence-selected" hidden></div>
-            </label>
+            <div id="bitEvidenceSelected" class="bit-evidence-selected" hidden></div>
           </div>
           <div id="bitRelacionModal" class="bit-relation-backdrop" hidden>
             <section class="bit-relation-modal" role="dialog" aria-modal="true" aria-labelledby="bitRelacionTitle">
@@ -222,7 +219,8 @@
           <div id="bitRegistroSaved" class="bit-register-saved" hidden></div>
           <div id="bitRegistroResult" class="bit-register-result" hidden></div>
           <div id="bitPendingPanel" class="bit-pending-panel" hidden></div>
-          <div class="bitacora-actions">
+          <div class="bitacora-actions bit-register-actions">
+            <label id="bitEvidenciaField" class="bit-evidence-attach" hidden><span class="bit-file-button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>Adjuntar evidencia</span><input id="bitEvidencias" type="file" multiple></label>
             <button id="btnBitGuardar" class="bitacora-primary" type="button">Guardar</button>
             <button id="btnBitNuevo" class="bitacora-primary" type="button" hidden>+ Nuevo registro</button>
           </div>
@@ -388,7 +386,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.6</span>
+      <span id="versionLabel">NEXUS · v0.3.7</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>

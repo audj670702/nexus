@@ -620,3 +620,29 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
 #bitRegistroView .bit-relation-field{display:grid;gap:5px}
 #bitRegistroView .bit-relation-trigger{display:flex;align-items:center;justify-content:space-between}
 @media(max-width:420px){#bitRegistroView .bit-flags{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:6px 12px}}
+
+/* ===== v0.3.7 · Bitácora › Registrar: folio reservado, Lugar en línea, evidencia junto a Guardar ===== */
+#bitRegistroView .bitacora-type-row{grid-template-columns:minmax(0,1fr) minmax(0,3fr);gap:10px}
+#bitRegistroView .bitacora-current-folio{white-space:normal;line-height:1.25;overflow-wrap:anywhere;min-width:0}
+#bitRegistroView .bitacora-form label.bit-inline-field{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px}
+#bitRegistroView .bit-register-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding-top:12px}
+#bitRegistroView .bit-evidence-attach{margin-right:auto;position:relative;display:inline-flex}
+#bitRegistroView .bit-evidence-attach[hidden],#bitRegistroView[data-locked="1"] .bit-evidence-attach{display:none}
+#bitRegistroView .bit-evidence-attach input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#bitRegistroView .bit-evidence-attach .bit-file-button{gap:6px;min-height:36px;background:#fff;color:#205985;border:1px solid #205985;font-size:.68rem;font-weight:800;box-shadow:none}
+#bitRegistroView .bit-evidence-attach .bit-file-button:hover{background:#f3f8fc}
+#bitRegistroView .bit-register-actions .bitacora-primary{min-height:36px}
+#bitRegistroView .bit-evidence-selected{margin-top:0}
+/* Relacionar actividad: mismos campos que el formulario */
+.bit-relation-tools input,.bit-relation-tools select{font-family:inherit;font-size:.74rem;font-weight:600;color:var(--ink);height:38px;min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#fff;width:100%;min-width:0;margin:0}
+.bit-relation-tools input[type="search"]{font-weight:500}
+.bit-relation-tools input[type="date"]{-webkit-appearance:none;appearance:none;display:block;text-align:left}
+.bit-relation-tools input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0;line-height:36px}
+.bit-relation-tools select{-webkit-appearance:none;appearance:none;padding-right:30px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6f8f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center}
+.bit-relation-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.bit-relation-filters label{display:grid;gap:5px;min-width:0;font-size:.66rem;font-weight:700;color:var(--ink)}
+.bit-relation-all{display:inline-flex;align-items:center;gap:7px;font-size:.66rem;font-weight:700;color:var(--ink)}
+.bit-relation-all input{width:17px;height:17px;min-height:0;margin:0;accent-color:#123f6d}
+#bitRegistroView .bitacora-current-folio{display:flex;flex-direction:column;gap:5px;padding:0;align-self:end}
+#bitRegistroView .bitacora-current-folio small{font-size:.66rem;font-weight:700;color:var(--ink)}
+#bitRegistroView .bitacora-current-folio strong{display:flex;align-items:center;height:38px;padding:0 2px;font-size:.74rem;font-weight:700;color:#205985;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

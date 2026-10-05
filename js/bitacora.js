@@ -377,11 +377,12 @@ function renderSavedRegister(folio=""){
 }
 function setRegisterLocked(locked,folio=""){
   const form=$("#bitRegistroView");if(!form)return;
+  form.dataset.locked=locked?"1":"";
   $("#bitacoraForm")?.toggleAttribute("hidden",locked);
   const formBox=form.querySelector(".bitacora-form");if(formBox)formBox.hidden=locked;
   $("#btnBitGuardar").hidden=locked;$("#btnBitNuevo").hidden=!locked;
   const lock=$("#bitRegistroLock");lock.hidden=!locked;
-  $("#bitFolio").textContent=folio?`Folio: ${folio}`:(locked?"Folio: pendiente de sincronización":"Folio: —");
+  $("#bitFolio").innerHTML=`<small>Folio</small><strong>${esc(folio?folio:(locked?"Pendiente":"—"))}</strong>`;$("#bitFolio").title=folio?"":(locked?"Pendiente de sincronización":"");
   if(locked)renderSavedRegister(folio);else if($("#bitRegistroSaved"))$("#bitRegistroSaved").hidden=true;
 }
 function clearRegisterForm(){
