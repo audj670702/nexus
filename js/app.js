@@ -13,7 +13,7 @@ import {getCteSnapshot,openCteTickets,openCteTicket} from "./cte.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,openBitacoraAt,hasBitacoraEvent,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.3.10";
+const VERSION="0.3.11";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -120,6 +120,7 @@ async function syncCteQueue(localId=""){
   try{for(const item of await getPendingCteEvents()){if(!localId||item.localId===localId)await syncCteItem(item)}}finally{cteSyncRunning=false;await notifyCteSynced()}
 }
 
+document.addEventListener("nexus:bitacora-reload",()=>{if(typeof currentContext!=="undefined"&&currentContext)loadBitacoraState(currentContext)});
 async function loadBitacoraState(context){
   if(context?.authenticated!==true||!context?.memberId||!context?.eo?.codigoEO){
     context.bitacora={activo:false,facultades:{}};
@@ -132,14 +133,16 @@ async function loadBitacoraState(context){
     url.searchParams.set("codigoEO",context.eo.codigoEO);
     const response=await apiFetch(url.toString(),{method:"GET",mode:"cors",cache:"no-store",credentials:"omit",headers:{"Accept":"application/json"}});
     const data=await response.json().catch(()=>({}));
-    if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||"No fue posible cargar Bitácora.");
+    if(!response.ok||data?.ok!==true){const err=new Error(data?.mensaje||`No fue posible cargar Bitácora (HTTP ${response.status}).`);err.code=data?.code||String(response.status);throw err}
     context.bitacora={activo:data.activo===true,facultades:data.facultades||{}};
     await setBitacoraState(data);
     document.dispatchEvent(new CustomEvent("nexus:data-changed"));
   }catch(error){
     console.error("NEXUS | BITACORA | STATE_ERROR",error);
+    // v0.3.11 · El motivo se muestra en Consultar en lugar de un "0 eventos" silencioso.
+    const loadError=`${error?.message||"Error desconocido"}${error?.code?` [${error.code}]`:""}`;
     const cached=await getCachedBitacoraAccess().catch(()=>null);
-    if(cached){context.bitacora={activo:cached?.facultades?.registro===true||cached?.facultades?.consulta===true||cached?.facultades?.seguimiento===true,facultades:cached.facultades||{}};await setBitacoraState(cached)}else{context.bitacora={activo:false,facultades:{}};await setBitacoraState({})}
+    if(cached){context.bitacora={activo:cached?.facultades?.registro===true||cached?.facultades?.consulta===true||cached?.facultades?.seguimiento===true,facultades:cached.facultades||{}};await setBitacoraState({...cached,loadError})}else{context.bitacora={activo:false,facultades:{}};await setBitacoraState({loadError})}
   }
 }
 async function syncBitacoraEvidence(queueItem,evidence){
