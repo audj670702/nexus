@@ -720,3 +720,24 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
 #bitConsultaView .bit-legend-filter button.bit-legend-group.is-on{background:transparent;color:#205985;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:400px){#bitConsultaView .bit-legend-filter{gap:5px}#bitConsultaView .bit-legend-filter button{padding:0 8px;font-size:.58rem}}
 @media(max-width:370px){#bitConsultaView .bit-legend-filter{gap:4px}#bitConsultaView .bit-legend-filter button{padding:0 7px;gap:5px}}
+
+/* ===== v0.3.10 · Consultar: lupa, menú Exportar, insignia de filtros activos ===== */
+#bitConsultaView{container-type:inline-size;container-name:bitcons}
+#bitConsultaView .bitacora-search{gap:8px;padding-left:10px}
+#bitConsultaView .bit-search-icon{flex:0 0 auto;color:#5b6f8f}
+#bitConsultaView .bit-consulta-actions{gap:6px}
+#bitConsultaView .bit-consulta-tool{display:inline-flex;align-items:center;gap:5px}
+#bitConsultaView .bit-consulta-tool:disabled{opacity:.45;cursor:default}
+#bitConsultaView .bit-consulta-tool.has-active{border-color:#205985}
+#bitConsultaView .bit-filter-badge{display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#d92f2f;color:#fff;font-size:.56rem;font-weight:800;line-height:1}
+#bitConsultaView .bit-consulta-tool.is-selected .bit-filter-badge{background:#fff;color:#205985}
+#bitConsultaView .bit-export-wrap{position:relative;margin-left:auto}
+#bitConsultaView .bit-export-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:150px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 12px 30px rgba(18,43,77,.16);display:grid;gap:2px}
+#bitConsultaView .bit-export-menu[hidden]{display:none}
+#bitConsultaView .bit-export-menu button{display:flex;align-items:center;gap:9px;height:36px;padding:0 9px;border:0;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:.68rem;font-weight:700;text-align:left;cursor:pointer}
+#bitConsultaView .bit-export-menu button:hover{background:#f3f7fc}
+#bitConsultaView .bit-export-ico{display:inline-grid;place-items:center;width:28px;height:20px;border-radius:4px;color:#fff;font-size:.5rem;font-weight:800;letter-spacing:.02em}
+#bitConsultaView .bit-export-ico.xls{background:#1d7a45}#bitConsultaView .bit-export-ico.pdf{background:#c0392b}
+#bitConsultaView .bit-lbl-long{display:inline!important}#bitConsultaView .bit-lbl-short{display:none!important}
+@container bitcons (max-width:312px){#bitConsultaView .bit-lbl-long{display:none!important}#bitConsultaView .bit-lbl-short{display:inline!important}}
+#bitConsultaView .bit-export-menu button{margin:0!important}
