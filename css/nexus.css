@@ -595,3 +595,6 @@ body.tv-fs{overflow:hidden}
 body.tv-fs .tv-monitor,body.tv-fs .top-band .tv-monitor{position:fixed!important;inset:0;z-index:9999;width:100vw!important;height:100vh;height:100dvh;max-width:none;aspect-ratio:auto;border-radius:0!important;background:#000}
 body.tv-fs #bottomNav{display:none}
 body.tv-fs .tv-monitor>*{grid-area:1/1}
+
+/* ===== v0.3.4 · sin zoom automático al tocar un campo (iPhone amplía si el texto mide menos de 16px) ===== */
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select,textarea,[contenteditable="true"]{font-size:16px!important}}
