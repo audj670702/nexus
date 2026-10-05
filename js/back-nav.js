@@ -10,7 +10,8 @@ const MODAL_SELECTOR = [
   "#bitSeguimientoAccionModal",
   "#bitSeguimientoMensajeModal",
   "#nexusMnsOverlay",
-  "#tvOptions"
+  "#tvOptions",
+  "#tvFsLayer"
 ].join(",");
 
 const CLOSE_SELECTOR = [

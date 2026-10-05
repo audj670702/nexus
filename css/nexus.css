@@ -586,3 +586,12 @@ body[data-nav="on"] .modal-backdrop:not(.nexus-notice-backdrop)>section{max-heig
 .mv-badge-red{background:#fdecea;color:#a3271a}
 @media(min-width:560px){.mv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .bit-followup-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+
+/* ===== v0.3.3 · pantalla completa del monitor (respaldo para iPhone) ===== */
+.tv-monitor:-webkit-full-screen{width:100vw;height:100vh;border-radius:0}
+.tv-fs-layer{position:fixed;inset:0;z-index:10000;background:transparent;pointer-events:none}
+.tv-fs-close{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);z-index:10000;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.tv-fs{overflow:hidden}
+body.tv-fs .tv-monitor,body.tv-fs .top-band .tv-monitor{position:fixed!important;inset:0;z-index:9999;width:100vw!important;height:100vh;height:100dvh;max-width:none;aspect-ratio:auto;border-radius:0!important;background:#000}
+body.tv-fs #bottomNav{display:none}
+body.tv-fs .tv-monitor>*{grid-area:1/1}
