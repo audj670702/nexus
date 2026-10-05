@@ -248,13 +248,19 @@ function filteredFollowups(){
   const id=bitFollowupSort.id,dir=bitFollowupSort.dir==="ASC"?1:-1;
   return items.slice().sort((a,b)=>{const av=followupSortValue(a,id),bv=followupSortValue(b,id);const cmp=typeof av==="number"&&typeof bv==="number"?av-bv:String(av).localeCompare(String(bv),"es",{numeric:true,sensitivity:"base"});return cmp*dir||String(eventRegister(a)).localeCompare(String(eventRegister(b)),"es",{numeric:true,sensitivity:"base"})});
 }
+// v0.3.12 · Seguimiento en modo tabla (mismo estilo que Consultar).
+function followupTh(id,label,cls=""){const active=bitFollowupSort.id===id,arrow=active?(bitFollowupSort.dir==="ASC"?"↑":"↓"):"";return `<th class="${cls}"><button type="button" class="bit-sort-head ${active?"is-active":""}" data-bit-followup-sort="${esc(id)}" title="Ordenar por ${esc(label)}">${esc(label)}${arrow?` <span>${arrow}</span>`:""}</button></th>`}
+function updateSegMore(){const wrap=$("#bitSeguimientoList .bit-tbl-scroll"),btn=$("#bitSegMore");if(!btn)return;if(!wrap){btn.hidden=true;return}const view=wrap.getBoundingClientRect();const hidden=[...wrap.querySelectorAll("thead th")].filter(th=>th.getBoundingClientRect().right>view.right+2).length;const atEnd=wrap.scrollLeft+wrap.clientWidth>=wrap.scrollWidth-2;wrap.classList.toggle("has-more",!atEnd);if(hidden>0&&!atEnd){btn.hidden=false;btn.innerHTML=`<span>+${hidden} columna${hidden===1?"":"s"}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>`}else btn.hidden=true}
 function renderFollowup(){
-  const items=filteredFollowups(),head=$("#bitSeguimientoHead");
-  if(head)head.innerHTML=["estado","fuente","reg","fecha","tipo","asignado"].map((id,i)=>followupSortButton(id,["Estado","Fuente","Reg.","Fecha","Tipo / descripción","Asignado"][i])).join("");
-  $("#bitSeguimientoList").innerHTML=items.length?items.map(e=>{
-    const id=String(e.id||e._id||""),state=followupState(e),assigned=String(e?.asignacionActual?.asignadoNombre||"Sin asignar"),stateClass=state==="ATENDIDO"?"is-attended":state==="EN_SEGUIMIENTO"?"is-progress":"is-unassigned";
-    return `<button class="bit-followup-main" type="button" data-bit-id="${esc(id)}"><span class="bit-followup-state ${stateClass}">${esc(followupStateLabel(e))}</span><span class="bit-followup-source">${esc(followupSource(e))}</span><span class="bitacora-folio">${esc(eventRegister(e))}</span><span class="bit-followup-date">${esc(eventColumnValue(e,"fecha"))}</span><span class="bitacora-item-copy"><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||"Evento")}</strong><span>${esc(e.descripcion||"")}</span></span><span class="bit-followup-assignee">${esc(assigned)}</span></button>`
-  }).join(""):'<div class="bitacora-empty">No hay eventos que requieran seguimiento para los criterios seleccionados.</div>';
+  const items=filteredFollowups(),total=bitState.seguimientoEventos.length;
+  const cnt=$("#bitSeguimientoCount");if(cnt)cnt.textContent=`${items.length===total?"":`${items.length} de `}${total} evento${total===1?"":"s"}`;
+  if(!items.length){$("#bitSeguimientoList").innerHTML='<div class="bitacora-empty">No hay eventos que requieran seguimiento para los criterios seleccionados.</div>';updateSegMore();return}
+  const rows=items.map(e=>{
+    const id=String(e.id||e._id||""),state=followupState(e),assigned=String(e?.asignacionActual?.asignadoNombre||"Sin asignar"),stateClass=state==="ATENDIDO"?"is-attended":state==="EN_SEGUIMIENTO"?"is-progress":"is-unassigned",src=followupSource(e),d=eventDate(e);
+    return `<tr data-bit-id="${esc(id)}" tabindex="0"><td class="c-nowrap"><span class="bit-seg-state ${stateClass}">${esc(followupStateLabel(e))}</span></td><td class="c-nowrap"><span class="bit-seg-src ${src==="CTE"?"is-cte":""}">${esc(src)}</span></td><td class="c-reg">${esc(eventRegister(e))}</td><td class="c-nowrap">${esc(d?d.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"2-digit"}):"—")}</td><td class="c-text"><span><strong>${esc(e.tipoEtiqueta||e.tipo?.etiqueta||(src==="CTE"?"Ticket de cliente":"Evento"))}</strong> · ${esc(e.descripcion||"")}</span></td><td class="c-short ${assigned==="Sin asignar"?"is-muted":""}"><span>${esc(assigned)}</span></td></tr>`;
+  }).join("");
+  $("#bitSeguimientoList").innerHTML=`<div class="bit-tbl-scroll"><table class="bit-tbl"><thead><tr>${followupTh("estado","Estado")}${followupTh("fuente","Origen")}${followupTh("reg","Reg.","c-reg")}${followupTh("fecha","Fecha")}${followupTh("tipo","Tipo / descripción")}${followupTh("asignado","Asignado")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  $("#bitSeguimientoList .bit-tbl-scroll")?.addEventListener("scroll",updateSegMore,{passive:true});requestAnimationFrame(updateSegMore);
 }
 function openFollowupAction(kind){
   const e=selectedDetailEvent;if(!e)return;const modal=$("#bitSeguimientoAccionModal"),title=$("#bitSeguimientoAccionTitle"),copy=$("#bitSeguimientoAccionCopy"),note=$("#bitSeguimientoNota"),confirm=$("#btnBitSeguimientoConfirmar");
@@ -520,7 +526,10 @@ export function initBitacora(){
   $("#btnBitExcel")?.addEventListener("click",exportExcel);$("#btnBitPdf")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=false;$("#bitReporteAnotaciones")?.focus()});$("#btnBitPdfCancelar")?.addEventListener("click",()=>{$("#bitPdfOptions").hidden=true});$("#btnBitPdfDescargar")?.addEventListener("click",async()=>{await exportPdf();$("#bitPdfOptions").hidden=true});
   $("#bitEventosList").addEventListener("click",e=>{if(e.target.closest("[data-bit-reload]")){$("#bitEventosList").innerHTML='<div class="bitacora-empty">Cargando…</div>';document.dispatchEvent(new CustomEvent("nexus:bitacora-reload"));}});
   $("#bitEventosList").addEventListener("click",e=>{const row=e.target.closest("[data-bit-id]");if(row)openDetail(row.dataset.bitId,"consulta")});
-  $("#bitSeguimientoList").addEventListener("click",e=>{const row=e.target.closest(".bit-followup-main[data-bit-id]");if(row)openDetail(row.dataset.bitId,"seguimiento")});
+  $("#bitSeguimientoList").addEventListener("click",e=>{const sb=e.target.closest("[data-bit-followup-sort]");if(sb){const id=String(sb.dataset.bitFollowupSort||"");bitFollowupSort=id===bitFollowupSort.id?{id,dir:bitFollowupSort.dir==="ASC"?"DESC":"ASC"}:{id,dir:"ASC"};renderFollowup();return}const row=e.target.closest("tr[data-bit-id]");if(row)openDetail(row.dataset.bitId,"seguimiento")});
+  $("#bitSeguimientoList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-bit-id]")){e.preventDefault();openDetail(e.target.dataset.bitId,"seguimiento")}});
+  $("#bitSegMore")?.addEventListener("click",()=>{const w=$("#bitSeguimientoList .bit-tbl-scroll");if(w)w.scrollBy({left:Math.max(160,w.clientWidth*.7),behavior:"smooth"})});
+  window.addEventListener("resize",()=>updateSegMore());
   $("#bitSeguimientoHead")?.addEventListener("click",e=>{const b=e.target.closest("[data-bit-followup-sort]");if(!b)return;const id=String(b.dataset.bitFollowupSort||"");bitFollowupSort=id===bitFollowupSort.id?{id,dir:bitFollowupSort.dir==="ASC"?"DESC":"ASC"}:{id,dir:"ASC"};renderFollowup()});
   $("#bitSeguimientoFuente")?.addEventListener("change",renderFollowup);$("#bitSeguimientoBuscar")?.addEventListener("input",renderFollowup);
   $("#bitDetalleSeguimientoAcciones")?.addEventListener("click",e=>{const b=e.target.closest("[data-detail-followup]");if(b)openFollowupAction(String(b.dataset.detailFollowup||""))});

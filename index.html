@@ -246,17 +246,17 @@
             <div class="bit-period">
               <span class="bit-f-label">Período</span>
               <div class="bit-period-row">
-                <label class="bit-date-field"><span>Desde</span><input id="bitFiltroDesde" type="date" aria-label="Desde"></label>
-                <label class="bit-date-field"><span>Hasta</span><input id="bitFiltroHasta" type="date" aria-label="Hasta"></label>
+                <label class="bit-date-field"><span>Desde</span><input id="bitFiltroDesde" autocomplete="off" type="date" aria-label="Desde"></label>
+                <label class="bit-date-field"><span>Hasta</span><input id="bitFiltroHasta" autocomplete="off" type="date" aria-label="Hasta"></label>
               </div>
             </div>
             <div class="bit-filter-grid">
-              <label>Tipo<select id="bitFiltroTipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select></label>
-              <label>Registro<select id="bitFiltroEstado"><option value="VIGENTE">Sin sustituir</option><option value="SUSTITUIDO">Sustituidos</option><option value="TODOS">Todos</option></select></label>
-              <label>Responsable<select id="bitFiltroResponsable"><option value="">Todos</option></select></label>
-              <label>Actividad<select id="bitFiltroActividad"><option value="">Todas</option></select></label>
+              <label>Tipo<select id="bitFiltroTipo" autocomplete="off" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option></select></label>
+              <label>Registro<select id="bitFiltroEstado" autocomplete="off"><option value="VIGENTE">Sin sustituir</option><option value="SUSTITUIDO">Sustituidos</option><option value="TODOS">Todos</option></select></label>
+              <label>Responsable<select id="bitFiltroResponsable" autocomplete="off"><option value="">Todos</option></select></label>
+              <label>Actividad<select id="bitFiltroActividad" autocomplete="off"><option value="">Todas</option></select></label>
             </div>
-            <span hidden><select id="bitFiltroTip" aria-hidden="true" tabindex="-1"><option value="">Todos</option><option value="REGULAR">Regular</option><option value="TIP">Prioritaria</option><option value="TIP_PENDIENTE">Prioritaria pendiente</option><option value="TIP_CONSULTADA">Prioritaria consultada</option></select></span>
+            <span hidden><select id="bitFiltroTip" autocomplete="off" aria-hidden="true" tabindex="-1"><option value="">Todos</option><option value="REGULAR">Regular</option><option value="TIP">Prioritaria</option><option value="TIP_PENDIENTE">Prioritaria pendiente</option><option value="TIP_CONSULTADA">Prioritaria consultada</option></select></span>
           </div>
           <div id="bitPdfOptions" class="bit-pdf-options" hidden>
             <label>Anotaciones para PDF <span>Opcional</span><textarea id="bitReporteAnotaciones" rows="3" maxlength="3000" placeholder="Aclaración que se incorporará únicamente al PDF. No se guarda en Bitácora."></textarea></label>
@@ -277,13 +277,15 @@
         </div>
 
         <div id="bitSeguimientoView" class="bitacora-view" hidden>
-          <div class="bitacora-section-head">
-            <div><span class="bitacora-kicker">SEGUIMIENTO</span><h3>Eventos que requieren atención</h3></div>
-            <div class="bit-followup-filters"><label class="bit-followup-source-filter">Estado<select id="bitSeguimientoEstado"><option value="TODOS">Todos</option><option value="ABIERTOS">Abiertos</option><option value="SIN_ASIGNAR">Sin asignar</option><option value="EN_SEGUIMIENTO">En proceso</option><option value="MIOS">Asignados a mí</option><option value="ATENDIDO">Atendidos</option></select></label><label class="bit-followup-source-filter">Origen<select id="bitSeguimientoFuente"><option value="TODOS">Todos</option><option value="BIT">BIT</option><option value="CTE">CTE</option></select></label></div>
+          <div class="bit-seg-head"><span class="bitacora-kicker">SEGUIMIENTO</span><h3>Eventos que requieren atención</h3></div>
+          <div class="bit-seg-filters">
+            <label class="bit-inline-select"><span>Estado</span><select id="bitSeguimientoEstado" autocomplete="off"><option value="TODOS">Todos</option><option value="ABIERTOS">Abiertos</option><option value="SIN_ASIGNAR">Sin asignar</option><option value="EN_SEGUIMIENTO">En proceso</option><option value="MIOS">Asignados a mí</option><option value="ATENDIDO">Atendidos</option></select></label>
+            <label class="bit-inline-select"><span>Origen</span><select id="bitSeguimientoFuente" autocomplete="off"><option value="TODOS">Todos</option><option value="BIT">BIT</option><option value="CTE">CTE</option></select></label>
           </div>
-          <label class="bitacora-search bit-followup-search"><span aria-hidden="true">⌕</span><input id="bitSeguimientoBuscar" type="search" placeholder="Buscar en Seguimiento (mín. 3 caracteres)" autocomplete="off"></label>
-          <div id="bitSeguimientoHead" class="bit-followup-head"></div>
-          <div id="bitSeguimientoList" class="bitacora-list bit-followup-list"></div>
+          <label class="bitacora-search bit-followup-search"><svg class="bit-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="bitSeguimientoBuscar" type="search" placeholder="Buscar en Seguimiento (mín. 3 caracteres)" autocomplete="off"></label>
+          <div class="bit-tbl-top"><span id="bitSeguimientoCount">0 eventos</span><button id="bitSegMore" class="bit-tbl-more" type="button" hidden></button></div>
+          <div id="bitSeguimientoHead" hidden></div>
+          <div id="bitSeguimientoList" class="bitacora-list"></div>
         </div>
 
         <div id="bitDetalleView" class="bitacora-view" hidden>
@@ -401,7 +403,7 @@
 
   <footer class="footer">
     <div class="footer-status">
-      <span id="versionLabel">NEXUS · v0.3.11</span>
+      <span id="versionLabel">NEXUS · v0.3.12</span>
       <span id="ccaLabel" class="cca">CCA · Se0 Us0 Eo0 App0</span>
     </div>
     <span class="powered">Powered by <img src="./assets/logo/logo_hub_360.png" alt="SCaD HUB"></span>
