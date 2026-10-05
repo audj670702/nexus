@@ -745,3 +745,51 @@ body.tv-fs .tv-monitor>*{grid-area:1/1}
 /* v0.3.11 · aviso de carga fallida en Consultar */
 #bitConsultaView .bit-load-error{display:grid;justify-items:center;gap:8px;color:#a3271a}
 #bitConsultaView .bit-load-error span{font-size:.6rem;color:var(--muted);word-break:break-word}
+
+/* ===== v0.3.12 · Seguimiento: encabezado, filtros en línea y tabla ===== */
+#bitSeguimientoView .bitacora-search{width:100%;min-height:var(--fld-h)}
+#bitSeguimientoView .bitacora-search input{font-size:var(--fld-fs);font-weight:500;background:transparent;min-width:0;flex:1 1 auto}
+#bitSeguimientoView .bit-tbl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:0 2px 6px;border-bottom:1px solid var(--line)}
+#bitSeguimientoView #bitSeguimientoCount{font-size:.62rem;font-weight:700;color:var(--muted)}
+#bitSeguimientoView .bit-tbl-more{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border:0;border-radius:999px;background:#e8f1fa;color:#205985;font:inherit;font-size:.6rem;font-weight:800;cursor:pointer;animation:bitMorePulse 1.8s ease-in-out infinite}
+#bitSeguimientoView .bit-tbl-more[hidden]{display:none}
+#bitSeguimientoView .bit-tbl-more svg{animation:bitMoreNudge 1.8s ease-in-out infinite}
+#bitSeguimientoView .bit-tbl-scroll{position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#bitSeguimientoView .bit-tbl-scroll.has-more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+#bitSeguimientoView .bit-tbl{border-collapse:collapse;width:100%;font-size:.64rem;color:var(--ink)}
+#bitSeguimientoView .bit-tbl th{position:sticky;top:0;background:#fff;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:.56rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+#bitSeguimientoView .bit-tbl th .bit-sort-head{border:0;background:transparent;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;white-space:nowrap}
+#bitSeguimientoView .bit-tbl th .bit-sort-head.is-active{color:#205985}
+#bitSeguimientoView .bit-tbl td{padding:8px;border-bottom:1px solid #edf2f9;vertical-align:top;line-height:1.35}
+#bitSeguimientoView .bit-tbl tbody tr{cursor:pointer}
+#bitSeguimientoView .bit-tbl tbody tr:hover,#bitSeguimientoView .bit-tbl tbody tr:focus-visible{background:#f5f9fd;outline:none}
+#bitSeguimientoView .bit-tbl .c-num{width:1%;white-space:nowrap;color:var(--muted);padding-right:4px}
+#bitSeguimientoView .bit-tbl .c-reg{width:1%;white-space:nowrap;font-weight:800;color:#205985;padding-right:4px}
+#bitSeguimientoView .bit-tbl .c-state{width:1%;padding-left:2px;padding-right:2px;text-align:center}
+#bitSeguimientoView .bit-tbl td.c-state .bit-state-cell{height:16px}
+#bitSeguimientoView .bit-tbl .c-nowrap{white-space:nowrap;width:1%}
+#bitSeguimientoView .bit-tbl td.c-short span{display:block;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bitSeguimientoView .bit-tbl td.c-mid span{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bitSeguimientoView .bit-tbl td.c-text span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-width:170px;max-width:280px}
+#bitSeguimientoView .bitacora-search{gap:8px;padding-left:10px}
+#bitSeguimientoView .bit-search-icon{flex:0 0 auto;color:#5b6f8f}
+#bitSeguimientoView{--fld-h:36px;--fld-fs:.72rem}
+#bitSeguimientoView .bit-seg-head{display:flex;align-items:baseline;gap:8px;min-width:0}
+#bitSeguimientoView .bit-seg-head .bitacora-kicker{flex:0 0 auto}
+#bitSeguimientoView .bit-seg-head h3{margin:0;font-size:.86rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#bitSeguimientoView .bit-seg-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:10px}
+#bitSeguimientoView .bit-inline-select{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:7px;min-width:0;font-size:.64rem;font-weight:700;color:var(--ink)}
+#bitSeguimientoView .bit-inline-select select{width:100%;min-width:0;height:var(--fld-h);margin:0;border:1px solid var(--line);border-radius:7px;color:var(--ink);font-family:inherit;font-size:var(--fld-fs);font-weight:600;-webkit-appearance:none;appearance:none;padding:0 28px 0 10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6f8f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center}
+#bitSeguimientoView .bit-followup-search{margin-top:8px;width:100%}
+#bitSeguimientoView .bit-tbl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:0 2px 6px;border-bottom:1px solid var(--line)}
+#bitSeguimientoView .bit-tbl-more{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border:0;border-radius:999px;background:#e8f1fa;color:#205985;font:inherit;font-size:.6rem;font-weight:800;cursor:pointer;animation:bitMorePulse 1.8s ease-in-out infinite}
+#bitSeguimientoView .bit-tbl-more[hidden]{display:none}
+#bitSeguimientoView .bit-tbl-more svg{animation:bitMoreNudge 1.8s ease-in-out infinite}
+#bitSeguimientoView .bit-seg-state{font-weight:800}
+#bitSeguimientoView .bit-seg-state.is-unassigned{color:#a3271a}
+#bitSeguimientoView .bit-seg-state.is-progress{color:#205985}
+#bitSeguimientoView .bit-seg-state.is-attended{color:#2f7d4a}
+#bitSeguimientoView .bit-seg-src{display:inline-block;padding:1px 6px;border-radius:4px;background:#eef3f9;color:#3d5272;font-size:.56rem;font-weight:800}
+#bitSeguimientoView .bit-seg-src.is-cte{background:#fdecea;color:#a3271a}
+#bitSeguimientoView .bit-tbl td.is-muted{color:var(--muted)}
+#bitSeguimientoView .bit-tbl td.c-text strong{font-weight:700}
