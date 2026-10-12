@@ -1,4 +1,4 @@
-const TVDI_HLS="https://motortv.scad.mx/hls/canal.m3u8";
+const TVDI_HLS="https://tvdigital.scad.mx/cfcx/canal/index.m3u8";
 let context=null,hls=null,tvMuted=true,communityVideoKey="";
 const $=s=>document.querySelector(s);
 
