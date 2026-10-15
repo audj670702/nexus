@@ -1,5 +1,5 @@
-const CACHE_NAME="nexus-v0.3.12";
-const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/ui.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./js/mns.js","./js/documents.js","./js/schedule.js","./js/bitacora.js","./js/cte.js","./js/local-first.js","./js/back-nav.js","./js/modes.js","./mns-frontend-v052.html","./mns-frontend.html","./manifest.json"];
+const CACHE_NAME="nexus-v0.3.13";
+const APP_SHELL=["./","./index.html","./css/nexus.css","./js/app.js","./js/ui.js","./js/context.js","./js/auth.js","./js/navigation.js","./js/modules.js","./js/tv.js","./js/tv-model.js","./js/tv-tenant.js","./js/mns.js","./js/documents.js","./js/schedule.js","./js/bitacora.js","./js/cte.js","./js/local-first.js","./js/back-nav.js","./js/modes.js","./mns-frontend-v052.html","./mns-frontend.html","./manifest.json","./css/nexus.css?v=0.3.13","./js/app.js?v=0.3.13","./js/tv.js?v=0.3.13","./js/tv-model.js?v=0.3.13","./js/tv-tenant.js?v=0.3.13"];
 
 self.addEventListener("install",event=>{
   event.waitUntil(

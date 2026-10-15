@@ -4,7 +4,7 @@ import {initBackNavigation,closeAllModals} from "./back-nav.js";
 import {initModes,renderModeView,getCurrentMode} from "./modes.js";
 import {initAccountMenu} from "./navigation.js";
 import {BASIC_MODULES,renderModules} from "./modules.js";
-import {initTv,setTvContext} from "./tv.js";
+import {initTv,setTvContext} from "./tv.js?v=0.3.13";
 import "./mns.js";
 import {initDocuments,setDocumentsContext,openDocuments} from "./documents.js";
 import {initSchedule,setScheduleContext,openSchedule} from "./schedule.js";
@@ -13,7 +13,7 @@ import {getCteSnapshot,openCteTickets,openCteTicket} from "./cte.js";
 import {initBitacora,setBitacoraContext,setBitacoraState,openBitacora,openBitacoraAt,hasBitacoraEvent,getPendingBitEvents,getBitEvidence,updateBitQueue,updateBitEvidence,notifyBitSynced,getCachedBitacoraAccess} from "./bitacora.js";
 import {initCte,setCteContext,setCteState,openCte,getPendingCteEvents,getCteEvidence,updateCteQueue,updateCteEvidence,notifyCteSynced} from "./cte.js";
 
-const VERSION="0.3.12";
+const VERSION="0.3.13";
 
 function initials(name=""){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"N"}
 function firstValue(obj,keys=[]){for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null}
@@ -388,12 +388,10 @@ function paintContext(c){
   paintCca(c);
   paintEo(auth?c?.eo:null);
   if(!auth){
-    document.querySelector("#eoChannelName").textContent="EO";
     document.querySelector("#btnAdminPanel").hidden=true;
     return;
   }
   const name=c?.user?.nombreVisible||c?.user?.nombre||"Usuario",email=c?.email||c?.user?.email||"",eo=c?.eo?.nombreMostrar||c?.eo?.nombre||"EO";
-  document.querySelector("#eoChannelName").textContent=eo;
   if(document.querySelector("#tvMonitor")?.dataset.channel==="eo"){const nl=document.querySelector("#tvNowLabel");if(nl)nl.textContent=eo}
   for(const id of ["#topUserName","#menuUserName"])document.querySelector(id).textContent=name;
   document.querySelector("#menuUserEmail").textContent=email;
@@ -418,10 +416,23 @@ function hideSplash(){
   const wait=Math.max(0,1200-(Date.now()-(window.__nexusSplashStart||Date.now())));
   setTimeout(()=>{el.dataset.done="1";el.classList.add("is-leaving");setTimeout(()=>el.remove(),450)},wait);
 }
+// Refresh only the channel of the authenticated, currently selected EO.
+async function loadTvContext(){
+  const expected=currentContext;
+  if(expected?.authenticated!==true||!expected?.memberId||!expected?.eo?.codigoEO)throw new Error('Inicia sesión para este canal.');
+  const url=new URL(`${API_BASE}/nexusPwaContext`);
+  url.searchParams.set('memberId',expected.memberId);
+  url.searchParams.set('enteOperador',expected.eo.codigoEO);
+  const response=await apiFetch(url.toString(),{method:'GET',mode:'cors',cache:'no-store',credentials:'omit',headers:{Accept:'application/json'},signal:AbortSignal.timeout(8000)});
+  const data=await response.json();
+  if(!response.ok||data?.ok!==true)throw new Error(data?.mensaje||'No se pudo consultar el canal.');
+  return {authenticated:true,memberId:data.usuario?.memberId||'',eo:data.eo||null,tv:data.tv||null};
+}
+
 async function boot(){
   initAccountMenu();initNotices();initBackNavigation();
   initModes({closeAllModals,openBitacora:()=>openBitacora(),openBitacoraAt,hasBitacoraEvent,openCteTicket,openSchedule,openDocuments,openTraining,openMns:()=>window.openScadMns?.(),openReports,openCte,openCteTickets,canReports,getBit:getBitacoraSnapshot,getCte:getCteSnapshot,getPendingBitCount:async()=>(await getPendingBitEvents()).length});
-  initTv();initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
+  initTv({loadContext:loadTvContext});initEoModal();initProfileModal();initInstallFlow();initDocuments();initSchedule();initBitacora();initCte();
   let c;
   try{c=await resolveAccessContext()}
   catch(error){
@@ -429,7 +440,8 @@ async function boot(){
     c={authenticated:false,roles:[],modules:[]};
   }
   currentContext=c;
-  setTvContext(c);
+  // Do not play a private channel from restored session data; confirm it with SYS first.
+  setTvContext({...c,tv:null});
   setBitacoraContext(c);setCteContext(c);
   // v0.2.93: pintar de inmediato con el último acceso conocido a Bitácora (guardado en el teléfono)
   // y cargar Bitácora y Atención al Cliente en paralelo, sin bloquear la pantalla.
@@ -478,8 +490,11 @@ async function boot(){
   document.addEventListener("nexus:bitacora-followup-release",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraReleaseFollowup",e.detail,"No fue posible liberar el seguimiento.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento liberado."}}))}catch(error){console.error("NEXUS | BITACORA | RELEASE_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible liberar el seguimiento."}}))}});
   document.addEventListener("nexus:bitacora-followup-attended",async e=>{try{const d=await runBitacoraFollowupAction("nexusBitacoraMarkFollowupAttended",e.detail,"No fue posible marcar el seguimiento como atendido.");document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-result",{detail:{message:d.mensaje||"Seguimiento marcado como atendido."}}))}catch(error){console.error("NEXUS | BITACORA | ATTENDED_FOLLOWUP_ERROR",error);document.dispatchEvent(new CustomEvent("nexus:bitacora-followup-error",{detail:{message:error?.message||"No fue posible marcar el seguimiento como atendido."}}))}});
   document.querySelector("#btnLogin").addEventListener("click",startLogin);
-  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout")logoutLocal();if(e.detail?.action==="admin")window.location.assign(adminPanelUrl())});
+  document.addEventListener("nexus:navigation",e=>{if(e.detail?.action==="logout"){setTvContext(null);logoutLocal()}if(e.detail?.action==="admin")window.location.assign(adminPanelUrl())});
   document.querySelector("#versionLabel").textContent=`NEXUS · v${VERSION}`;
-  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));
+  if("serviceWorker" in navigator){
+    const register=()=>navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(console.error);
+    if(document.readyState==='complete')register();else window.addEventListener('load',register,{once:true});
+  }
 }
 boot().catch(console.error);
